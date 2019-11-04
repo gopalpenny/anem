@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572835659036.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3647077832",
+    "id" : "145D265E",
+    "lastKnownWriteTime" : 1572834417,
+    "last_content_update" : 1572834417,
+    "path" : "~/Projects/CNH/packages/anema/R/anema_geoprocessing.R",
+    "project_path" : "R/anema_geoprocessing.R",
+    "properties" : {
+        "cursorPosition" : "0,2",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

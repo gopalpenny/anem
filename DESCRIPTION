@@ -1,0 +1,22 @@
+Package: anem
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Author: person("Gopal", "Penny", email = "gopalpenny@gmail.com",
+                  role = c("aut", "cre"))
+Maintainer: Gopal Penny <gopalpenny@gmail.com>
+Description: This package is used for 2d steady state groundwater flow, applying the analytical element method.
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Suggests:
+    sf,
+    tibble,
+    dplyr,
+    tidyr,
+    testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1

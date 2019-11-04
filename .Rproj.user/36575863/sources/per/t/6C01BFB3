@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572814263249.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3448894515",
+    "id" : "6C01BFB3",
+    "lastKnownWriteTime" : 1572836216,
+    "last_content_update" : 1572836216509,
+    "path" : "~/Projects/CNH/packages/anema/vignettes/anema-vignette.Rmd",
+    "project_path" : "vignettes/anema-vignette.Rmd",
+    "properties" : {
+        "cursorPosition" : "73,58",
+        "last_setup_crc32" : "B331F87Ff0ca3d7a",
+        "scrollLine" : "61"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

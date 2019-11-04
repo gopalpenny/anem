@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572818290846.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "561822644",
+    "id" : "94F1115",
+    "lastKnownWriteTime" : 1572834122,
+    "last_content_update" : 1572834122083,
+    "path" : "~/Projects/CNH/packages/anema/R/anema_potentials.R",
+    "project_path" : "R/anema_potentials.R",
+    "properties" : {
+        "cursorPosition" : "4,110",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

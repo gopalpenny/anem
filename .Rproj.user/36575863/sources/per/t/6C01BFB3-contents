@@ -1,0 +1,74 @@
+---
+title: "anema-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{anema-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+devtools::load_all()
+```
+
+## Intialization and data prep
+
+```{r setup}
+# install.packages(".", repos = NULL, type="source")
+# library(anema)
+library(magrittr)
+library(ggplot2)
+```
+
+Let's begin by loading some data to practice with. The data are stored in two shapefiles, one `wells` shapefile containing point features with attributes for `rate` and `diameter`, and a second `boundaries` shapefile with `bound_type`.
+
+```{r data_import}
+pts_wgs <- sf::read_sf("../../../genevois/spatial/shp/manual/pts_text.shp")
+pts_wgs
+
+boundaries_wgs <- sf::read_sf("../../../genevois/spatial/shp/manual/lines_text.shp") 
+boundaries_wgs
+```
+
+The coordinates of objects should be in a planar coordinate system in meters. Tranform both of the shapefiles to UTM projection, first by getting the UTM zone and proj4string transforming the shapefiles.
+
+```{r transform_to_planar}
+utm_zone <- longitude_to_utm_zone(6.2)
+utm_proj4 <- utm_zone_to_proj4(utm_zone)
+pts_utm <- pts_wgs %>% sf::st_transform(utm_proj4)
+boundaries_utm <- boundaries_wgs %>% sf::st_transform(utm_proj4)
+
+ggplot() + 
+  geom_sf(data=boundaries_utm, aes()) + 
+  geom_sf(data=pts_utm, aes())
+```
+
+We now need to extract the coordinates of the wells and boundaries, as well as get the slope (m) and intercept (b) of the boundaries.
+
+```{r prep_dataframes}
+wells <- prep_wells_sf(pts_utm)
+boundaries <- prep_bounds(boundaries_utm)
+```
+
+## Generating well images
+
+We now need to generate image wells by mirroring wells across each of the boundaries. Wells are mirrored across no-flow ("NF") boundaries with the inverse rate of pumping, and across constant head ("CH") boundaries with the same pumping rate.
+
+> This has not been tested with complex boundaries.
+>> Use only straight lines.
+>> No complex shapes.
+
+```{r imaging}
+well_images <- generate_image_wells(wells,boundaries,num_levels=2)
+```
+
+## Generating hydraulic head
+
+The `well_images` object contains a row for each pumping well. Because of the principle of superposition,
+the hydraulic head at any given location is the sum of the effect on hydraulic head of all pumping wells.
+
+Next use the files in `aem_geoprocessing.R` to continue...

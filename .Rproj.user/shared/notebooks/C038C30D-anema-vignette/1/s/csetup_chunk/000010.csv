@@ -1,0 +1,4 @@
+"0","# install.packages(""."", repos = NULL, type=""source"")"
+"0","# library(anema)"
+"0","library(magrittr)"
+"0","library(ggplot2)"
