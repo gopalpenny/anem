@@ -56,10 +56,7 @@ get_radius_of_influence <- function(..., method) {
 #' @param well single well object containing rate Q [m^3/s], diam [m],
 #'   radius of influence roi [m], & coordinates x0 [m], y0 [m]
 #' @param loc coordinates vector as c(x,y), with units of [m]
-#' @param Ksat saturated hydraulic conductivity [m/s]
-#' @param z0 thickness of the confined aquifer (confining case only)
-#' @param aquifer_type "confined" or "unconfined". Determines the calculation
-#'   and output units.
+#' @inheritParams get_hydraulic_head
 #' @return The output is the effect at \code{loc} of the \code{well} on the hydraulic head (in units of [m]) if
 #'   \code{aquifer_type="confined"} or discharge potential [m^2] if
 #'   \code{aquifer_type="unconfined"}.
@@ -111,9 +108,7 @@ get_row_as_vector <- function(df,row=1) {
 #' Get the cumulative effect of all wells at a singled location, output as head (confined aquifer) or discharge potential (unconfined aquifer).
 #'
 #' @param loc coordinates vector as c(x,y), with units of [m]
-#' @param wells wells object with each row containing rate Q [m^3/s], diam [m],
-#'   radius of influence roi [m], & coordinates x0 [m], y0 [m]
-#' @inheritParams get_well_effect
+#' @inheritParams get_hydraulic_head
 #' @return The output is the cumulative effect at \code{loc} of all \code{wells} on the hydraulic head [units=m] if
 #'   \code{aquifer_type="confined"} or discharge potential [m^2] if
 #'   \code{aquifer_type="unconfined"}.
@@ -140,7 +135,10 @@ get_potential <- function(loc,wells,Ksat,z0,aquifer_type) {
 #'   radius of influence roi [m], & coordinates x0 [m], y0 [m]
 #' @param h0 resting hydraulic head [m] of the aquifer without any pumping. For
 #'   an unconfined aquifer, this must be the thickness of the water table.
-#' @inheritParams get_potential
+#' @param Ksat saturated hydraulic conductivity [m/s]
+#' @param z0 thickness of the confined aquifer (confining case only)
+#' @param aquifer_type "confined" or "unconfined". Determines the calculation
+#'   and output units.
 #' @return The output is the hydraulic head \code{loc}, accounting for the
 #'   cumulative effect of all \code{wells} (dP), which is given as hydraulic
 #'   head [units=m] if \code{aquifer_type="confined"} or discharge potential
@@ -165,17 +163,20 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
     dP <- NULL
     loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
     n <- length(loc_list)
-    start_time <- Sys.time()
-    cat(paste0("Getting head at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
-    pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",
-                   width = NA, style = 3)
-    for (i in 1:n) {
-      dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-      # if (difftime(Sys.time(),start_time,units="secs") > 3) {
-      setTxtProgressBar(pb, i)
-      # }
+
+    if (n * dim(wells)[1] < 20) { # don't show progress bar for small number of points / wells
+      for (i in 1:n) {
+        dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+      }
+    } else { # show progress bar for large number of points / wells
+      start_time <- Sys.time()
+      cat(paste0("Getting head at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
+      pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
+      for (i in 1:n) {
+        dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+        setTxtProgressBar(pb, i)
+      }
     }
-    # OLD dP <- sapply(loc_list,get_potential,wells=wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
   }
 
   # calculate head using h0 and change in potential
@@ -192,9 +193,9 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
   return(h)
 }
 
-#' Calculate flow direction
+#' Numerically calculate flow direction
 #'
-#' Calculates the derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
+#' Calculates the numerical derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
 #'   and \eqn{-dh/dy}.
 #'
 #' @inheritParams get_hydraulic_head
@@ -210,6 +211,29 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
 #' get_flowdir(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#'
+#' # Injection and pumping well along diagonal line
+#' wells2 <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
+#' grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
+#' fd2 <- get_flowdir(wells2,loc=grid_pts2,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#'
+#' # Two pumping wells along diagonal line
+#' wells3 <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(-1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
+#' grid_pts3 <- data.frame(x=c(-3,-3,0,3,3),y=c(-3,3,0,-3,3))
+#' fd3 <- get_flowdir(wells3,loc=grid_pts3,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#'
+#' ## plot the flow directions
+#' # scale dx and dy for visualization
+#' fd3_grid <- grid_pts3 %>% cbind(fd3) %>%
+#'    dplyr::mutate(dx_norm=dx*50,dy_norm=dy*50,x2=x+dx_norm,y2=y+dy_norm) # normaliz
+#' # alternatively, apply nonlinear scaling to dx and dy for visualization
+#' fd3_grid <- grid_pts3 %>% cbind(fd3) %>%
+#'   dplyr::mutate(angle=atan(dx/dy),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
+#'                 dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
+#'                 x2=x+dx_norm,y2=y+dy_norm)
+#'
+#' library(ggplot2)
+#' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 
   loc_class <- class(loc)
@@ -220,20 +244,25 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
     fd <- data.frame(dx=NULL,dy=NULL)
     loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
     n <- length(loc_list)
-    start_time <- Sys.time()
-    cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
-    pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",
-                         width = NA, style = 3)
-    for (i in 1:n) {
-      fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-      fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
-      fd <- rbind(fd,fd_i_df)
-      # get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-      # if (difftime(Sys.time(),start_time,units="secs") > 3) {
-      setTxtProgressBar(pb, i)
-      # }
+
+    if (n * dim(wells)[1] < 20) { # no progress bar
+      for (i in 1:n) {
+        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+        fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
+        fd <- rbind(fd,fd_i_df)
+      }
+    } else { # with progress bar
+      start_time <- Sys.time()
+      cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
+      pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
+      for (i in 1:n) {
+        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+        fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
+        fd <- rbind(fd,fd_i_df)
+        setTxtProgressBar(pb, i)
+      }
+      cat("\n")
     }
-    # OLD dP <- sapply(loc_list,get_potential,wells=wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
   }
 
   return(fd)

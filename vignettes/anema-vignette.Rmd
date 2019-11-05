@@ -100,19 +100,17 @@ grid_pts_flowdir <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=30),y=s
 flow_dir <- get_flowdir(grid_pts_flowdir,wells,h0=100,Ksat=0.00001,aquifer_type="unconfined")
 # the dx_norm and dy_norm are used to make the arrows visible in the plot that follows.
 flow_dir_df <- grid_pts_flowdir %>% bind_cols(flow_dir) %>%
-  mutate(angle=abs(atan(y/x)),
+  mutate(angle=atan(x/y),
          mag=sqrt(dx^2+dy^2),
-         mag_norm=mag^(1/4)*1e3,
+         mag_norm=mag^(1/2)*2e3,
          dx_norm=cos(angle)*sign(dx)*mag_norm,
-         dy_norm=sin(angle)*sign(dy)*mag_norm,
+         dy_norm=sin(angle)*sign(dx)*mag_norm,
          x2=x+dx_norm,
          y2=y+dy_norm)
-# flow_dir_check <- flow_dir_df %>% select(dx,dx_norm,dy,dy_norm) %>%
-#   mutate(check=sign(dx)==sign(dx_norm) & sign(dy)== sign(dy_norm))
 
 # plot the flow velocities
 ggplot(flow_dir_df) + 
-  geom_raster(aes(x,y,fill=log(mag)))  + 
+  geom_raster(aes(x,y,fill=mag_norm))  + 
   geom_sf(data=pts_utm, aes(),size=3) +
   coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax))
 ```
@@ -124,7 +122,7 @@ ggplot(head_df) +
   geom_point(data=wells, aes(x=x0,y=y0),shape=1,stroke=1) +
   geom_segment(data=flow_dir_df,
                aes(x,y,xend=x2,yend=y2),arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) +
-  coord_equal()+
+  coord_equal() +
   # coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax),crs = st_crs(wells)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4)) #+ scale_size_continuous(limits=c(3,4))
 ```
@@ -157,14 +155,14 @@ using `expand.grid` and `seq` to generate evenly spaced points in the variable `
 thes points and the `well_images` to generate hydraulic head using `get_hydraulic_head()`.
 
 ```{r hydraulic_head_unconfined,fig.width=6,fig.height=3.5}
-grid_bounds <- boundaries %>% st_coordinates() %>% as_tibble() %>%
+grid_bounds_unconf <- boundaries %>% st_coordinates() %>% as_tibble() %>%
   summarize(xmin=min(X),xmax=max(X),ymin=min(Y),ymax=max(Y))
-grid_bounds <- data.frame(xmin=273000,xmax=284000,ymin=5113000,ymax=5120000)
-grid_pts_head <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
-heads <- get_hydraulic_head(grid_pts_head,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
-head_df <- grid_pts_head %>% bind_cols(head_m=heads)
+grid_bounds_unconf <- data.frame(xmin=273000,xmax=284000,ymin=5113000,ymax=5120000)
+grid_pts_head_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
+heads_unconf <- get_hydraulic_head(grid_pts_head,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
+head_unconf_df <- grid_pts_head_unconf %>% bind_cols(head_m=heads)
 
-ggplot(head_df) + 
+ggplot(head_unconf_df) + 
   geom_raster(aes(x,y,fill=head_m))  + 
   geom_sf(data=boundaries_utm, aes()) + 
   geom_sf(data=pts_utm, aes(size=abs(rate),shape=type)) +
@@ -180,23 +178,23 @@ to before, define set of coordinates of evenly spaced points. Then, use
 these points and the `well_images` to generate hydraulic head using `get_flowdir()`.
 
 ```{r flowdir_unconfined}
-grid_pts_flowdir <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
-flow_dir <- get_flowdir(grid_pts_flowdir,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
+grid_pts_flowdir_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
+flow_dir_unconf <- get_flowdir(grid_pts_flowdir_unconf,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
 # the dx_norm and dy_norm are used to make the arrows visible in the plot that follows.
-flow_dir_df <- grid_pts_flowdir %>% bind_cols(flow_dir) %>%
-  mutate(angle=abs(atan(y/x)),
+flow_dir_unconf_df <- grid_pts_flowdir_unconf %>% bind_cols(flow_dir_unconf) %>%
+  mutate(angle=atan(x/y),
          mag=sqrt(dx^2+dy^2),
          mag_norm=mag^(1/4)*1e3,
          dx_norm=cos(angle)*sign(dx)*mag_norm,
-         dy_norm=sin(angle)*sign(dy)*mag_norm,
+         dy_norm=sin(angle)*sign(dx)*mag_norm,
          x2=x+dx_norm,
          y2=y+dy_norm)
 # flow_dir_check <- flow_dir_df %>% select(dx,dx_norm,dy,dy_norm) %>%
 #   mutate(check=sign(dx)==sign(dx_norm) & sign(dy)== sign(dy_norm))
 
 # plot the flow velocities
-ggplot(flow_dir_df) + 
-  geom_raster(aes(x,y,fill=log(mag)))  + 
+ggplot(flow_dir_unconf_df) + 
+  geom_raster(aes(x,y,fill=mag_norm))  + 
   geom_sf(data=boundaries_utm, aes()) + 
   geom_sf(data=pts_utm, aes(size=abs(rate),shape=type)) +
   coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
@@ -206,11 +204,11 @@ ggplot(flow_dir_df) +
 
 Now, plot the results together. 
 ```{r plot_unconfined}
-ggplot(head_df) +
+ggplot(head_unconf_df) +
   geom_raster(aes(x,y,fill=head_m))  +
   geom_sf(data=boundaries_utm, aes()) +
-  geom_point(data=wells, aes(x=x0,y=y0,size=abs(rate))) +
-  geom_segment(data=flow_dir_df,
+  geom_point(data=wells, aes(x=x0,y=y0),size=3,shape=1,stroke=1.5) +
+  geom_segment(data=flow_dir_unconf_df,
                aes(x,y,xend=x2,yend=y2),arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) +
   coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4)) #+ scale_size_continuous(limits=c(3,4))

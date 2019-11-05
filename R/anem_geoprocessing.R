@@ -69,15 +69,33 @@ prep_bounds_sf <- function(bounds_sf) {
 #'   that the wells are labeled with a column of identifiers, pID. If it is not
 #'   present, the function generates them.
 #' @importFrom magrittr %>%
-prep_bounds <- function(boundaries) {
+#' @examples
+#' boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+#' ggplot(boundaries) + geom_segment(aes(x1,y1,xend=x2,yend=y2))
+prep_bounds <- function(boundaries,get_rectangular=FALSE) {
   if (max(grepl("sf",class(boundaries)))) {
     boundaries <- prep_bounds_sf(boundaries)
   }
   if (!max(grepl("^bID$",names(boundaries)))) { # generate pID's if they are not present
     boundaries <- boundaries %>% dplyr::mutate(bID=dplyr::row_number())
   }
+  # if (rectangular) {
+  #   boundaries <- get_rectangular(boundaries)
+  # }
   bounds_w_slope <- boundaries %>%
     dplyr::mutate(m=(y2-y1)/(x2-x1),
            b=y1 - m*x1) %>% dplyr::select(-x1,-y1,-x2,-y2)
   return(bounds_w_slope)
 }
+
+#' #' Get intersection of two lines
+#' #'
+#' #' Get the intersection of two lines described by m, b
+#' get_intersection()
+#'
+#' #' Convert quadrangle to rectangle
+#' #'
+#' #' Convert 4 lines to a rectangular box with only right angles
+#' get_rectangular <- function(boundaries){
+#'   #
+#' }

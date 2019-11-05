@@ -1,5 +1,6 @@
-/Users/gopal/Projects/CNH/packages/anem/R/anema_geoprocessing.R="7076D8FE"
-/Users/gopal/Projects/CNH/packages/anem/R/anema_imaging.R="6E189899"
+/Users/gopal/Projects/CNH/packages/anem/DESCRIPTION="10805F69"
+/Users/gopal/Projects/CNH/packages/anem/R/anem_geoprocessing.R="DCD232DA"
+/Users/gopal/Projects/CNH/packages/anem/R/anem_potentials.R="C0F4A638"
 /Users/gopal/Projects/CNH/packages/anem/tests/testthat/test_geoprocessing.R="6940B23"
 /Users/gopal/Projects/CNH/packages/anem/tests/testthat/test_imaging.R="F37BA77E"
 /Users/gopal/Projects/CNH/packages/anem/tests/testthat/test_potentials.R="93A8255"
