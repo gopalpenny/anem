@@ -1,8 +1,0 @@
-"0","utm_zone <- longitude_to_utm_zone(6.2)"
-"0","utm_proj4 <- utm_zone_to_proj4(utm_zone)"
-"0","pts_utm <- pts_wgs %>% sf::st_transform(utm_proj4)"
-"0","boundaries_utm <- boundaries_wgs %>% sf::st_transform(utm_proj4)"
-"0",""
-"0","ggplot() + "
-"0","  geom_sf(data=boundaries_utm, aes()) + "
-"0","  geom_sf(data=pts_utm, aes())"

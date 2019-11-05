@@ -5,21 +5,21 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "561822644",
+    "hash" : "4103348347",
     "id" : "94F1115",
-    "lastKnownWriteTime" : 1572834122,
-    "last_content_update" : 1572834122083,
-    "path" : "~/Projects/CNH/packages/anema/R/anema_potentials.R",
+    "lastKnownWriteTime" : 1572923832,
+    "last_content_update" : 1572923832519,
+    "path" : "~/Projects/CNH/packages/anem/R/anema_potentials.R",
     "project_path" : "R/anema_potentials.R",
     "properties" : {
-        "cursorPosition" : "4,110",
-        "scrollLine" : "0",
+        "cursorPosition" : "86,34",
+        "scrollLine" : "56",
         "tempName" : "Untitled1"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 5,
+    "relative_order" : 3,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "r_source"

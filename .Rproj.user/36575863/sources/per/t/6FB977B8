@@ -9,7 +9,7 @@
     "id" : "6FB977B8",
     "lastKnownWriteTime" : 1572833540,
     "last_content_update" : 1572833540,
-    "path" : "~/Projects/CNH/packages/anema/DESCRIPTION",
+    "path" : "~/Projects/CNH/packages/anem/DESCRIPTION",
     "project_path" : "DESCRIPTION",
     "properties" : {
         "cursorPosition" : "7,110",
@@ -18,7 +18,7 @@
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 5,
+    "relative_order" : 4,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "dcf"

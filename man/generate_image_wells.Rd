@@ -7,15 +7,16 @@
 generate_image_wells(wells, bounds, num_levels)
 }
 \arguments{
-\item{wells}{Wells with columns}
+\item{wells}{Wells with columns rate, diam, x0, y0}
 
-\item{bounds}{Bounds with columns}
+\item{bounds}{Bounds with columns bID, bound_type, m, b}
 
 \item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
 }
 \value{
 A data.frame containing original and mirrored wells, with the following columns:
-  x0, y0, rate, diam, path, origin, transform (boundary type), source_bound
+  x0, y0, rate, diam, path, origin, transform (boundary type), source_bound.
+  Columns in wells that are not reproduced by this function are filled with \code{NA}.
 }
 \description{
 Recursively mirror wells across boundaries

@@ -5,21 +5,21 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "3448894515",
+    "hash" : "1855331885",
     "id" : "6C01BFB3",
-    "lastKnownWriteTime" : 1572836216,
-    "last_content_update" : 1572836216509,
-    "path" : "~/Projects/CNH/packages/anema/vignettes/anema-vignette.Rmd",
+    "lastKnownWriteTime" : 1572924684,
+    "last_content_update" : 1572924684125,
+    "path" : "~/Projects/CNH/packages/anem/vignettes/anema-vignette.Rmd",
     "project_path" : "vignettes/anema-vignette.Rmd",
     "properties" : {
-        "cursorPosition" : "73,58",
-        "last_setup_crc32" : "B331F87Ff0ca3d7a",
-        "scrollLine" : "61"
+        "cursorPosition" : "207,21",
+        "last_setup_crc32" : "2E60557E26b99821",
+        "scrollLine" : "195"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 4,
+    "relative_order" : 5,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "r_markdown"
