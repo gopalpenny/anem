@@ -18,8 +18,9 @@ are given an id, and there is one row in the output which identifies the opposid
 Get the 4 vertices correspondingt to quadrangle of 4 lines
 }
 \examples{
-boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\% mutate(bID=row_number())
 quad_vertices <- get_quad_vertices(boundaries)
 ggplot() + geom_segment(data=boundaries,aes(x1,y1,xend=x2,yend=y2)) +
-  geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bound_id),color=as.factor(bound_id)))
+  geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+  scale_shape_manual(values=1:4)
 }

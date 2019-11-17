@@ -25,18 +25,19 @@ devtools::load_all()
 library(magrittr)
 library(sf)
 library(tidyverse)
-devtools::load_all("~/Projects/R_packages/anem")
+# devtools::load_all("~/Projects/R_packages/anem")
+devtools::load_all()
 ```
 
 Let's begin by loading some data to practice with. The data are stored in two shapefiles, one `wells` shapefile containing point features with attributes for `rate` and `diameter`, and a second `boundaries` shapefile with `bound_type`.
 
 ```{r data_import}
-pts_wgs <- sf::read_sf("../../../genevois/spatial/shp/manual/pts_text.shp") %>%
+pts_wgs <- sf::read_sf("../../../CNH/genevois/spatial/shp/manual/pts_text.shp") %>%
   mutate(rate=rate/100,
          type=factor(sign(rate),levels=c(-1,0,1),labels=c("pumping","defunct","injection")))
 pts_wgs
 
-boundaries_wgs <- sf::read_sf("../../../genevois/spatial/shp/manual/lines_text.shp") 
+boundaries_wgs <- sf::read_sf("../../../CNH/genevois/spatial/shp/manual/lines_text.shp") 
 boundaries_wgs
 ```
 
@@ -58,7 +59,7 @@ We now need to extract the coordinates of the wells and boundaries, as well as g
 ```{r prep_dataframes}
 wells <- prep_wells_sf(pts_utm) %>%
   mutate(roi=get_radius_of_influence(Ksat=0.0001,h=50,t=3600*24*365*20,n=0.4,method="aravin-numerov"))
-boundaries <- prep_bounds(boundaries_utm)
+boundaries <- prep_bounds(boundaries_utm,get_rectangular = TRUE)
 ```
 
 ## Two wells in a uniform confined aquifer
