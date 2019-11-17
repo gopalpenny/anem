@@ -87,7 +87,7 @@ get_well_effect <- function(well,loc,Ksat,z0=NULL,aquifer_type) {
     }
     # Transmissivity: as Ksat * z0, the thickness of the aquifer [L^2/T]. Must have same length and time units as Q
     Transmissivity <- Ksat * z0
-    dp <- -well$rate/(2*pi*Transmissivity)*log(r/well$roi)
+    dp <- -well$rate/(2*pi*Ksat * z0)*log(r/well$roi)
   } else if (aquifer_type=="unconfined") {
     dp <- -well$rate/(pi*Ksat)*log(r/well$roi)
   } else {
@@ -119,10 +119,10 @@ get_row_as_vector <- function(df,row=1) {
 #' wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-4,-2e-4),diam=c(0.75,0.8),roi=c(300,300))
 #' get_potential(wells,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined")
 #' get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
-get_potential <- function(loc,wells,Ksat,z0,aquifer_type) {
-  dp_vec <- sapply(split(wells,1:dim(wells)[1]),get_well_effect,loc=loc,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-  return(sum(dp_vec))
-}
+# get_potential <- function(loc,wells,Ksat,z0,aquifer_type) {
+#   dp_vec <- sapply(split(wells,1:dim(wells)[1]),get_well_effect,loc=loc,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+#   return(sum(dp_vec))
+# }
 
 #' Get cumulative effect of wells at location
 #'
@@ -155,29 +155,31 @@ get_potential <- function(loc,wells,Ksat,z0,aquifer_type) {
 #' get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
 get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 
-  loc_class <- class(loc)
-  # get change in potential due to wells
-  if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
-    dP <- get_potential(loc,wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-  } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
-    dP <- NULL
-    loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
-    n <- length(loc_list)
-
-    if (n * dim(wells)[1] < 20) { # don't show progress bar for small number of points / wells
-      for (i in 1:n) {
-        dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-      }
-    } else { # show progress bar for large number of points / wells
-      start_time <- Sys.time()
-      cat(paste0("Getting head at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
-      pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
-      for (i in 1:n) {
-        dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
-        setTxtProgressBar(pb, i)
-      }
-    }
-  }
+  dP <- get_potential(loc,wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  #
+  # loc_class <- class(loc)
+  # # get change in potential due to wells
+  # if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
+  #   dP <- get_potential(loc,wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  # } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
+  #   dP <- NULL
+  #   loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
+  #   n <- length(loc_list)
+  #
+  #   if (n * dim(wells)[1] < 20) { # don't show progress bar for small number of points / wells
+  #     for (i in 1:n) {
+  #       dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  #     }
+  #   } else { # show progress bar for large number of points / wells
+  #     start_time <- Sys.time()
+  #     cat(paste0("Getting head at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
+  #     pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
+  #     for (i in 1:n) {
+  #       dP[i] <- get_potential(loc_list[[i]],wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  #       setTxtProgressBar(pb, i)
+  #     }
+  #   }
+  # }
 
   # calculate head using h0 and change in potential
   if (aquifer_type=="confined") {
@@ -266,4 +268,99 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
   }
 
   return(fd)
+}
+
+
+
+##########################################################################################
+############################################################################################################
+############################################################################################################
+# get potentials
+# ##################
+# a <- matrix(rnorm(1e4),nrow=100)
+# b <- rowSums(matrix(rnorm(1e4),nrow=100))
+# c_ <- a / b
+# dim(c_)
+#
+# a <- matrix(rep(1:10,10),ncol=10)
+# b <- matrix(1:10,nrow=10)
+# # a %*% (1/b)
+#
+#
+# nwells <- 10
+# nobs <- 1000
+#
+# x_loc <- rnorm(nobs)
+# y_obs <- rnorm(x_well)
+
+# wells <- data.frame(x = rnorm(nwells), y = rnorm(nwells), roi = 1:nwells, diam = runif(nwells,0.3,2))
+
+#
+
+
+#' Get cumulative effect of wells at location
+#'
+#' Get the cumulative effect of all wells at a singled location, output as head (confined aquifer) or discharge potential (unconfined aquifer).
+#'
+#' @param loc coordinates \code{data.frame} with columns labeled 'x0' and 'y0', or as vector as c(x,y), with units of [m]
+#' @inheritParams get_hydraulic_head
+#' @return The output is the cumulative effect at \code{loc} of all \code{wells} on the hydraulic head [units=m] if
+#'   \code{aquifer_type="confined"} or discharge potential [m^2] if
+#'   \code{aquifer_type="unconfined"}.
+#'
+#'   Note: if the \code{loc} is contained within the diameter of a well, the distance between the location
+#'   and that well is automatically adjusted to the edge of the well screen (i.e., well$diam/2). Similar any well-location
+#'   distance that exceeds the radius of influence of the well, R, is set equal to R
+#' @examples
+#' # Single test location
+#' wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-4,-2e-4),diam=c(0.75,0.8),roi=c(300,300))
+#' get_potential(wells,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined")
+#' get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
+#'
+#' # Multiple test locations
+#' wells <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
+#' grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
+#' get_potentials(wells,grid_pts,Ksat=0.00001,aquifer_type="unconfined")
+get_potential <- function(loc, wells, Ksat, z0, aquifer_type) {
+  x_well <- wells$x
+  y_well <- wells$y
+  R <- wells$roi
+  Q <- wells$rate
+  diam_wells <- wells$diam
+
+  if (max(grepl("data.frame",class(loc)))) {
+    x_loc <- loc$x
+    y_loc <- loc$y
+  } else {
+    x_loc <- loc[1]
+    y_loc <- loc[2]
+  }
+
+  ni <- length(x_well) # number of wells
+  mj <- length(x_loc) # number of locations to measure potential
+
+  # create mj x ni matrices -- rows j vary for locations, columns i for wells
+  xi <- matrix(rep(x_well,each=mj,nrow=ni), ncol=ni) # mj x ni matrix
+  yi <- matrix(rep(y_well,each=mj,nrow=ni), ncol=ni) # mj x ni matrix
+
+  xj <- matrix(rep(x_loc,ni,nrow=ni), ncol=ni)
+  yj <- matrix(rep(y_loc,ni,nrow=ni), ncol=ni)
+
+  Ri <- matrix(rep(R,each=mj),ncol=ni)
+  Qi <- matrix(rep(Q,each=mj),ncol=ni)
+  di <- matrix(rep(diam_wells,each=mj),ncol=ni)
+
+  # rji is the distance between well i and observation location j, with 2 exceptions
+  # 1. set rji to the radius of influence, R, for any well-location distance that exceeds R
+  # 2. set rji to the radius of the well, diam/2, for anly location that falls within the radius of the well, diam/2
+  rji <- pmax(pmin(sqrt((xi-xj)^2 + (yi-yj)^2), Ri), di/2)
+
+  # calculate the potential differential
+  if (aquifer_type=="confined") { # as a differential hydraulic head
+    dP <- -rowSums(Qi/(2*pi*Ksat * z0)*log(rji/Ri))
+  } else if (aquifer_type=="unconfined") { # as a differential discharge potential
+    dP <- -rowSums(Qi/(pi*Ksat)*log(rji/Ri))
+  }
+
+  return(dP)
 }

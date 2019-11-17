@@ -25,6 +25,7 @@ devtools::load_all()
 library(magrittr)
 library(sf)
 library(tidyverse)
+devtools::load_all("~/Projects/R_packages/anem")
 ```
 
 Let's begin by loading some data to practice with. The data are stored in two shapefiles, one `wells` shapefile containing point features with attributes for `rate` and `diameter`, and a second `boundaries` shapefile with `bound_type`.
