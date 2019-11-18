@@ -286,3 +286,12 @@ gen_circles <- function(df) {
   circles <- do.call(rbind,lapply(split(df,df$id),gen_circleFun))
   return(circles)
 }
+
+
+
+get_quad_vertices_wide <- function(bounds) {
+  bounds <- get_quad_vertices(bounds) %>% filter(!is.na(x)) %>% group_by(bID) %>%
+    mutate(num=rank(intersection_bID)) %>% select(-intersection_bID) %>%
+    gather(axis,val,x,y) %>% unite(pt,axis,num) %>% spread(pt,val)
+  return(bounds)
+}

@@ -7,7 +7,7 @@
 get_hydraulic_head(loc, wells, h0, Ksat, z0 = NA, aquifer_type)
 }
 \arguments{
-\item{loc}{coordinates vector as c(x,y), with units of [m]}
+\item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
 
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence roi [m], & coordinates x0 [m], y0 [m]}
@@ -21,42 +21,44 @@ an unconfined aquifer, this must be the thickness of the water table.}
 
 \item{aquifer_type}{"confined" or "unconfined". Determines the calculation
 and output units.}
-
-\item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
 }
 \value{
-The output is the cumulative effect at \code{loc} of all \code{wells} on the hydraulic head [units=m] if
-  \code{aquifer_type="confined"} or discharge potential [m^2] if
-  \code{aquifer_type="unconfined"}.
-
-  Note: if the \code{loc} is contained within the diameter of any well, the distance between the location
-  and that well is automatically adjusted to the edge of the well screen (i.e., well$diam/2).
-
 The output is the hydraulic head \code{loc}, accounting for the
   cumulative effect of all \code{wells} (dP), which is given as hydraulic
   head [units=m] if \code{aquifer_type="confined"} or discharge potential
   [m^2] if \code{aquifer_type="unconfined"}. Then the head at \code{loc} is:
 
-  \describe{ \item{aquifer_type="confined"}{\eqn{h=h_0+dP}}
+  \describe{
+  \item{aquifer_type="confined"}{\eqn{h=h_0+dP}}
   \item{aquifer_type="unconfined"}{\eqn{h=\sqrt{h_0^2+dP}}} }
 }
 \description{
-Get the cumulative effect of all wells at a singled location, output as head (confined aquifer) or discharge potential (unconfined aquifer).
-}
-\examples{
-wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-4,-2e-4),diam=c(0.75,0.8),roi=c(300,300))
-get_potential(wells,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined")
-get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
-Get cumulative effect of wells at location
-
 Get the hydraulic head at a location, accounting for the aquifer type
 (confined or unconfined), resting head, and cumulative effect of all wells. This function
-is a wrapper around \\code{get_potential()} to get the actual hydraulic head instead of the differential potential.
+is a wrapper around \code{get_potential()} to get the actual hydraulic head instead of the differential potential.
+}
+\examples{
+well1 <- data.frame(x0=0,y0=0,rate=1e-3,diam=0.75,roi=300)
+well2 <- data.frame(x0=0.5,y0=0.25,rate=-2e-3,diam=0.8,roi=300)
+get_hydraulic_head(well1,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+get_hydraulic_head(well2,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+wells <- rbind(well1,well2)
+get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 
-wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-3,-2e-3),diam=c(0.75,0.8),roi=c(300,300))
 get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 get_hydraulic_head(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
 
 grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
+get_hydraulic_head(well1,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+get_hydraulic_head(well2,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
 get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+
+# Ensure potentials are even when pumping is symmetric (and opposite sign)
+well1 <- data.frame(x0=0,y0=0,rate=1e-3,diam=0.5,roi=300)
+well2 <- data.frame(x0=1,y0=1,rate=-2e-3,diam=0.5,roi=300)
+well3 <- data.frame(x0=0,y0=0.5,rate=2e-3,diam=0.5,roi=300)
+well4 <- data.frame(x0=0.5,y0=1,rate=-2e-3,diam=0.5,roi=300)
+wells_even <- rbind(well1,well1,well2,well3,well4)
+grid_pts_even <- data.frame(x=c(0,0.5,1),y=c(1,0.5,0))
+get_hydraulic_head(wells_even,loc=grid_pts_even,h0=40,Ksat=0.00005,aquifer_type="unconfined")
 }

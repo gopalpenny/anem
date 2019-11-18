@@ -5,10 +5,10 @@
 \title{Numerically calculate flow direction}
 \usage{
 get_flowdir(loc, wells, h0, Ksat, z0 = NA, aquifer_type,
-  show_progress = FALSE)
+  show_progress = FALSE, eps = 1e-04)
 }
 \arguments{
-\item{loc}{coordinates vector as c(x,y), with units of [m]}
+\item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
 
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence roi [m], & coordinates x0 [m], y0 [m]}
@@ -52,7 +52,7 @@ fd2 <- get_flowdir(wells2,loc=grid_pts2,h0=30,Ksat=0.00001,aquifer_type="unconfi
 
 # Two pumping wells along diagonal line
 wells3 <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(-1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
-grid_pts3 <- data.frame(x=c(-3,-3,0,3,3),y=c(-3,3,0,-3,3))
+grid_pts3 <- data.frame(x=c(-3,-3,0,3,3,-2,2,-1,1),y=c(-3,3,0,-3,3,-1,1,-2,2))
 fd3 <- get_flowdir(wells3,loc=grid_pts3,h0=30,Ksat=0.00001,aquifer_type="unconfined")
 
 ## plot the flow directions
@@ -61,7 +61,7 @@ fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
    dplyr::mutate(dx_norm=dx*50,dy_norm=dy*50,x2=x+dx_norm,y2=y+dy_norm) # normaliz
 # alternatively, apply nonlinear scaling to dx and dy for visualization
 fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
-  dplyr::mutate(angle=atan(dx/dy),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
+  dplyr::mutate(angle=atan(dy/dx),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
                 dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
                 x2=x+dx_norm,y2=y+dy_norm)
 
