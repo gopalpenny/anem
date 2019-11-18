@@ -73,14 +73,19 @@ prep_bounds_sf <- function(bounds_sf) {
 #' boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' ggplot(boundaries) + geom_segment(aes(x1,y1,xend=x2,yend=y2))
 prep_bounds <- function(boundaries,get_rectangular=FALSE) {
-  if (max(grepl("sf",class(boundaries)))) {
-    boundaries <- prep_bounds_sf(boundaries)
-  }
   if (!max(grepl("^bID$",names(boundaries)))) { # generate pID's if they are not present
     boundaries <- boundaries %>% dplyr::mutate(bID=dplyr::row_number())
   }
+  if (max(grepl("sf",class(boundaries)))) {
+    boundaries <- prep_bounds_sf(boundaries)
+    boundaries_no_geometry <- boundaries %>% st_set_geometry(NULL)
+  } else {
+    boundaries_no_geometry <- boundaries
+  }
   if (get_rectangular) {
-    bounds_w_slope <- get_rectangle(boundaries)
+    bounds_w_slope <- get_rectangle(boundaries) %>%
+      left_join(boundaries_no_geometry,by="bID") %>%
+      select(-x1,-x2,-y1,-y2)
   } else{
     bounds_w_slope <- boundaries %>%
       dplyr::mutate(m=(y2-y1)/(x2-x1),
@@ -93,25 +98,27 @@ prep_bounds <- function(boundaries,get_rectangular=FALSE) {
 #' Convert quadrangle to rectangle
 #'
 #' Convert 4 lines to a rectangular box with only right angles
-#' @param boundaries a \code{data.frame} containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2, and an id (bID)
+#' @param bounds a \code{data.frame} containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2, and an id (bID)
 #' @importFrom magrittr %>%
 #' @return Returns a \code{data.frame} containing slope and intercept for four edges of a rectangle. The
-#' rectangle is determined by (1) identifying the quadrangle of the input \code{boundaries}, (2)
+#' rectangle is determined by (1) identifying the quadrangle of the input \code{bounds}, (2)
 #' selecting the midpoints of each edge of the quadrangle, (3) determining the "long" axis of the
 #' quadrangle, which becomes the long axis of the rectangle, (4) calculating the slope of the long
 #' and short axes of the rectangle (at right angles), then generating lines with these slopes through
 #' the midpoints.
 #' @examples
-#' boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>%
+#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>%
 #'   mutate(bID=row_number())
-#' rect_boundaries <- get_rectangle(boundaries)
-#' ggplot() + geom_segment(data=boundaries,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID)))
-get_rectangle <- function(boundaries) {
-  # get vertices
-  quad_vertices_full <- get_quad_vertices(boundaries)
+#' rect_boundaries <- get_rectangle(bounds)
+#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID))) + coord_equal()
+get_rectangle <- function(bounds) {
+  is_sf <- max(grepl("sf",class(bounds)))
 
-  # get midpoints of boundaries
+  # get vertices (and remove extraneous properties, including sf)
+  quad_vertices_full <- get_quad_vertices(bounds)
+
+  # get midpoints of bounds
   midpoints <- quad_vertices_full %>% dplyr::group_by(bID) %>%
     dplyr::summarize(x_mid=mean(x,na.rm=TRUE),
               y_mid=mean(y,na.rm=TRUE),
@@ -128,11 +135,26 @@ get_rectangle <- function(boundaries) {
     tidyr::gather(var,bID,dplyr::ends_with("bID")) %>%
     dplyr::select(bID,m,m2)
 
-  # get boundaries as m, b
+  # get bounds as m, b
   bounds_rectangular <- midpoints %>%
-    dplyr::left_join(slopes %>% dplyr::select(-m) %>% dplyr::rename(m=m2),by="bID") %>%
-    dplyr::mutate(m=dplyr::if_else(!is.na(m),m,slopes$m[1])) %>%
-    dplyr::mutate(b=y_mid - m*x_mid) %>% dplyr::select(m,b,bID)
+    dplyr::left_join(slopes %>% dplyr::select(-m) %>% dplyr::rename(m=m2) %>% dplyr::mutate(bGroup=1),by="bID") %>%
+    dplyr::mutate(m=dplyr::if_else(!is.na(m),m,slopes$m[1]),
+                  bGroup=dplyr::if_else(!is.na(bGroup),bGroup,2)) %>%
+    dplyr::mutate(b=y_mid - m*x_mid) %>% dplyr::select(m,b,bID,bGroup)
+
+  if(is_sf) {
+    quad_vertices_final <- get_quad_vertices(bounds_rectangular) %>%
+      dplyr::filter(!is.na(x)) %>% select(x,y,bID)
+    quad_vertices_final_sf <- quad_vertices_final %>%
+      sf::st_as_sf(coords=c("x","y")) %>%
+      sf::st_set_crs(sf::st_crs(bounds))
+    quad_vertices_final_linestring <- quad_vertices_final_sf %>% group_by(bID) %>%
+      dplyr::summarize(geometry=sf::st_union(geometry)) %>%
+      sf::st_cast("LINESTRING",union=TRUE) %>%
+      sf::st_set_crs(sf::st_crs(bounds))
+    bounds_rectangular <- quad_vertices_final_linestring %>%
+      left_join(bounds_rectangular,by="bID")
+  }
 
   return(bounds_rectangular)
 }
@@ -140,31 +162,44 @@ get_rectangle <- function(boundaries) {
 #' Get vertices of a quadrangle
 #'
 #' Get the 4 vertices correspondingt to quadrangle of 4 lines
-#' @param boundaries a data.frame containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2
+#' @param bounds a data.frame containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2
 #' @importFrom magrittr %>%
-#' @return Returns a data.frame vertices for each of the 4 boundaries. The boundaries
+#' @return Returns a data.frame vertices for each of the 4 bounds. The bounds
 #' are given an id, and there is one row in the output which identifies the opposide bound
 #' (with which there is no intersection).
 #' @examples
-#' boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
-#' quad_vertices <- get_quad_vertices(boundaries)
-#' ggplot() + geom_segment(data=boundaries,aes(x1,y1,xend=x2,yend=y2)) +
+#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
+#' quad_vertices <- get_quad_vertices(bounds)
+#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
 #'   scale_shape_manual(values=1:4)
-get_quad_vertices <- function(boundaries) {
-  bounds_w_slope <- boundaries %>%
-    dplyr::mutate(m=(y2-y1)/(x2-x1),
-                  b=y1 - m*x1) %>% dplyr::select(-x1,-y1,-x2,-y2) %>%
-    dplyr::arrange(desc(m))
+#'
+#' bounds <- data.frame(x1=c(0,1,2,1),y1=c(1,2,1,0),x2=c(1,2,1,0),y2=c(2,1,0,1)) %>% mutate(bID=row_number())
+#' quad_vertices <- get_quad_vertices(bounds)
+#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
+#'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+#'   scale_shape_manual(values=1:4)
+get_quad_vertices <- function(bounds) {
+  if (max(grepl("sf",class(bounds)))) {
+    bounds <- bounds %>% sf::st_set_geometry(NULL)
+  }
+  if (min(c('m','b') %in% names(bounds))) {
+    bounds_w_slope <- bounds %>% dplyr::select(m,b,bID)
+  } else if (min(c('x1','x2','y1','y2') %in% names(bounds))) {
+    bounds_w_slope <- bounds %>%
+      dplyr::mutate(m=(y2-y1)/(x2-x1),
+                    b=y1 - m*x1) %>% dplyr::select(m,b,bID)
+  }
   vertices <- bounds_w_slope %>%
     tidyr::crossing(bounds_w_slope %>% dplyr::rename(m2=m,b2=b,bID2=bID)) %>%
-    dplyr::mutate(x=round(get_intersection(m,b,m2,b2)$x,14), # round to avoid math errors that make points seem different
-           y=round(get_intersection(m,b,m2,b2)$y,14)) %>%
-    dplyr::select(bID,bID2,x,y) %>% dplyr::filter(!is.nan(x))
+    dplyr::mutate(x=round(get_intersection(m,b,m2,b2)$x,10), # round to avoid math errors that make points seem different
+           y=round(get_intersection(m,b,m2,b2)$y,10)) %>%
+    dplyr::select(bID,bID2,x,y) %>% dplyr::filter(!is.nan(x),abs(x)!=Inf)
   vertices_of_quad_midpoints <- vertices %>%
     dplyr::group_by(bID) %>%
-    dplyr::summarize(x=get_point_on_quandrangle(x),
-              y=get_point_on_quandrangle(y)) %>%
+    dplyr::summarize(X=get_point_on_quandrangle(x,y,"x"),
+                     Y=get_point_on_quandrangle(x,y,"y")) %>%
+    dplyr::rename(x=X,y=Y) %>%
     dplyr::left_join(vertices,by=c("bID","x","y")) %>%
     tidyr::gather(orig,bID,dplyr::starts_with("bID"))
   segments_remaining <- vertices_of_quad_midpoints %>%
@@ -195,9 +230,16 @@ get_quad_vertices <- function(boundaries) {
 #' If a line has 3 intersection points, the middle one is definitely a vertex
 #' of the quadrangle. If less than 3, then both are intersection points.
 #' Choose the second one.
-get_point_on_quandrangle <- function(vec) {
-  if (length(vec)>1) {
-    point <- sort(vec)[2]
+get_point_on_quandrangle <- function(x,y,axis) {
+  # if (length(x)>1) {
+    vec_order <- order(x)
+    x <- x[vec_order]
+    y <- y[vec_order]
+  # }
+  if (axis=="x") {
+    point <- x[2]
+  } else if (axis=="y") {
+    point <- y[2]
   }
   return(point)
 }
@@ -208,4 +250,39 @@ get_intersection <- function(m1,b1,m2,b2) {
   y <- m2*x + b2
   intersections <- data.frame(x=x,y=y)
   return(intersections)
+}
+
+#' Generate outline of circle
+#'
+#' @param circle A \code{data.frame} with $x, $y, and $r columns. $id optional
+#' @importFrom magrittr %>%
+gen_circleFun <- function(circle, npoints = 100){
+  center <- c(circle$x,circle$y)
+  r <- circle$r
+  tt <- seq(0,2*pi,length.out = npoints)
+  xx <- center[1] + r * cos(tt)
+  yy <- center[2] + r * sin(tt)
+  df <- data.frame(x = xx, y = yy)
+  if (!is.null(circle$id)) {
+    df <- df %>% dplyr::mutate(id=circle$id)
+  }
+  return(df)
+}
+
+#' Generate an object that acts like a circle
+gen_circ <- function(x,y,r) {
+  return(list(x=x,y=y,r=r))
+}
+
+#' Generate an object that acts like a circle
+#'
+#' @param df data.frame with columns x, y, r
+#' @examples
+#' df <- data.frame(x=1:3,y=1:3,roi=c(0.5,1,1.5))
+#' circles <- gen_circles(df %>% rename(r=roi))
+#' ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
+gen_circles <- function(df) {
+  df$id <- 1:dim(df)[1]
+  circles <- do.call(rbind,lapply(split(df,df$id),gen_circleFun))
+  return(circles)
 }

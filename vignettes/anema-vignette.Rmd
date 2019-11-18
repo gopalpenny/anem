@@ -19,14 +19,13 @@ devtools::load_all()
 
 ## Intialization and data prep
 
-```{r setup}
+```{r setup, message=FALSE,warning=FALSE}
 # install.packages(".", repos = NULL, type="source")
-# library(anema)
+# library(anem)
 library(magrittr)
 library(sf)
 library(tidyverse)
-# devtools::load_all("~/Projects/R_packages/anem")
-devtools::load_all()
+devtools::load_all("~/Projects/R_packages/anem")
 ```
 
 Let's begin by loading some data to practice with. The data are stored in two shapefiles, one `wells` shapefile containing point features with attributes for `rate` and `diameter`, and a second `boundaries` shapefile with `bound_type`.
@@ -60,6 +59,11 @@ We now need to extract the coordinates of the wells and boundaries, as well as g
 wells <- prep_wells_sf(pts_utm) %>%
   mutate(roi=get_radius_of_influence(Ksat=0.0001,h=50,t=3600*24*365*20,n=0.4,method="aravin-numerov"))
 boundaries <- prep_bounds(boundaries_utm,get_rectangular = TRUE)
+
+ggplot() + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_sf(data=boundaries, aes(color=as.factor(bGroup))) + 
+  geom_sf(data=pts_utm, aes())
 ```
 
 ## Two wells in a uniform confined aquifer
@@ -77,7 +81,7 @@ these points and the `well_images` to generate hydraulic head using `get_hydraul
 grid_bounds <- boundaries %>% st_coordinates() %>% as_tibble() %>%
   summarize(xmin=min(X),xmax=max(X),ymin=min(Y),ymax=max(Y))
 grid_bounds <- data.frame(xmin=276000,xmax=283000,ymin=5115000,ymax=5120000)
-grid_pts_head <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=30),y=seq(ymin,ymax,length.out=20)))
+grid_pts_head <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=150),y=seq(ymin,ymax,length.out=100)))
 heads <- get_hydraulic_head(grid_pts_head,wells,h0=10,Ksat=0.00001,z0=10,aquifer_type="confined")
 head_df <- grid_pts_head %>% bind_cols(head_m=heads)
 
@@ -97,7 +101,7 @@ around `get_hydraulic_head()` that incorporates a numeric derivative from the pa
 to before, define set of coordinates of evenly spaced points. Then, use
 these points and the `well_images` to generate hydraulic head using `get_flowdir()`.
 
-```{r flowdir_confined}
+```{r flowdir_confined, message=FALSE, warning=FALSE}
 grid_pts_flowdir <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=30),y=seq(ymin,ymax,length.out=20)))
 flow_dir <- get_flowdir(grid_pts_flowdir,wells,h0=100,Ksat=0.00001,aquifer_type="unconfined")
 # the dx_norm and dy_norm are used to make the arrows visible in the plot that follows.
@@ -142,8 +146,25 @@ To reproduce the boundaries, we need to generate image wells by mirroring wells 
 Lastly, to know the effect of a well on any given location, we need to know the radius of influence of the well. This package provides a couple ways to do this through the `get_radius_of_influence` function. See `?get_radius_of_influence` for more resources. 
 
 ```{r imaging}
-well_images <- generate_image_wells(wells,boundaries,num_levels=2) %>%
+well_images <- generate_image_wells(wells,boundaries,num_levels=5) %>%
   mutate(roi=get_radius_of_influence(Ksat=0.0001,h=50,t=3600*24*365*20,n=0.4,method="aravin-numerov"))
+
+well_roi <- gen_circles(well_images %>% rename(r=roi,x=x0,y=y0))
+
+ggplot()  +
+  geom_sf(data=boundaries, aes()) + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_point(data=well_images,aes(x0,y0),alpha=0.5) + 
+  geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.3,color="black")
+
+# now select only the wells that will affect the space
+well_images <- well_images %>% filter(max_mirror_dist<roi)
+well_roi <- gen_circles(well_images %>% rename(r=roi,x=x0,y=y0))
+ggplot()  +
+  geom_sf(data=boundaries, aes()) + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_point(data=well_images,aes(x0,y0),alpha=0.5,size=3) + 
+  geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.1,color="black")
 ```
 
 
@@ -157,18 +178,23 @@ using `expand.grid` and `seq` to generate evenly spaced points in the variable `
 thes points and the `well_images` to generate hydraulic head using `get_hydraulic_head()`.
 
 ```{r hydraulic_head_unconfined,fig.width=6,fig.height=3.5}
-grid_bounds_unconf <- boundaries %>% st_coordinates() %>% as_tibble() %>%
-  summarize(xmin=min(X),xmax=max(X),ymin=min(Y),ymax=max(Y))
-grid_bounds_unconf <- data.frame(xmin=273000,xmax=284000,ymin=5113000,ymax=5120000)
-grid_pts_head_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
-heads_unconf <- get_hydraulic_head(grid_pts_head,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
-head_unconf_df <- grid_pts_head_unconf %>% bind_cols(head_m=heads)
+# grid_bounds_unconf <- boundaries %>% st_coordinates() %>% as_tibble() %>%
+#   summarize(xmin=min(X),xmax=max(X),ymin=min(Y),ymax=max(Y))
+grid_bounds_unconf <- data.frame(xmin=270000,xmax=290000,ymin=5113000,ymax=5120000)
+grid_pts_head_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=150),y=seq(ymin,ymax,length.out=100)))
+heads_unconf <- get_hydraulic_head(grid_pts_head_unconf,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
+head_unconf_df <- grid_pts_head_unconf %>% bind_cols(head_m=heads_unconf)
+
+ggplot(head_unconf_df %>% mutate(head_neutral=head_m==100)) + 
+  geom_raster(aes(x,y,fill=head_neutral)) 
 
 ggplot(head_unconf_df) + 
   geom_raster(aes(x,y,fill=head_m))  + 
-  geom_sf(data=boundaries_utm, aes()) + 
-  geom_sf(data=pts_utm, aes(size=abs(rate),shape=type)) +
-  coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
+  geom_sf(data=boundaries, aes()) + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_point(data=well_images %>% filter(level==0),aes(x0,y0)) +
+  # geom_sf(data=pts_utm, aes(size=abs(rate),shape=type)) +
+  coord_sf(xlim=c(grid_bounds_unconf$xmin,grid_bounds_unconf$xmax),ylim=c(grid_bounds_unconf$ymin,grid_bounds_unconf$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4))
 ```
 
@@ -179,14 +205,14 @@ around `get_hydraulic_head()` that incorporates a numeric derivative from the pa
 to before, define set of coordinates of evenly spaced points. Then, use
 these points and the `well_images` to generate hydraulic head using `get_flowdir()`.
 
-```{r flowdir_unconfined}
-grid_pts_flowdir_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=3),y=seq(ymin,ymax,length.out=2)))
+```{r flowdir_unconfined, message=FALSE, warning=FALSE}
+grid_pts_flowdir_unconf <- with(grid_bounds_unconf,crossing(x=seq(xmin,xmax,length.out=75),y=seq(ymin,ymax,length.out=50)))
 flow_dir_unconf <- get_flowdir(grid_pts_flowdir_unconf,well_images,h0=100,Ksat=0.00001,aquifer_type="unconfined")
 # the dx_norm and dy_norm are used to make the arrows visible in the plot that follows.
 flow_dir_unconf_df <- grid_pts_flowdir_unconf %>% bind_cols(flow_dir_unconf) %>%
   mutate(angle=atan(x/y),
          mag=sqrt(dx^2+dy^2),
-         mag_norm=mag^(1/4)*1e3,
+         mag_norm=mag^(1/3)*5e2,
          dx_norm=cos(angle)*sign(dx)*mag_norm,
          dy_norm=sin(angle)*sign(dx)*mag_norm,
          x2=x+dx_norm,
@@ -197,22 +223,39 @@ flow_dir_unconf_df <- grid_pts_flowdir_unconf %>% bind_cols(flow_dir_unconf) %>%
 # plot the flow velocities
 ggplot(flow_dir_unconf_df) + 
   geom_raster(aes(x,y,fill=mag_norm))  + 
-  geom_sf(data=boundaries_utm, aes()) + 
-  geom_sf(data=pts_utm, aes(size=abs(rate),shape=type)) +
-  coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
+  geom_sf(data=boundaries, aes()) + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_point(data=well_images %>% filter(level==0),aes(x0,y0)) +
+  coord_sf(xlim=c(grid_bounds_unconf$xmin,grid_bounds_unconf$xmax),
+           ylim=c(grid_bounds_unconf$ymin,grid_bounds_unconf$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4))
 ```
 
 
 Now, plot the results together. 
-```{r plot_unconfined}
+```{r plot_unconfined,fig.width=6,fig.height=4}
 ggplot(head_unconf_df) +
   geom_raster(aes(x,y,fill=head_m))  +
-  geom_sf(data=boundaries_utm, aes()) +
-  geom_point(data=wells, aes(x=x0,y=y0),size=3,shape=1,stroke=1.5) +
+  geom_sf(data=boundaries, aes()) + 
+  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
+  geom_point(data=well_images %>% filter(level==0),aes(x0,y0)) +
   geom_segment(data=flow_dir_unconf_df,
                aes(x,y,xend=x2,yend=y2),arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) +
   coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4)) #+ scale_size_continuous(limits=c(3,4))
+```
+
+```{r check_bounds}
+bounds_behavior_noim <- get_bounds_behavior(wells,boundaries,h0=100,Ksat=0.00001,aquifer_type="unconfined") %>% mutate(im="no_images")
+bounds_behavior_wim <- get_bounds_behavior(well_images,boundaries,h0=100,Ksat=0.00001,aquifer_type="unconfined") %>% mutate(im="images")
+bounds_behavior <- bind_rows(bounds_behavior_noim,bounds_behavior_wim) %>% 
+  left_join(boundaries %>% st_set_geometry(NULL) %>% mutate(BT=paste(bID,bound_type)) %>% select(bID,BT),by="bID") %>%
+  mutate(im=factor(im,levels=c("no_images","images")))
+p_h <- ggplot(bounds_behavior) + geom_line(aes(dist_rel,head)) + facet_grid(BT~im,scales="free_x") + theme(axis.text.x=element_blank())
+p_f <- ggplot(bounds_behavior) + geom_line(aes(dist_rel,flow_mag)) + facet_grid(BT~im,scales="free_x") + theme(axis.text.x=element_blank())
+
+
+gridExtra::grid.arrange(p_h0,p_h1,p_f0,p_f1,nrow=1)
+
 ```
 

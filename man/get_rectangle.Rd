@@ -4,14 +4,14 @@
 \alias{get_rectangle}
 \title{Convert quadrangle to rectangle}
 \usage{
-get_rectangle(boundaries)
+get_rectangle(bounds)
 }
 \arguments{
-\item{boundaries}{a data.frame containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2, and an id (bID)}
+\item{bounds}{a \code{data.frame} containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2, and an id (bID)}
 }
 \value{
 Returns a \code{data.frame} containing slope and intercept for four edges of a rectangle. The
-rectangle is determined by (1) identifying the quadrangle of the input \code{boundaries}, (2)
+rectangle is determined by (1) identifying the quadrangle of the input \code{bounds}, (2)
 selecting the midpoints of each edge of the quadrangle, (3) determining the "long" axis of the
 quadrangle, which becomes the long axis of the rectangle, (4) calculating the slope of the long
 and short axes of the rectangle (at right angles), then generating lines with these slopes through
@@ -21,9 +21,9 @@ the midpoints.
 Convert 4 lines to a rectangular box with only right angles
 }
 \examples{
-boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\%
+bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\%
   mutate(bID=row_number())
-rect_boundaries <- get_rectangle(boundaries)
-ggplot() + geom_segment(data=boundaries,aes(x1,y1,xend=x2,yend=y2)) +
-  geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID)))
+rect_boundaries <- get_rectangle(bounds)
+ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+  geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID))) + coord_equal()
 }

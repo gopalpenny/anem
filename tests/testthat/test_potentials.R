@@ -26,14 +26,16 @@ test_that("get_well_effect works in unconfined case",{
 # USING wells
 wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-4,-2e-4),diam=c(0.75,0.8),roi=c(300,300))
 test_that("get_potential works in confined case",{
-  expect_equal(round(get_potential(wells,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined"),4), -0.2324)
+  expect_equal(round(get_potential(loc=c(50,50),wells,Ksat=0.00001,z0=10,aquifer_type="confined"),4), -0.2324)
 })
 test_that("get_potential works in unconfined case",{
-  expect_equal(round(get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined"),4), -4.6481)
+  expect_equal(round(get_potential(loc=c(50,50),wells,Ksat=0.00001,aquifer_type="unconfined"),4), -4.6481)
 })
 
 ### USING wells2. NOTE DISTINCTION WITH wells
 wells2 <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(1e-3,-2e-3),diam=c(0.75,0.8),roi=c(300,300))
+
+
 test_that("get_hydraulic_head works in confined case",{
   expect_equal(round(get_hydraulic_head(wells2,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined"),4), -2.0706)
 })

@@ -201,6 +201,8 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #'   and \eqn{-dh/dy}.
 #'
 #' @inheritParams get_hydraulic_head
+#' @param show_progress Boolean input parameter. If true and there are >20 combinations of
+#' wells and locations, then a progress bar will be printed.
 #' @return Outputs the flow direction in the x and y directions. If the input \code{loc} is
 #'   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
 #'   then the output is also a dataframe with columns \code{dx} and \code{dy}. The two values
@@ -236,7 +238,7 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #'
 #' library(ggplot2)
 #' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
-get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
+get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type,show_progress=FALSE) {
 
   loc_class <- class(loc)
   # get change in potential due to wells
@@ -247,7 +249,7 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
     loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
     n <- length(loc_list)
 
-    if (n * dim(wells)[1] < 20) { # no progress bar
+    if (n * dim(wells)[1] < 20 | !show_progress) { # no progress bar
       for (i in 1:n) {
         fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
         fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
@@ -271,38 +273,11 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 }
 
 
-
-##########################################################################################
-############################################################################################################
-############################################################################################################
-# get potentials
-# ##################
-# a <- matrix(rnorm(1e4),nrow=100)
-# b <- rowSums(matrix(rnorm(1e4),nrow=100))
-# c_ <- a / b
-# dim(c_)
-#
-# a <- matrix(rep(1:10,10),ncol=10)
-# b <- matrix(1:10,nrow=10)
-# # a %*% (1/b)
-#
-#
-# nwells <- 10
-# nobs <- 1000
-#
-# x_loc <- rnorm(nobs)
-# y_obs <- rnorm(x_well)
-
-# wells <- data.frame(x = rnorm(nwells), y = rnorm(nwells), roi = 1:nwells, diam = runif(nwells,0.3,2))
-
-#
-
-
 #' Get cumulative effect of wells at location
 #'
 #' Get the cumulative effect of all wells at a singled location, output as head (confined aquifer) or discharge potential (unconfined aquifer).
 #'
-#' @param loc coordinates \code{data.frame} with columns labeled 'x0' and 'y0', or as vector as c(x,y), with units of [m]
+#' @param loc coordinates \code{data.frame} with columns labeled 'x' and 'y', or as vector as c(x,y), with units of [m]
 #' @inheritParams get_hydraulic_head
 #' @return The output is the cumulative effect at \code{loc} of all \code{wells} on the hydraulic head [units=m] if
 #'   \code{aquifer_type="confined"} or discharge potential [m^2] if
@@ -320,10 +295,10 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #' # Multiple test locations
 #' wells <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
 #' grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-#' get_potentials(wells,grid_pts,Ksat=0.00001,aquifer_type="unconfined")
+#' get_potential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
 get_potential <- function(loc, wells, Ksat, z0, aquifer_type) {
-  x_well <- wells$x
-  y_well <- wells$y
+  x_well <- wells$x0
+  y_well <- wells$y0
   R <- wells$roi
   Q <- wells$rate
   diam_wells <- wells$diam
@@ -364,3 +339,87 @@ get_potential <- function(loc, wells, Ksat, z0, aquifer_type) {
 
   return(dP)
 }
+
+get_quad_vertices_wide <- function(bounds) {
+  bounds <- get_quad_vertices(bounds) %>% filter(!is.na(x)) %>% group_by(bID) %>%
+    mutate(num=rank(intersection_bID)) %>% select(-intersection_bID) %>%
+    gather(axis,val,x,y) %>% unite(pt,axis,num) %>% spread(pt,val)
+  return(bounds)
+}
+
+get_bound_seq <- function(bound,length.out=10) {
+  bound_seq <- data.frame(
+    x = seq(bound$x_1,bound$x_2,length.out = length.out),
+    y = seq(bound$y_1,bound$y_2,length.out = length.out),
+    bID = bound$bID
+  )
+  bound_length <- sqrt((bound$x_1-bound$x_2)^2+(bound$y_1-bound$y_2)^2)
+  bound_seq <- bound_seq %>%
+    mutate(dist=sqrt((x-bound$x_1)^2+(y-bound$y_1)^2),
+           dist_rel=dist/bound_length)
+  return(bound_seq)
+}
+
+#' Get hydraulic behavior on bounds
+#'
+#' Get hydraulic head and flow on boundaries
+#' @inheritParams get_hydraulic_head
+#' @param length.out The number of points to check on each boundary
+#' @return Returns a \code{data.frame}, with \code{length.out} rows for each bID.
+#' Each row represents a point along bID and contains the head and flow as:
+#'  dx = -Ksat * dh/dx, and
+#'  dy = -Ksat * dh/dy
+get_bounds_behavior <- function(wells,bounds,h0,Ksat,z0=z0,aquifer_type,length.out=100) {
+  bounds_wide <- get_quad_vertices_wide(bounds)
+
+  bounds_seq <- do.call(rbind,lapply(split(bounds_wide,bounds_wide$bID),get_bound_seq,length.out=length.out))
+
+  head <- get_hydraulic_head(bounds_seq,wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  flowdir <- get_flowdir(bounds_seq,wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  flowdir_mag <- flowdir %>% mutate(flow_mag=Ksat*sqrt(flowdir$dx^2 +flowdir$dy^2))
+  bounds_seq <- bounds_seq %>%
+    mutate(head=head,
+           flow_x=Ksat*flowdir$dx,
+           flow_y=Ksat*flowdir$dy,
+           flow_mag=flowdir_mag$flow_mag)
+
+  return(bounds_seq)
+}
+
+#' Plot behavior on boundaries
+#'
+#' Plot behavior on boundaries with and without well images
+#' @inheritParams get_bounds_behavior
+#' @return Two ggplot objects that show behavior on the boundaries, one for head and one for flow
+#' @importFrom magrittr %>%
+#' @examples
+# wells_noimages <- data.frame(x0=c(50,5),y0=c(25,2.5),rate=c(0.5,-0.2),diam=c(0.05,0.08)) %>% as_tibble() %>%
+#    mutate(roi=get_radius_of_influence(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+# bounds <- tibble(bound_type=c("CH","NF","NF","NF"),
+#                  m=c(0.8,-1.25,0.8,-1.25),b=c(3,100,-25,1),
+#                  bID=as.numeric(1:4),bGroup=c(2,1,2,1))
+# well_images <- generate_image_wells(wells_noimages,bounds,num_levels=6) %>%
+#    filter(max_mirror_dist<roi)
+# ggplot() + geom_point(data=well_images,aes(x0,y0)) +
+#   geom_abline(data=bounds,aes(slope=m,intercept=b)) + coord_equal()
+# gg_list <- plot_bounds_behavior(wells_noimages,image_wells,bounds,h0=1000,Ksat=1,aquifer_type="confined",length.out=50)
+plot_bounds_behavior <- function(wells_noimages,well_images,bounds,h0,Ksat,z0=NA,aquifer_type,length.out=100) {
+  bounds_behavior_noim <- get_bounds_behavior(wells_noimages,bounds,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type) %>%
+    dplyr::mutate(im="no_images")
+  bounds_behavior_wim <- get_bounds_behavior(well_images,bounds,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type) %>%
+    dplyr::mutate(im="images")
+  bounds_behavior <- ggplot2::bind_rows(bounds_behavior_noim,bounds_behavior_wim) %>%
+    dplyr::left_join(boundaries %>% st_set_geometry(NULL) %>% dplyr::mutate(BT=paste(bID,bound_type)) %>%
+                dplyr::select(bID,BT),by="bID") %>%
+    dplyr::mutate(im=factor(im,levels=c("no_images","images")))
+  p_h <- ggplot2::ggplot(bounds_behavior) + ggplot2::geom_line(aes(dist_rel,head)) +
+    ggplot2::facet_grid(BT~im,scales="free_x") + ggplot2::theme(axis.text.x=element_blank())
+  p_f <- ggplot2::ggplot(bounds_behavior) + ggplot2::geom_line(aes(dist_rel,flow_mag)) +
+    ggplot2::facet_grid(BT~im,scales="free_x") + ggplot2::theme(axis.text.x=element_blank())
+
+  return(list(p_h=p_h,p_f=p_f))
+}
+
+
+
+

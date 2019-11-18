@@ -4,7 +4,7 @@
 \alias{get_point_on_quandrangle}
 \title{Get point on quadrangle}
 \usage{
-get_point_on_quandrangle(vec)
+get_point_on_quandrangle(x, y, axis)
 }
 \description{
 The complete quadrangle is comprised of 6 vertices (intersection points)

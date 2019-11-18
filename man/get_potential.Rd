@@ -7,7 +7,7 @@
 get_potential(loc, wells, Ksat, z0, aquifer_type)
 }
 \arguments{
-\item{loc}{coordinates \code{data.frame} with columns labeled 'x0' and 'y0', or as vector as c(x,y), with units of [m]}
+\item{loc}{coordinates \code{data.frame} with columns labeled 'x' and 'y', or as vector as c(x,y), with units of [m]}
 
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence roi [m], & coordinates x0 [m], y0 [m]}
@@ -40,5 +40,5 @@ get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
 # Multiple test locations
 wells <- data.frame(x0=c(-10,10),y0=c(-10,10),rate=c(1e-3,-1e-3),diam=c(0.1,0.1),roi=c(300,300))
 grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-get_potentials(wells,grid_pts,Ksat=0.00001,aquifer_type="unconfined")
+get_potential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
 }

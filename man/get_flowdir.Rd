@@ -4,7 +4,8 @@
 \alias{get_flowdir}
 \title{Numerically calculate flow direction}
 \usage{
-get_flowdir(loc, wells, h0, Ksat, z0 = NA, aquifer_type)
+get_flowdir(loc, wells, h0, Ksat, z0 = NA, aquifer_type,
+  show_progress = FALSE)
 }
 \arguments{
 \item{loc}{coordinates vector as c(x,y), with units of [m]}
@@ -21,6 +22,9 @@ an unconfined aquifer, this must be the thickness of the water table.}
 
 \item{aquifer_type}{"confined" or "unconfined". Determines the calculation
 and output units.}
+
+\item{show_progress}{Boolean input parameter. If true and there are >20 combinations of
+wells and locations, then a progress bar will be printed.}
 }
 \value{
 Outputs the flow direction in the x and y directions. If the input \code{loc} is
