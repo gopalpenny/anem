@@ -31,7 +31,7 @@ get_segment_seq <- function(segment,length.out=10) {
 #' bounds <- tibble(bound_type=c("CH","NF"), m=c(1,-1),b=c(0,100), bID=as.numeric(1:2), bGroup=c(2,1))
 #' well_images <- generate_image_wells(wells,bounds,num_levels=2) %>% filter(max_mirror_dist<roi)
 #' segments <- bounds %>% rename(sID=bID) %>% mutate(x_1=c(0,50),x_2=c(50,75),y_1=c(0,50),y_2=c(50,25)) %>%
-#'   dplyr::mutate(x_unit=sqrt(1/(1+m^2)),y_unit=-sign(m)*sqrt(m^2/(1+m^2)))
+#'   dplyr::mutate(y_unit_norm=sqrt(1/(1+m^2)),y_unit_norm=-sign(m)*sqrt(m^2/(1+m^2)))
 #' segments_behavior <- get_segments_behavior(well_images,segments,h0=100,Ksat=1,z0=100,aquifer_type="confined") %>% as_tibble()
 #' p_domain <- ggplot() +
 #'   geom_point(data=well_images,aes(x0,y0,fill=rate),color="black",size=2,shape=21) +
@@ -46,7 +46,7 @@ get_segments_behavior <- function(wells,segments,h0,Ksat,z0=z0,aquifer_type,leng
   segments_seq_list <- lapply(split(segments,segments$sID),get_segment_seq,length.out=length.out)
 
   segments_seq <- do.call(rbind,segments_seq_list) %>%
-    dplyr::left_join(segments %>% dplyr::select(sID,x_unit,y_unit),by="sID")
+    dplyr::left_join(segments %>% dplyr::select(sID,x_unit_norm,y_unit_norm),by="sID")
 
   head <- get_hydraulic_head(segments_seq,wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
   flowdir <- get_flowdir(segments_seq,wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type,eps=eps)
@@ -55,7 +55,7 @@ get_segments_behavior <- function(wells,segments,h0,Ksat,z0=z0,aquifer_type,leng
     mutate(head=head,
            flow_x=Ksat*flowdir$dx,
            flow_y=Ksat*flowdir$dy,
-           flow_normal=flow_x*x_unit+flow_y*y_unit,
+           flow_normal=flow_x*x_unit_norm+flow_y*y_unit_norm,
            flow_mag=abs(flow_normal))
 
   return(bounds_seq)
@@ -91,9 +91,8 @@ get_segments_behavior <- function(wells,segments,h0,Ksat,z0=z0,aquifer_type,leng
 get_bounds_behavior <- function(wells,bounds,h0,Ksat,z0=z0,aquifer_type,length.out=100) {
   bounds_wide <- bounds %>%
     dplyr::left_join(get_quad_vertices_wide(bounds),by="bID") %>%
-    dplyr::mutate(x_unit=sqrt(1/(1+m^2)),
-                  y_unit=-sign(m)*sqrt(m^2/(1+m^2))) #%>%
-  # dplyr::mutate(unit_check=sqrt(x_unit^2+y_unit^2))
+    dplyr::mutate(x_unit_norm=-sign(m)*sqrt(m^2/(1+m^2)),
+                  y_unit_norm=sqrt(1/(1+m^2)))
 
   bounds_seq <- get_segments_behavior(wells,bounds_wide %>% rename(sID=bID),
                                       h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type,length.out=length.out) %>%
