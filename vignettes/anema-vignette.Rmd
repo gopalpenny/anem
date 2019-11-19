@@ -354,7 +354,7 @@ ggplot(head_unconf_df) +
 
 ## Calculate Dii, Dij, and ri.
 
-Set the total pumping rate for each group equal to 0.1
+Set the total pumping rate for each group equal to 1
 
 ```{r generate_game_wells}
 wells_game <- wells %>%
