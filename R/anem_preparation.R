@@ -39,7 +39,7 @@ define_wells <- function(wells_df=NULL,...) {
 
   # Generate empty tibble with required column names
   columns <- c("wID", "Q", "R", "diam", "x", "y") %>%
-    purrr::map_dfr( ~tibble(!!.x := numeric() ) )
+    purrr::map_dfr( ~tibble::tibble(!!.x := numeric() ) )
 
   # Replicate inputs with length 1. Then check everything has the same length
   if (length(params) > 0) {
@@ -60,7 +60,7 @@ define_wells <- function(wells_df=NULL,...) {
 
     # generate wells_df if it is empty
     if (is.null(wells_df)) {
-      wells_df <- columns %>% bind_rows(data.frame(wID=rep(NA,max(num_wells))))
+      wells_df <- columns %>% dplyr::bind_rows(data.frame(wID=rep(NA,max(num_wells))))
     }
   }
 

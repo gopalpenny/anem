@@ -47,55 +47,6 @@ get_ROI <- function(..., method) {
   return(R)
 }
 
-
-#' Get the effect of a single well
-#'
-#' Get the effect of a single well on hydraulic potential or discharge
-#' potential.
-#'
-#' @param well single well object containing rate Q [m^3/s], diam [m],
-#'   radius of influence R [m], & coordinates x [m], y [m]
-#' @param loc coordinates vector as c(x,y), with units of [m]
-#' @inheritParams get_hydraulic_head
-#' @return The output is the effect at \code{loc} of the \code{well} on the hydraulic head (in units of [m]) if
-#'   \code{aquifer_type="confined"} or discharge potential [m^2] if
-#'   \code{aquifer_type="unconfined"}.
-#'
-#'   Note: if the \code{loc} is contained within the diameter of the well, the distance between the tested location
-#'   and the well is automatically adjusted to the edge of the well screen (i.e., well$diam/2).
-#' @examples
-#' well <- data.frame(pID=1,x=0,y=0,Q=1e-4,diam=0.75,R=300)
-#' get_well_effect(well,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined")
-#' get_well_effect(well,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
-get_well_effect <- function(well,loc,aquifer,Ksat,z0=NULL,aquifer_type) {
-  x1 <- loc[1]
-  y1 <- loc[2]
-  x0 <- well$x
-  y0 <- well$y
-  r <- sqrt((x1-x0)^2+(y1-y0)^2)
-
-  # If the location is inside the well, set the distance at the edge of the well screen
-  if (r < well$diam/2) {
-    r <- well$diam/2
-  }
-
-  if (r > well$R) {
-    dp <- 0
-  } else if (aquifer_type=="confined") {
-    if(is.na(z0)) {
-      stop("For confined aquifer, must specify z0")
-    }
-    # Transmissivity: as Ksat * z0, the thickness of the aquifer [L^2/T]. Must have same length and time units as Q
-    Transmissivity <- aquifer$Ksat * aquifer$z0
-    dp <- -well$Q/(2*pi*Ksat * aquifer$z0)*log(r/well$R)
-  } else if (aquifer_type=="unconfined") {
-    dp <- -well$Q/(pi*aquifer$Ksat)*log(r/well$R)
-  } else {
-    stop("aquifer_type specified as:",aquifer_type,". It should be specified as \"confined\" or \"unconfined\".\n")
-  }
-  return(dp)
-}
-
 #' Get row of a data.frame as a vector
 #'
 #' return the row of a data.frame or tibble as a vector (used for extracting x,y coordinates)
@@ -107,7 +58,7 @@ get_row_as_vector <- function(df,row=1) {
 #'
 #' Get the hydraulic head at a location, accounting for the aquifer type
 #' (confined or unconfined), resting head, and cumulative effect of all wells. This function
-#' is a wrapper around \code{get_potential()} to get the actual hydraulic head instead of the differential potential.
+#' is a wrapper around \code{get_potential_differential()} to get the actual hydraulic head instead of the differential potential.
 #'
 #' @param loc coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y
 #' @param wells wells object with each row containing rate Q [m^3/s], diam [m],
@@ -127,10 +78,13 @@ get_row_as_vector <- function(df,row=1) {
 #'   \item{aquifer_type="confined"}{\eqn{h=h_0+dP}}
 #'   \item{aquifer_type="unconfined"}{\eqn{h=\sqrt{h_0^2+dP}}} }
 #' @examples
-#' well1 <- data.frame(x=0,y=0,Q=1e-3,diam=0.75,R=300)
-#' well2 <- data.frame(x=0.5,y=0.25,Q=-2e-3,diam=0.8,R=300)
-#' get_hydraulic_head(well1,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
-#' get_hydraulic_head(well2,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+#' well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.75,R=300)
+#' well2 <- define_wells(x=0.5,y=0.25,Q=-2e-3,diam=0.8,R=300)
+#' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#'
+#'
+#' get_hydraulic_head(well1,loc=c(5,5),aquifer)
+#' get_hydraulic_head(well2,loc=c(5,5),aquifer)
 #' wells <- rbind(well1,well2)
 #' get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #'
@@ -143,25 +97,25 @@ get_row_as_vector <- function(df,row=1) {
 #' get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
 #'
 #' # Ensure potentials are even when pumping is symmetric (and opposite sign)
-#' well1 <- data.frame(x=0,y=0,Q=1e-3,diam=0.5,R=300)
-#' well2 <- data.frame(x=1,y=1,Q=-2e-3,diam=0.5,R=300)
-#' well3 <- data.frame(x=0,y=0.5,Q=2e-3,diam=0.5,R=300)
-#' well4 <- data.frame(x=0.5,y=1,Q=-2e-3,diam=0.5,R=300)
+#' well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)
+#' well2 <- define_wells(x=1,y=1,Q=-2e-3,diam=0.5,R=300)
+#' well3 <- define_wells(x=0,y=0.5,Q=2e-3,diam=0.5,R=300)
+#' well4 <- define_wells(x=0.5,y=1,Q=-2e-3,diam=0.5,R=300)
 #' wells_even <- rbind(well1,well1,well2,well3,well4)
 #' grid_pts_even <- data.frame(x=c(0,0.5,1),y=c(1,0.5,0))
 #' get_hydraulic_head(wells_even,loc=grid_pts_even,h0=40,Ksat=0.00005,aquifer_type="unconfined")
-get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
+get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type) {
 
-  dP <- get_potential(loc,wells,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+  dP <- get_potential_differential(loc,wells,aquifer)
 
   # calculate head using h0 and change in potential
-  if (aquifer_type=="confined") {
-    h <- h0 + dP
-  } else if (aquifer_type=="unconfined") {
-    h_squared <- pmax(h0^2 + dP,0)
+  if (aquifer$aquifer_type=="confined") {
+    h <- aquifer$h0 + dP
+  } else if (aquifer$aquifer_type=="unconfined") {
+    h_squared <- pmax(aquifer$h0^2 + dP,0)
     h <- sqrt(h_squared)
   } else {
-    stop("aquifer_type specified as:",aquifer_type,". It should be specified as \"confined\" or \"unconfined\".\n")
+    stop("aquifer_type specified as:",aquifer$aquifer_type,". It should be specified as \"confined\" or \"unconfined\".\n")
   }
 
   # return head
@@ -176,14 +130,16 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #' @inheritParams get_hydraulic_head
 #' @param show_progress Boolean input parameter. If true and there are >20 combinations of
 #' wells and locations, then a progress bar will be printed.
+#' @param eps Threshold satisfying numeric derivative
 #' @return Outputs the flow direction in the x and y directions. If the input \code{loc} is
 #'   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
 #'   then the output is also a dataframe with columns \code{dx} and \code{dy}. The two values
 #'   indicate the flow direction, and are equivalent to \eqn{-dh/dx}
 #'   and \eqn{-dh/dy}.
 #' @examples
-#' wells <- data.frame(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
-#' get_flowdir(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+#' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
+#' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+#' get_flowdir(loc=c(5,5),wells,aquifer)
 #' get_flowdir(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
@@ -211,12 +167,12 @@ get_hydraulic_head <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type) {
 #'
 #' library(ggplot2)
 #' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
-get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type,show_progress=FALSE,eps=1e-4) {
+get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
 
   loc_class <- class(loc)
   # get change in potential due to wells
   if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
-    fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+    fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
   } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
     fd <- data.frame(dx=NULL,dy=NULL)
     loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
@@ -224,7 +180,7 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type,show_progress=FALSE
 
     if (n * dim(wells)[1] < 20 | !show_progress) { # no progress bar
       for (i in 1:n) {
-        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method.args=list(eps=eps),wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method.args=list(eps=eps),wells=wells,aquifer=aquifer)
         fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
         fd <- rbind(fd,fd_i_df)
       }
@@ -233,7 +189,7 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type,show_progress=FALSE
       cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
       pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
       for (i in 1:n) {
-        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type=aquifer_type)
+        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,aquifer=aquifer)
         fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
         fd <- rbind(fd,fd_i_df)
         setTxtProgressBar(pb, i)
@@ -261,15 +217,18 @@ get_flowdir <- function(loc,wells,h0,Ksat,z0=NA,aquifer_type,show_progress=FALSE
 #'   distance that exceeds the radius of influence of the well, R, is set equal to R
 #' @examples
 #' # Single test location
-#' wells <- data.frame(x=c(0,0.5),y=c(0,0.25),Q=c(1e-4,-2e-4),diam=c(0.75,0.8),R=c(300,300))
-#' get_potential(wells,loc=c(50,50),Ksat=0.00001,z0=10,aquifer_type="confined")
-#' get_potential(wells,loc=c(50,50),Ksat=0.00001,aquifer_type="unconfined")
+#' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-4,-2e-4),diam=c(0.75,0.8),R=c(300,300))
+#' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#'
+#' wells <- rbind(well1,well2)
+#' get_potential_differential(loc=c(50,50),well1,aquifer)
+#' get_potential_differential(loc=c(50,50),well2,aquifer)
 #'
 #' # Multiple test locations
 #' wells <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-#' get_potential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
-get_potential <- function(loc, wells, Ksat, z0, aquifer_type) {
+#' get_potential_differential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
+get_potential_differential <- function(loc, wells, aquifer) {
   x_well <- wells$x
   y_well <- wells$y
   R <- wells$R
@@ -304,13 +263,14 @@ get_potential <- function(loc, wells, Ksat, z0, aquifer_type) {
   rji <- pmax(pmin(sqrt((xi-xj)^2 + (yi-yj)^2), Ri), di/2)
 
   # calculate the potential differential
-  if (aquifer_type=="confined") { # as a differential hydraulic head
-    if(is.na(z0)) {
+  if (aquifer$aquifer_type=="confined") { # as a differential hydraulic head
+    if(is.na(aquifer$z0)) {
       stop("need to set z0 for confined aquifer")
     }
-    dP <- -rowSums(Qi/(2*pi*Ksat * z0)*log(rji/Ri))
-  } else if (aquifer_type=="unconfined") { # as a differential discharge potential
-    dP <- -rowSums(Qi/(pi*Ksat)*log(rji/Ri))
+    dP <- -rowSums(Qi/(2*pi*aquifer$Ksat * aquifer$z0)*log(rji/Ri))
+
+  } else if (aquifer$aquifer_type =="unconfined") { # as a differential discharge potential
+    dP <- -rowSums(Qi/(pi*aquifer$Ksat)*log(rji/Ri))
   }
 
   return(dP)

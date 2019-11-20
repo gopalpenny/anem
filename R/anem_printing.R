@@ -23,7 +23,7 @@ print.aquifer <- function(aquifer) {
   if (!is.null(aquifer$bounds)) {
     print(aquifer$bounds)
   } else {
-    cat("  No boundaries\n")
+    cat("    No boundaries\n")
   }
 
   # Print recharge zones
@@ -31,7 +31,7 @@ print.aquifer <- function(aquifer) {
   if (!is.null(aquifer$recharge)) {
     print(aquifer$recharge)
   } else {
-    cat("  No recharge zones\n")
+    cat("    No recharge zones\n")
   }
 
   # Any additional named items?
