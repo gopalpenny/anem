@@ -75,11 +75,9 @@ Let's begin by loading some data to practice with. The data are stored in two sh
 # pts_wgs <- sf::read_sf("../../../CNH/genevois/spatial/shp/manual/pts_text.shp") %>%
 #   mutate(type=factor(sign(rate),levels=c(-1,0,1),labels=c("pumping","defunct","injection"))) %>%
 #   mutate(rate=c(-0.03,0.01))
-pts_wgs <- sf::read_sf("/Users/gopal/Projects/CNH/genevois/spatial/shp/stylized_aquifer/genevois_wells_stylized.shp") %>% 
-  mutate(diam=RADUIS*2) %>% select(diam,well_group=CONCESSION) %>% group_by(well_group) %>%
-  mutate(rate=1/n())
+pts_wgs <- sf::read_sf("/Users/gopal/Projects/CNH/genevois/spatial/shp/stylized_aquifer/genevois_wells_stylized.shp")%>% 
+  mutate(diam=RADUIS*2) %>% select(diam,well_group=CONCESSION)
 pts_wgs
-
 
 # boundaries_wgs <- sf::read_sf("../../../CNH/genevois/spatial/shp/manual/lines_text.shp") 
 boundaries_wgs <- sf::read_sf("/Users/gopal/Projects/CNH/genevois/spatial/shp/stylized_aquifer/genevois_bounds_stylized.shp")
@@ -106,26 +104,28 @@ ggplot() +
 We now need to extract the coordinates of the wells and boundaries, as well as get the slope (m) and intercept (b) of the boundaries.
 
 ```{r prep_dataframes}
-boundaries <- prep_bounds(boundaries_utm,get_rectangular = TRUE)
+# bounds <- define_bounds(boundaries_utm)
+
+aq_confined <- define_aquifer("confined",1e-3,bounds=boundaries_utm,h0=100,z0=10)
+
 ```
 
 We also need to prepare the wells. Generate an aquifer polygon and take only the wells that intersect the aquifer. Calculate the radius of influence of each well. Plot the results.
 
 ```{r prep_wells}
-bounds_polygon <- boundaries %>% st_coordinates() %>% as_tibble() %>% select(-L1) %>% distinct() %>% st_as_sf(coords=c("X","Y")) %>%
-  summarize() %>% st_cast("POLYGON")
-bounds_polygon <- boundaries %>% 
+bounds_polygon <- aq_confined$bounds %>% 
   summarize() %>% st_polygonize() %>% st_collection_extract("POLYGON")
 
-wells <- prep_wells_sf(pts_utm) %>% st_intersection(bounds_polygon) %>% group_by() %>%
-  mutate(rate=-1e-1/n(),
-         rate=if_else(well_group=="COMMUNE",-2*rate,rate)) %>% group_by() %>%
-  mutate(roi=get_radius_of_influence(Ksat=Ksat,h=h0,t=3600*24*365*20,n=aquifer_porosity,method="aravin-numerov"))
+wells_df <- pts_utm %>% st_intersection(bounds_polygon) %>% group_by() %>%
+  mutate(Q=-1e-1/n(),
+         Q=if_else(well_group=="COMMUNE",-2*Q,Q))  %>%
+  mutate(R=get_ROI(Ksat=1e-3,h=100,t=3600*24*365*20,n=0.4,method="aravin-numerov")) 
+wells <- define_wells(wells_df)
 
 ggplot() + 
   geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-  geom_sf(data=boundaries, aes(color=as.factor(bGroup))) + 
-  geom_sf(data=wells, aes())
+  geom_sf(data=aq_confined$bounds, aes(color=as.factor(bGroup))) + 
+  geom_point(data=wells, aes(x,y))
 ```
 
 ## Two wells in a uniform confined aquifer
@@ -140,12 +140,10 @@ using `expand.grid` and `seq` to generate evenly spaced points in the variable `
 these points and the `well_images` to generate hydraulic head using `get_hydraulic_head()`.
 
 ```{r hydraulic_head_confined,fig.width=6,fig.height=3.5}
-z0 <- 10
-grid_bounds <- boundaries %>% st_coordinates() %>% as_tibble() %>%
+grid_bounds <- aq_confined$bounds %>% st_coordinates() %>% as_tibble() %>%
   summarize(xmin=min(X),xmax=max(X),ymin=min(Y),ymax=max(Y))
-# grid_bounds <- data.frame(xmin=276000,xmax=283500,ymin=5115000,ymax=5120000)
 grid_pts_head <- with(grid_bounds,crossing(x=seq(xmin,xmax,length.out=150),y=seq(ymin,ymax,length.out=100)))
-heads <- get_hydraulic_head(grid_pts_head,wells,h0=h0,Ksat=Ksat,z0=z0,aquifer_type="confined")
+heads <- get_hydraulic_head(grid_pts_head,wells,aq_confined) # h0=h0,Ksat=Ksat,z0=z0,aquifer_type="confined")
 head_df <- grid_pts_head %>% bind_cols(head_m=heads)
 
 ggplot(head_df) + 
@@ -208,11 +206,11 @@ To reproduce the boundaries, we need to generate image wells by mirroring wells 
   + Use only straight lines.
   + No complex shapes.
   
-Lastly, to know the effect of a well on any given location, we need to know the radius of influence of the well. This package provides a couple ways to do this through the `get_radius_of_influence` function. See `?get_radius_of_influence` for more resources. 
+Lastly, to know the effect of a well on any given location, we need to know the radius of influence of the well. This package provides a couple ways to do this through the `get_ROI` function. See `?get_ROI` for more resources. 
 
 ```{r well_imaging,fig.width=6,fig.height=3.5}
 well_images <- generate_image_wells(wells,boundaries,num_levels=3) %>%
-  mutate(roi=get_radius_of_influence(Ksat=Ksat,h=h0,t=3600*24*365*100,n=aquifer_porosity,method="aravin-numerov"))
+  mutate(roi=get_ROI(Ksat=Ksat,h=h0,t=3600*24*365*100,n=aquifer_porosity,method="aravin-numerov"))
 
 well_roi <- gen_circles(well_images %>% rename(r=roi,x=x0,y=y0))
 

@@ -24,20 +24,6 @@ utm_zone_to_proj4 <- function(utm_zone) {
   return(gsub("UTM_ZONE",as.character(utm_zone),proj4_base))
 }
 
-#' Convert wells sf object to dataframe
-#'
-#' Convert wells sf object to dataframe, with appropriate column coordinates
-#'
-#' @param wells wells sf object, with point features
-#' @param results outputs a data.frame of wells with all of the attributes and coordinate as x0, y0
-#' @importFrom magrittr %>%
-prep_wells_sf <- function(wells_sf) {
-  wells_df <- wells_sf %>%
-    dplyr::bind_cols(sf::st_coordinates(wells_sf) %>% tibble::as_tibble()) %>%
-    dplyr::rename(x0=X,y0=Y)
-  return(wells_df)
-}
-
 #' Convert boundaries sf object to dataframe, with appropriate column coordinates
 #'
 #' @param bounds_sf boundaries sf object, with line features (2 end points)
@@ -56,44 +42,27 @@ prep_bounds_sf <- function(bounds_sf) {
   return(bounds_df)
 }
 
-#' Prepare boundaries with slope and intercept
-#'
-#' Get slope (m) and intercept (b) of all line objects, and add boundary ID (bID)
-#'
-#' @param boundaries An sf object of straight lines (single segments), or a
-#'   data.frame with column names x1, y1, x2, y2, representing the endpoints
-#' @return A data.frame containing slope (m) and intercept (b) for each line,
-#'   along with original columns. If \code{boundaries} is a data.frame, the columns
-#'   x1, y1, x2, y2 are automatically calculated using \code{prep_wells_sf} and
-#'   added to the sf object before getting the slope and intercept. The function requires
-#'   that the wells are labeled with a column of identifiers, pID. If it is not
-#'   present, the function generates them.
-#' @importFrom magrittr %>%
-#' @examples
-#' boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
-#' ggplot(boundaries) + geom_segment(aes(x1,y1,xend=x2,yend=y2))
-prep_bounds <- function(boundaries,get_rectangular=FALSE) {
-  if (!max(grepl("^bID$",names(boundaries)))) { # generate pID's if they are not present
-    boundaries <- boundaries %>% dplyr::mutate(bID=dplyr::row_number())
-  }
-  if (max(grepl("sf",class(boundaries)))) {
-    boundaries <- prep_bounds_sf(boundaries)
-    boundaries_no_geometry <- boundaries %>% st_set_geometry(NULL)
-  } else {
-    boundaries_no_geometry <- boundaries
-  }
-  if (get_rectangular) {
-    bounds_w_slope <- get_rectangle(boundaries) %>%
-      left_join(boundaries_no_geometry,by="bID") %>%
-      select(-x1,-x2,-y1,-y2)
-  } else{
-    bounds_w_slope <- boundaries %>%
-      dplyr::mutate(m=(y2-y1)/(x2-x1),
-                    b=y1 - m*x1) %>% dplyr::select(-x1,-y1,-x2,-y2)
-  }
-  return(bounds_w_slope)
-}
 
+#' Check boundaries
+#'
+#' Check that boundaries have slopes that are normal to each other
+#' @examples
+#' check_bounds(tibble(m=c(1,1,-1,-1)))
+#' check_bounds(tibble(m=c(1,0.9,-1,-1)))
+check_bounds <- function(bounds) {
+  slopes <- bounds$m
+  slopes_unique <- unique(slopes)
+  warn <- FALSE
+  if (length(unique(round(slopes,10))) > 2) {
+    warn <- TRUE
+    warning("check_bounds(): More than two slopes have been specified: ",paste(slopes_unique,collapse=", "))
+  }
+  if (abs(slopes_unique[1] + 1/slopes_unique[2]) > 1e-10) {
+    warn <- TRUE
+    warning("check_bounds(): Slopes are not normal to each other (tolerance 1e-10). Slopes: ",paste(slopes_unique,collapse=", "))
+  }
+  return(warn)
+}
 
 #' Convert quadrangle to rectangle
 #'
@@ -107,13 +76,17 @@ prep_bounds <- function(boundaries,get_rectangular=FALSE) {
 #' and short axes of the rectangle (at right angles), then generating lines with these slopes through
 #' the midpoints.
 #' @examples
-#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>%
-#'   mutate(bID=row_number())
+#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID))) + coord_equal()
 get_rectangle <- function(bounds) {
   is_sf <- max(grepl("sf",class(bounds)))
+
+  if (is.null(bounds$bID)) {
+    bounds <- bounds %>%
+      dplyr::mutate(bID=dplyr::row_number())
+  }
 
   # get vertices (and remove extraneous properties, including sf)
   quad_vertices_full <- get_quad_vertices(bounds)
@@ -127,8 +100,8 @@ get_rectangle <- function(bounds) {
   # get slope of of long and short axes
   slopes <- midpoints %>%
     dplyr::left_join(midpoints %>% dplyr::select(-bID) %>%
-                       dplyr::rename(bID=opposite_bID,x_mid2=x_mid,y_mid2=y_mid)) %>%
-    dplyr::mutate(dist=sqrt((x_mid2-x_mid)^2+(y_mid2-y_mid)^2))%>%
+                       dplyr::rename(bID=opposite_bID,x_mid2=x_mid,y_mid2=y_mid),by="bID") %>%
+    dplyr::mutate(dist=sqrt((x_mid2-x_mid)^2+(y_mid2-y_mid)^2)) %>%
     dplyr::filter(dist==max(dist)) %>% dplyr::slice(1) %>%
     dplyr::mutate(m=(y_mid2-y_mid)/(x_mid2-x_mid),
                   m2=-1/m) %>%
@@ -142,9 +115,19 @@ get_rectangle <- function(bounds) {
                   bGroup=dplyr::if_else(!is.na(bGroup),bGroup,2)) %>%
     dplyr::mutate(b=y_mid - m*x_mid) %>% dplyr::select(m,b,bID,bGroup)
 
+
+  quad_vertices_final <- get_quad_vertices(bounds_rectangular) %>%
+    dplyr::filter(!is.na(x)) %>% dplyr::select(x,y,bID) %>%
+    dplyr::group_by(bID)
+  quad_vertices_final_wide <- quad_vertices_final%>%
+    dplyr::mutate(pt_num=dplyr::row_number()) %>% dplyr::group_by() %>%
+    tidyr::gather(var,val,x,y) %>%
+    tidyr::unite("pt",var,pt_num,sep = "") %>%
+    tidyr::spread(pt,val)
+
+  bounds_rectangular <- bounds_rectangular %>% dplyr::left_join(quad_vertices_final_wide,by="bID")
+
   if(is_sf) {
-    quad_vertices_final <- get_quad_vertices(bounds_rectangular) %>%
-      dplyr::filter(!is.na(x)) %>% select(x,y,bID)
     quad_vertices_final_sf <- quad_vertices_final %>%
       sf::st_as_sf(coords=c("x","y")) %>%
       sf::st_set_crs(sf::st_crs(bounds))
@@ -157,6 +140,25 @@ get_rectangle <- function(bounds) {
   }
 
   return(bounds_rectangular)
+}
+
+#' Get bounds as sf object
+#'
+#' Convert bounds object with bID, x1, y1, x2, y2 to sf object
+#' @examples
+#' bounds <- data.frame(bID=1,x1=1,y1=1,x2=3,y2=3)
+#' bounds_to_sf(bounds,crs=4326)
+bounds_to_sf <- function(bounds,crs) {
+  bounds_geometry <- bounds %>% tidyr::gather(coord,val,x1,y1,x2,y2) %>%
+    dplyr::mutate(axis=substr(coord,1,1),
+                  pt_num=substr(coord,2,2)) %>%
+    dplyr::select(-coord) %>% tidyr::spread(axis,val) %>%
+    sf::st_as_sf(coords=c("x","y")) %>% sf::st_set_crs(crs) %>%
+    dplyr::group_by(bID) %>%
+    dplyr::summarize() %>% sf::st_cast("LINESTRING")
+  bounds_with_sf <- bounds_geometry %>% dplyr::left_join(bounds,by="bID") %>%
+    dplyr::select(!! names(bounds),everything())
+  return(bounds_with_sf)
 }
 
 #' Get vertices of a quadrangle
@@ -285,13 +287,4 @@ gen_circles <- function(df) {
   df$id <- 1:dim(df)[1]
   circles <- do.call(rbind,lapply(split(df,df$id),gen_circleFun))
   return(circles)
-}
-
-
-
-get_quad_vertices_wide <- function(bounds) {
-  bounds <- get_quad_vertices(bounds) %>% filter(!is.na(x)) %>% group_by(bID) %>%
-    mutate(num=rank(intersection_bID)) %>% select(-intersection_bID) %>%
-    gather(axis,val,x,y) %>% unite(pt,axis,num) %>% spread(pt,val)
-  return(bounds)
 }

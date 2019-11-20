@@ -9,7 +9,7 @@ prep_wells_sf(wells_sf)
 \arguments{
 \item{wells}{wells sf object, with point features}
 
-\item{results}{outputs a data.frame of wells with all of the attributes and coordinate as x0, y0}
+\item{results}{outputs a data.frame of wells with all of the attributes and coordinate as x, y}
 }
 \description{
 Convert wells sf object to dataframe, with appropriate column coordinates

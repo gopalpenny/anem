@@ -40,7 +40,7 @@ wells <- data.frame(x0=c(50,10),y0=c(25,2.5),rate=c(0.5,-0.2),diam=c(0.05,0.08))
 bounds <- tibble(bound_type=c("CH","NF"), m=c(1,-1),b=c(0,100), bID=as.numeric(1:2), bGroup=c(2,1))
 well_images <- generate_image_wells(wells,bounds,num_levels=2) \%>\% filter(max_mirror_dist<roi)
 segments <- bounds \%>\% rename(sID=bID) \%>\% mutate(x_1=c(0,50),x_2=c(50,75),y_1=c(0,50),y_2=c(50,25)) \%>\%
-  dplyr::mutate(x_unit=sqrt(1/(1+m^2)),y_unit=-sign(m)*sqrt(m^2/(1+m^2)))
+  dplyr::mutate(y_unit_norm=sqrt(1/(1+m^2)),y_unit_norm=-sign(m)*sqrt(m^2/(1+m^2)))
 segments_behavior <- get_segments_behavior(well_images,segments,h0=100,Ksat=1,z0=100,aquifer_type="confined") \%>\% as_tibble()
 p_domain <- ggplot() +
   geom_point(data=well_images,aes(x0,y0,fill=rate),color="black",size=2,shape=21) +
