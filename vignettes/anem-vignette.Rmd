@@ -48,13 +48,14 @@ As you will see in this vignette, the package has a number of functions that are
 
 ## Intialization and data prep
 
+Load packages for the vignette
+
 ```{r setup, message=FALSE,warning=FALSE}
-# install.packages(".", repos = NULL, type="source")
-# library(anem)
-library(magrittr)
-library(sf)
 library(tidyverse)
-devtools::load_all("~/Projects/R_packages/anem")
+library(sf)
+# devtools::load_all("~/Projects/R_packages/anem")
+# devtools::install_github("https://github.com/gopalpenny/anem")
+# library(anem)
 ```
 
 ### Examine the data
