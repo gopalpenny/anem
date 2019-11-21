@@ -6,6 +6,7 @@
 #'
 #' @param lon longitude in [-180,180]
 #' @return The number of the UTM zone containing the longitude
+#' @export
 #' @examples
 #' longitude_to_utm_zone(-45)
 longitude_to_utm_zone <- function(lon) {
@@ -17,6 +18,7 @@ longitude_to_utm_zone <- function(lon) {
 #'
 #' @param utm_zone UTM zone as numeric integer, or string
 #' @return The proj4string of the UTM Zone
+#' @export
 #' @examples
 #' utm_zone_to_proj4(32)
 utm_zone_to_proj4 <- function(utm_zone) {

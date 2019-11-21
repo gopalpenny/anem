@@ -27,5 +27,13 @@ Define an aquifer as confined or unconfined and with saturated hydraulic conduct
 Other optional parameters can be defined including boundaries and recharge.
 }
 \examples{
-a <- define_aquifer("confined",1e-4)
+(aquifer <- define_aquifer("confined",1e-4))
+
+bounds_df1 <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+aquifer_confined <- define_aquifer("confined",1e-3,bounds=bounds_df1,h0=100,z0=10)
+print(aquifer_confined)
+
+bounds_df2 <- data.frame(bound_type=c("CH","CH","NF","NF"),x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+aquifer_confined <- define_aquifer("unconfined",1e-3,bounds=bounds_df2,h0=100)
+aquifer_confined
 }

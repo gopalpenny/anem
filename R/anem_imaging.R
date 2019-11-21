@@ -176,6 +176,7 @@ mirror_across_bounds <- function(wells,bounds,num_levels,first_mirror=TRUE) {
 #' present, the function generates them. The image well wID's are always generated automatically.
 #' not present.
 #' @importFrom magrittr %>%
+#' @export
 #' @examples
 #' wells <- define_wells(x=c(5,0.5),y=c(2.5,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
 #' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
