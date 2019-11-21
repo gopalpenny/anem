@@ -12,15 +12,7 @@ get_hydraulic_head(loc, wells, aquifer)
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
 
-\item{h0}{resting hydraulic head [m] of the aquifer without any pumping. For
-an unconfined aquifer, this must be the thickness of the water table.}
-
-\item{Ksat}{saturated hydraulic conductivity [m/s]}
-
-\item{z0}{thickness of the confined aquifer (confining case only)}
-
-\item{aquifer_type}{"confined" or "unconfined". Determines the calculation
-and output units.}
+\item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 }
 \value{
 The output is the hydraulic head \code{loc}, accounting for the
@@ -46,15 +38,14 @@ aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
 get_hydraulic_head(well1,loc=c(5,5),aquifer)
 get_hydraulic_head(well2,loc=c(5,5),aquifer)
 wells <- rbind(well1,well2)
-get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 
-get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
-get_hydraulic_head(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
+get_hydraulic_head(wells,loc=c(5,5),aquifer=aquifer)
 
 grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-get_hydraulic_head(well1,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
-get_hydraulic_head(well2,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
-get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
+get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
+get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)
 
 # Ensure potentials are even when pumping is symmetric (and opposite sign)
 well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)
@@ -63,5 +54,5 @@ well3 <- define_wells(x=0,y=0.5,Q=2e-3,diam=0.5,R=300)
 well4 <- define_wells(x=0.5,y=1,Q=-2e-3,diam=0.5,R=300)
 wells_even <- rbind(well1,well1,well2,well3,well4)
 grid_pts_even <- data.frame(x=c(0,0.5,1),y=c(1,0.5,0))
-get_hydraulic_head(wells_even,loc=grid_pts_even,h0=40,Ksat=0.00005,aquifer_type="unconfined")
+get_hydraulic_head(wells_even,loc=grid_pts_even,aquifer=aquifer_unconfined)
 }

@@ -157,9 +157,9 @@ mirror_across_bounds <- function(wells,bounds,num_levels,first_mirror=TRUE) {
 #'
 #' Mirror wells across 2 parallel bounds, then the two perpendicular bounds
 #'
-#' @param bounds Bounds with columns bID, bound_type, m, b
+#' @param aquifer Aquifer object with bounds defined including columns for bID, bound_type, m, b
 #' @inheritParams mirror_across_bounds
-#' @return A data.frame containing original and mirrored wells, with the following columns:
+#' @return A tibble containing original and mirrored wells, with the following columns:
 #'   x, y, Q, diam, path, origin, transform (boundary type), source_bound.
 #'   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 #' @section Method:
@@ -186,8 +186,8 @@ mirror_across_bounds <- function(wells,bounds,num_levels,first_mirror=TRUE) {
 #' image_wells <- generate_image_wells(wells,bounds,num_levels=1)
 #' image_wells <- generate_image_wells(wells,bounds,num_levels=2) %>% mutate(original=level==0)
 #' ggplot() +
-#'   geom_abline(data=bounds,aes(slope=m,intercept=b)) +
-#'   geom_point(data=image_wells,aes(x,y,color=as.factor(origin),shape=original)) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
+#'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_point(data=image_wells,aes(x,y,color=as.factor(origin))) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
 #'   scale_shape_manual(values=c(1,16)) +
 #'   coord_equal()
 generate_image_wells <- function(wells,aquifer,num_levels) {

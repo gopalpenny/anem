@@ -11,6 +11,8 @@ get_potential_differential(loc, wells, aquifer)
 
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
+
+\item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 }
 \value{
 The output is the cumulative effect at \code{loc} of all \code{wells} on the hydraulic head [units=m] if
@@ -36,5 +38,6 @@ get_potential_differential(loc=c(50,50),well2,aquifer)
 # Multiple test locations
 wells <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-get_potential_differential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
+aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+get_potential_differential(grid_pts,wells,aquifer_unconfined)
 }

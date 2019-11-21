@@ -64,12 +64,7 @@ get_row_as_vector <- function(df,row=1) {
 #' @param loc coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y
 #' @param wells wells object with each row containing rate Q [m^3/s], diam [m],
 #'   radius of influence R [m], & coordinates x [m], y [m]
-#' @param h0 resting hydraulic head [m] of the aquifer without any pumping. For
-#'   an unconfined aquifer, this must be the thickness of the water table.
-#' @param Ksat saturated hydraulic conductivity [m/s]
-#' @param z0 thickness of the confined aquifer (confining case only)
-#' @param aquifer_type "confined" or "unconfined". Determines the calculation
-#'   and output units.
+#' @param aquifer Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)
 #' @return The output is the hydraulic head \code{loc}, accounting for the
 #'   cumulative effect of all \code{wells} (dP), which is given as hydraulic
 #'   head [units=m] if \code{aquifer_type="confined"} or discharge potential
@@ -88,15 +83,14 @@ get_row_as_vector <- function(df,row=1) {
 #' get_hydraulic_head(well1,loc=c(5,5),aquifer)
 #' get_hydraulic_head(well2,loc=c(5,5),aquifer)
 #' wells <- rbind(well1,well2)
-#' get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #'
-#' get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
-#' get_hydraulic_head(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#' get_hydraulic_head(wells,loc=c(5,5),aquifer=aquifer)
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-#' get_hydraulic_head(well1,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
-#' get_hydraulic_head(well2,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
-#' get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#' get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
+#' get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
+#' get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)
 #'
 #' # Ensure potentials are even when pumping is symmetric (and opposite sign)
 #' well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)
@@ -105,7 +99,7 @@ get_row_as_vector <- function(df,row=1) {
 #' well4 <- define_wells(x=0.5,y=1,Q=-2e-3,diam=0.5,R=300)
 #' wells_even <- rbind(well1,well1,well2,well3,well4)
 #' grid_pts_even <- data.frame(x=c(0,0.5,1),y=c(1,0.5,0))
-#' get_hydraulic_head(wells_even,loc=grid_pts_even,h0=40,Ksat=0.00005,aquifer_type="unconfined")
+#' get_hydraulic_head(wells_even,loc=grid_pts_even,aquifer=aquifer_unconfined)
 get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type) {
 
   dP <- get_potential_differential(loc,wells,aquifer)
@@ -143,20 +137,20 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #' get_flowdir(loc=c(5,5),wells,aquifer)
-#' get_flowdir(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-#' get_flowdir(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#' get_flowdir(loc=grid_pts,wells,aquifer)
 #'
 #' # Injection and pumping well along diagonal line
 #' wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-#' fd2 <- get_flowdir(wells2,loc=grid_pts2,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#' fd2 <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
 #'
 #' # Two pumping wells along diagonal line
 #' wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts3 <- data.frame(x=c(-3,-3,0,3,3,-2,2,-1,1),y=c(-3,3,0,-3,3,-1,1,-2,2))
-#' fd3 <- get_flowdir(wells3,loc=grid_pts3,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+#' fd3 <- get_flowdir(wells3,loc=grid_pts3,aquifer_unconfined)
 #'
 #' ## plot the flow directions
 #' # scale dx and dy for visualization
@@ -169,7 +163,8 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #'                 x2=x+dx_norm,y2=y+dy_norm)
 #'
 #' library(ggplot2)
-#' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
+#' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
+#'   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
   cAquifer <- check_aquifer(aquifer)
 
@@ -232,7 +227,8 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
 #' # Multiple test locations
 #' wells <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-#' get_potential_differential(grid_pts,wells,Ksat=0.00001,aquifer_type="unconfined")
+#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#' get_potential_differential(grid_pts,wells,aquifer_unconfined)
 get_potential_differential <- function(loc, wells, aquifer) {
   x_well <- wells$x
   y_well <- wells$y

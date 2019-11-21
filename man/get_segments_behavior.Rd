@@ -13,6 +13,8 @@ radius of influence R [m], & coordinates x [m], y [m]}
 
 \item{segments}{A data.frame containing, m, b, sID, x_1, x_2, y_1, y_2}
 
+\item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
+
 \item{length.out}{The number of points to check on each segment}
 }
 \value{

@@ -9,12 +9,12 @@ generate_image_wells(wells, aquifer, num_levels)
 \arguments{
 \item{wells}{Wells with columns Q, diam, x, y}
 
-\item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
+\item{aquifer}{Aquifer object with bounds defined including columns for bID, bound_type, m, b}
 
-\item{bounds}{Bounds with columns bID, bound_type, m, b}
+\item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
 }
 \value{
-A data.frame containing original and mirrored wells, with the following columns:
+A tibble containing original and mirrored wells, with the following columns:
   x, y, Q, diam, path, origin, transform (boundary type), source_bound.
   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 }
@@ -49,8 +49,8 @@ bounds <- define_bounds(bounds_df)
 image_wells <- generate_image_wells(wells,bounds,num_levels=1)
 image_wells <- generate_image_wells(wells,bounds,num_levels=2) \%>\% mutate(original=level==0)
 ggplot() +
-  geom_abline(data=bounds,aes(slope=m,intercept=b)) +
-  geom_point(data=image_wells,aes(x,y,color=as.factor(origin),shape=original)) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
+  geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+  geom_point(data=image_wells,aes(x,y,color=as.factor(origin))) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()
 }

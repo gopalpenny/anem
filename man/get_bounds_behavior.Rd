@@ -10,6 +10,8 @@ get_bounds_behavior(wells, aquifer, length.out = 100)
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
 
+\item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
+
 \item{length.out}{The number of points to check on each boundary}
 }
 \value{

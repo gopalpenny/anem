@@ -12,6 +12,8 @@ get_flowdir(loc, wells, aquifer, show_progress = FALSE, eps = 1e-04)
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
 
+\item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
+
 \item{show_progress}{Boolean input parameter. If true and there are >20 combinations of
 wells and locations, then a progress bar will be printed.}
 
@@ -32,20 +34,20 @@ Calculates the numerical derivative of hydraulic head in x and y directions, ret
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 get_flowdir(loc=c(5,5),wells,aquifer)
-get_flowdir(wells,loc=c(5,5),h0=30,Ksat=0.00001,aquifer_type="unconfined")
 
 grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-get_flowdir(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+get_flowdir(loc=grid_pts,wells,aquifer)
 
 # Injection and pumping well along diagonal line
 wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-fd2 <- get_flowdir(wells2,loc=grid_pts2,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+fd2 <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
 
 # Two pumping wells along diagonal line
 wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 grid_pts3 <- data.frame(x=c(-3,-3,0,3,3,-2,2,-1,1),y=c(-3,3,0,-3,3,-1,1,-2,2))
-fd3 <- get_flowdir(wells3,loc=grid_pts3,h0=30,Ksat=0.00001,aquifer_type="unconfined")
+fd3 <- get_flowdir(wells3,loc=grid_pts3,aquifer_unconfined)
 
 ## plot the flow directions
 # scale dx and dy for visualization
@@ -58,5 +60,6 @@ fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
                 x2=x+dx_norm,y2=y+dy_norm)
 
 library(ggplot2)
-ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
+ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
+  geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 }
