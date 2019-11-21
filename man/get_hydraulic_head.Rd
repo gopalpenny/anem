@@ -4,13 +4,13 @@
 \alias{get_hydraulic_head}
 \title{Get cumulative effect of wells at location}
 \usage{
-get_hydraulic_head(loc, wells, h0, Ksat, z0 = NA, aquifer_type)
+get_hydraulic_head(loc, wells, aquifer)
 }
 \arguments{
 \item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
 
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
-radius of influence roi [m], & coordinates x0 [m], y0 [m]}
+radius of influence R [m], & coordinates x [m], y [m]}
 
 \item{h0}{resting hydraulic head [m] of the aquifer without any pumping. For
 an unconfined aquifer, this must be the thickness of the water table.}
@@ -35,13 +35,16 @@ The output is the hydraulic head \code{loc}, accounting for the
 \description{
 Get the hydraulic head at a location, accounting for the aquifer type
 (confined or unconfined), resting head, and cumulative effect of all wells. This function
-is a wrapper around \code{get_potential()} to get the actual hydraulic head instead of the differential potential.
+is a wrapper around \code{get_potential_differential()} to get the actual hydraulic head instead of the differential potential.
 }
 \examples{
-well1 <- data.frame(x0=0,y0=0,rate=1e-3,diam=0.75,roi=300)
-well2 <- data.frame(x0=0.5,y0=0.25,rate=-2e-3,diam=0.8,roi=300)
-get_hydraulic_head(well1,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
-get_hydraulic_head(well2,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.75,R=300)
+well2 <- define_wells(x=0.5,y=0.25,Q=-2e-3,diam=0.8,R=300)
+aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+
+
+get_hydraulic_head(well1,loc=c(5,5),aquifer)
+get_hydraulic_head(well2,loc=c(5,5),aquifer)
 wells <- rbind(well1,well2)
 get_hydraulic_head(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 
@@ -54,10 +57,10 @@ get_hydraulic_head(well2,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfine
 get_hydraulic_head(wells,loc=grid_pts,h0=30,Ksat=0.00001,aquifer_type="unconfined")
 
 # Ensure potentials are even when pumping is symmetric (and opposite sign)
-well1 <- data.frame(x0=0,y0=0,rate=1e-3,diam=0.5,roi=300)
-well2 <- data.frame(x0=1,y0=1,rate=-2e-3,diam=0.5,roi=300)
-well3 <- data.frame(x0=0,y0=0.5,rate=2e-3,diam=0.5,roi=300)
-well4 <- data.frame(x0=0.5,y0=1,rate=-2e-3,diam=0.5,roi=300)
+well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)
+well2 <- define_wells(x=1,y=1,Q=-2e-3,diam=0.5,R=300)
+well3 <- define_wells(x=0,y=0.5,Q=2e-3,diam=0.5,R=300)
+well4 <- define_wells(x=0.5,y=1,Q=-2e-3,diam=0.5,R=300)
 wells_even <- rbind(well1,well1,well2,well3,well4)
 grid_pts_even <- data.frame(x=c(0,0.5,1),y=c(1,0.5,0))
 get_hydraulic_head(wells_even,loc=grid_pts_even,h0=40,Ksat=0.00005,aquifer_type="unconfined")

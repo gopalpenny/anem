@@ -4,20 +4,9 @@
 \alias{plot_bounds_behavior}
 \title{Plot behavior on boundaries}
 \usage{
-plot_bounds_behavior(wells_noimages, well_images, bounds, h0, Ksat,
-  z0 = NA, aquifer_type, length.out = 100)
+plot_bounds_behavior(well_images, aquifer, length.out = 100)
 }
 \arguments{
-\item{h0}{resting hydraulic head [m] of the aquifer without any pumping. For
-an unconfined aquifer, this must be the thickness of the water table.}
-
-\item{Ksat}{saturated hydraulic conductivity [m/s]}
-
-\item{z0}{thickness of the confined aquifer (confining case only)}
-
-\item{aquifer_type}{"confined" or "unconfined". Determines the calculation
-and output units.}
-
 \item{length.out}{The number of points to check on each boundary}
 }
 \value{
@@ -27,13 +16,14 @@ Two ggplot objects that show behavior on the boundaries, one for head and one fo
 Plot behavior on boundaries with and without well images
 }
 \examples{
-wells1 <- data.frame(x0=c(5),y0=c(5),rate=c(-.0001),diam=c(.1)) \%>\% as_tibble() \%>\%
-  mutate(roi=get_radius_of_influence(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds1 <- tibble(bound_type=c("CH","NF","NF","NF"),
+wells1 <- define_wells(x0=c(5),y0=c(5),rate=c(-.0001),diam=c(.1)) \%>\% as_tibble() \%>\%
+  mutate(R=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-well_images1 <- generate_image_wells(wells1,bounds1,num_levels=20) \%>\%
-  filter(max_mirror_dist<roi)
+aquifer1 <- define_aquifer("unconfined",Ksat=1,bounds=bounds_df1)
+well_images1 <- generate_image_wells(wells1,aquifer1,num_levels=20) \%>\%
+  filter(max_mirror_dist<R)
 p_domain <- ggplot() +
   geom_point(data=well_images1,aes(x0,y0,fill=rate),color="black",size=2,shape=21,alpha=0.5) +
   scale_fill_gradient2(low="blue",high="red",mid="gray") +
@@ -45,7 +35,7 @@ gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
 
 
 wells2 <- data.frame(x0=c(2,8),y0=c(5,5),rate=c(-.0007,.0005),diam=c(1,1)) \%>\% as_tibble() \%>\%
-  mutate(roi=get_radius_of_influence(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+  mutate(roi=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 bounds2 <- tibble(bound_type=c("CH","NF","NF","NF"),
                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))

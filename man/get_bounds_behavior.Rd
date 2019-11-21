@@ -4,22 +4,11 @@
 \alias{get_bounds_behavior}
 \title{Get hydraulic behavior on bounds}
 \usage{
-get_bounds_behavior(wells, bounds, h0, Ksat, z0 = z0, aquifer_type,
-  length.out = 100)
+get_bounds_behavior(wells, aquifer, length.out = 100)
 }
 \arguments{
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
-radius of influence roi [m], & coordinates x0 [m], y0 [m]}
-
-\item{h0}{resting hydraulic head [m] of the aquifer without any pumping. For
-an unconfined aquifer, this must be the thickness of the water table.}
-
-\item{Ksat}{saturated hydraulic conductivity [m/s]}
-
-\item{z0}{thickness of the confined aquifer (confining case only)}
-
-\item{aquifer_type}{"confined" or "unconfined". Determines the calculation
-and output units.}
+radius of influence R [m], & coordinates x [m], y [m]}
 
 \item{length.out}{The number of points to check on each boundary}
 }
@@ -33,18 +22,18 @@ Each row represents a point along bID and contains the head and flow as:
 Get hydraulic head and flow on boundaries
 }
 \examples{
-wells_noimages <- data.frame(x0=c(50,5),y0=c(25,2.5),rate=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\% as_tibble() \%>\%
-  mutate(roi=get_radius_of_influence(Ksat=0.00005,h=100,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds <- tibble(bound_type=c("CH","NF","NF","NF"),
+wells <- define_wells(x=c(50,5),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\% as_tibble() \%>\%
+  mutate(R=get_ROI(Ksat=0.00005,h=100,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
                  m=c(0.8,-1.25,0.8,-1.25),b=c(3,100,-25,1),
-                 bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-well_images <- generate_image_wells(wells_noimages,bounds,num_levels=6) \%>\%
-  filter(max_mirror_dist<roi)
+                 bID=as.numeric(1:4))
+aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df)
+well_images <- generate_image_wells(wells,bounds,num_levels=6) \%>\% filter(max_mirror_dist<R)
 ggplot() +
-  geom_point(data=well_images,aes(x0,y0,fill=rate),color="black",size=2,shape=21) +
+  geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray")+
   geom_abline(data=bounds,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) + coord_equal()
-bound_behavior <- get_bounds_behavior(well_images,bounds,h0=100,Ksat=0.00005,z0=100,aquifer_type="confined") \%>\%
+bound_behavior <- get_bounds_behavior(well_images,aquifer) \%>\%
   dplyr::mutate(im="images")
 gg_list <- plot_bounds_behavior(wells_noimages,well_images,bounds=bounds,h0=1000,Ksat=1,z0=100,aquifer_type="confined",length.out=50)
 gg_list$p_h

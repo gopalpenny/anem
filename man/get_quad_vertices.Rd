@@ -7,7 +7,7 @@
 get_quad_vertices(bounds)
 }
 \arguments{
-\item{bounds}{a data.frame containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2}
+\item{bounds}{a data.frame containing 4 lines (rows) defined by bID and x1, y1, x2, y2, or m and b}
 }
 \value{
 Returns a data.frame vertices for each of the 4 bounds. The bounds
@@ -15,7 +15,7 @@ are given an id, and there is one row in the output which identifies the opposid
 (with which there is no intersection).
 }
 \description{
-Get the 4 vertices correspondingt to quadrangle of 4 lines
+Get the 4 vertices corresponding to quadrangle of 4 lines
 }
 \examples{
 bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\% mutate(bID=row_number())
@@ -27,6 +27,12 @@ ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 bounds <- data.frame(x1=c(0,1,2,1),y1=c(1,2,1,0),x2=c(1,2,1,0),y2=c(2,1,0,1)) \%>\% mutate(bID=row_number())
 quad_vertices <- get_quad_vertices(bounds)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
+  geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+  scale_shape_manual(values=1:4)
+
+bounds <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+quad_vertices <- get_quad_vertices(bounds)
+ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal() +
   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
   scale_shape_manual(values=1:4)
 }

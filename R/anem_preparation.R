@@ -81,7 +81,7 @@ define_wells <- function(wells_df=NULL,...) {
     dplyr::select(wID,Q,R,diam,x,y,well_type,dplyr::everything()) %>% tibble::as_tibble()
 
   if (is_sf) {
-    wells <- wells %>% dplyr::mutate(X=x,Y=x) %>% sf::st_as_sf(coords=c("X","Y"),crs=wells_crs)
+    wells <- wells %>% dplyr::mutate(X=x,Y=y) %>% sf::st_as_sf(coords=c("X","Y"),crs=wells_crs)
   }
 
   return(wells)
@@ -92,8 +92,9 @@ define_wells <- function(wells_df=NULL,...) {
 #'
 #' Prepare boundaries with slope (m) and intercept (b) of all line objects, and add boundary ID (bID)
 #'
-#' @param bounds An sf object of straight lines (single segments), or a
-#'   data.frame with column names x1, y1, x2, y2, representing the endpoints
+#' @param bounds An sf object of straight lines (single segments), a
+#'   data.frame with column names x1, y1, x2, y2, representing the endpoints,
+#'   or a data.frame with columns m (slope) and b (intercept)
 #' @return A data.frame containing slope (m) and intercept (b) for each line,
 #'   along with original columns. If \code{bounds} is an sf object, the columns
 #'   x1, y1, x2, y2 are automatically extracted using \code{prep_wells_sf} and
@@ -103,9 +104,13 @@ define_wells <- function(wells_df=NULL,...) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' bounds <- define_bounds(bounds_df)
-#' ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2))
+#' ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
+#'
+#' bounds_df <- data.frame(bound_type=c("CH","CH","NF","NF"),x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' bounds <- define_bounds(bounds_df)
+#' ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
 define_bounds <- function(bounds_df,get_rectangular=TRUE) {
   is_sf <- max(grepl("sf",class(bounds_df)))
   bounds_prep <- bounds_df
@@ -113,25 +118,27 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
     bounds_prep <- bounds_prep %>% dplyr::mutate(bID=dplyr::row_number())
   }
 
+  if (is.factor(bounds_prep$bound_type)) {
+    bounds_prep$bound_type <- as.character(bounds_prep$bound_type)
+  }
+
   # Generate empty tibble with required column names
   columns <- tibble::tibble(bID=as.integer(),bound_type=as.character()) %>% cbind(
-    c("x1", "y1", "x2", "y2") %>% purrr::map_dfr( ~tibble(!!.x := numeric() ) ) )
+    c("x1", "y1", "x2", "y2") %>% purrr::map_dfr( ~tibble::tibble(!!.x := numeric() ) ) )
 
   # Get x, y coordinates and strip sf
   if (is_sf) {
     bounds_crs <- sf::st_crs(bounds_prep)
-    bounds_prep <- bounds_prep %>% dplyr::select(-dplyr::matches("x1"),-dplyr::matches("x2"),-dplyr::matches("y1"),-dplyr::matches("y2"))
+    bounds_prep <- bounds_prep %>% dplyr::select(-dplyr::matches("^x1$"),-dplyr::matches("^x2$"),-dplyr::matches("^y1$"),-dplyr::matches("^y2$"))
     bounds_prep <- prep_bounds_sf(bounds_prep) %>% sf::st_set_geometry(NULL)
     # boundaries_no_geometry <- bounds_prep %>% sf::st_set_geometry(NULL) %>%
-    #   dplyr::select(-x1,-x2,-y1,-y2)
-  } else {
-    # boundaries_no_geometry <- bounds_prep %>%
     #   dplyr::select(-x1,-x2,-y1,-y2)
   }
 
   # get rectangular bounds
   if (get_rectangular) {
-    bounds <- bounds_prep %>% dplyr::select(-x1,-x2,-y1,-y2) %>%
+    bounds <- bounds_prep %>%
+      dplyr::select(-dplyr::matches("^x1$"),-dplyr::matches("^x2$"),-dplyr::matches("^y1$"),-dplyr::matches("^y2$"),-dplyr::matches("^m$"),-dplyr::matches("^b$")) %>%
       dplyr::left_join(get_rectangle(bounds_prep),by="bID")
   } else{
     bounds <- bounds_prep %>%

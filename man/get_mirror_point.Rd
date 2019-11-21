@@ -2,13 +2,13 @@
 % Please edit documentation in R/anem_imaging.R
 \name{get_mirror_point}
 \alias{get_mirror_point}
-\title{Mirror a point across a boundary}
+\title{Mirror a well across a boundary}
 \usage{
-get_mirror_point(point, boundary, new_pID = NA)
+get_mirror_point(well, boundary, new_wID = NA)
 }
 \arguments{
-\item{point}{single point as a list (or sf object single point feature)
-containing coordinates (point$x0, point$y0), and pumping rate (point$rate),
+\item{well}{single well as a list (or sf object single well feature)
+containing coordinates (well$x, well$y), and pumping rate (well$Q),
 which is positive for injection, negative for pumping. Should also have:
 diam, path, origin.}
 
@@ -16,20 +16,29 @@ diam, path, origin.}
 containing slope (as boundary$m) and intercept (as boundary$b), as well as
 the boundary type (bound_type) as "CH" for constant head or "NF" for no flow}
 
-\item{new_pID}{integer ID for the new point to be created}
+\item{new_wID}{integer ID for the new well to be created}
 }
 \value{
-a row (same class as point input) containing the new imaged point and
-  the following columns: x0, y0, rate, diam, path, origin, transform
+a row (same class as well input) containing the new imaged well and
+  the following columns: x, y, Q, diam, path, origin, transform
   (boundary type),
   source_bound
 }
 \description{
-Mirror a point across a boundary, specified as constant head (CH) or no flow
+Mirror a well across a boundary, specified as constant head (CH) or no flow
 (NF) and defined by the line \eqn{m x + b})
 }
 \examples{
-point <- data.frame(pID=1,x0=0,y0=0,rate=0.5,diam=0.75,path=1,origin=1)
+well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
 boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
-get_mirror_point(point, boundary, new_pID=2)
+get_mirror_point(well, boundary, new_wID=2)
+
+well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+boundary <- data.frame(bID=1,m=Inf,b=1,bound_type="NF")
+get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
+
+
+well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
+get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
 }

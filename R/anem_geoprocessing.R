@@ -42,32 +42,10 @@ prep_bounds_sf <- function(bounds_sf) {
   return(bounds_df)
 }
 
-
-#' Check boundaries
-#'
-#' Check that boundaries have slopes that are normal to each other
-#' @examples
-#' check_bounds(tibble(m=c(1,1,-1,-1)))
-#' check_bounds(tibble(m=c(1,0.9,-1,-1)))
-check_bounds <- function(bounds) {
-  slopes <- bounds$m
-  slopes_unique <- unique(slopes)
-  warn <- FALSE
-  if (length(unique(round(slopes,10))) > 2) {
-    warn <- TRUE
-    warning("check_bounds(): More than two slopes have been specified: ",paste(slopes_unique,collapse=", "))
-  }
-  if (abs(slopes_unique[1] + 1/slopes_unique[2]) > 1e-10) {
-    warn <- TRUE
-    warning("check_bounds(): Slopes are not normal to each other (tolerance 1e-10). Slopes: ",paste(slopes_unique,collapse=", "))
-  }
-  return(warn)
-}
-
 #' Convert quadrangle to rectangle
 #'
 #' Convert 4 lines to a rectangular box with only right angles
-#' @param bounds a \code{data.frame} containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2, and an id (bID)
+#' @param bounds a \code{data.frame} containing 4 lines (rows) defined by columns bID and, either x1, y1, x2, and y2, or m and b
 #' @importFrom magrittr %>%
 #' @return Returns a \code{data.frame} containing slope and intercept for four edges of a rectangle. The
 #' rectangle is determined by (1) identifying the quadrangle of the input \code{bounds}, (2)
@@ -79,7 +57,24 @@ check_bounds <- function(bounds) {
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_abline(data=rect_boundaries,aes(slope=m,intercept=b,color=as.factor(bID))) + coord_equal()
+#'   geom_segment(data=rect_boundaries,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'
+#' bounds2 <- data.frame(m=c(2,4,-1,-1),b=c(0,4,3,20))
+#' rect_boundaries2 <- get_rectangle(bounds2)
+#' ggplot() + geom_abline(data=bounds2,aes(slope=m,intercept=b)) +
+#'   geom_segment(data=rect_boundaries2,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'
+#'
+#' bounds3 <- data.frame(m=c(Inf,0,Inf,0),b=c(0,4,4,0))
+#' rect_boundaries3 <- get_rectangle(bounds3)
+#' ggplot() + geom_abline(data=bounds3 %>% filter(m!=Inf),aes(slope=m,intercept=b),linetype="dashed") +
+#'   geom_vline(data=bounds3 %>% filter(m==Inf),aes(xintercept=b),linetype="dashed") +
+#'   geom_segment(data=rect_boundaries3,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'
+#' bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' rect_boundaries4 <- get_rectangle(bounds4)
+#' ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_segment(data=rect_boundaries4,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 get_rectangle <- function(bounds) {
   is_sf <- max(grepl("sf",class(bounds)))
 
@@ -103,8 +98,8 @@ get_rectangle <- function(bounds) {
                        dplyr::rename(bID=opposite_bID,x_mid2=x_mid,y_mid2=y_mid),by="bID") %>%
     dplyr::mutate(dist=sqrt((x_mid2-x_mid)^2+(y_mid2-y_mid)^2)) %>%
     dplyr::filter(dist==max(dist)) %>% dplyr::slice(1) %>%
-    dplyr::mutate(m=(y_mid2-y_mid)/(x_mid2-x_mid),
-                  m2=-1/m) %>%
+    dplyr::mutate(m=get_slope_intercept(x_mid,y_mid,x_mid2,y_mid2)$m,
+                  m2=get_slope_intercept(y_mid,-x_mid,y_mid2,-x_mid2)$m) %>%
     tidyr::gather(var,bID,dplyr::ends_with("bID")) %>%
     dplyr::select(bID,m,m2)
 
@@ -113,13 +108,13 @@ get_rectangle <- function(bounds) {
     dplyr::left_join(slopes %>% dplyr::select(-m) %>% dplyr::rename(m=m2) %>% dplyr::mutate(bGroup=1),by="bID") %>%
     dplyr::mutate(m=dplyr::if_else(!is.na(m),m,slopes$m[1]),
                   bGroup=dplyr::if_else(!is.na(bGroup),bGroup,2)) %>%
-    dplyr::mutate(b=y_mid - m*x_mid) %>% dplyr::select(m,b,bID,bGroup)
+    dplyr::mutate(b=get_slope_intercept(x_mid,y_mid,m=m)$b) %>% dplyr::select(m,b,bID)
 
 
   quad_vertices_final <- get_quad_vertices(bounds_rectangular) %>%
     dplyr::filter(!is.na(x)) %>% dplyr::select(x,y,bID) %>%
     dplyr::group_by(bID)
-  quad_vertices_final_wide <- quad_vertices_final%>%
+  quad_vertices_final_wide <- quad_vertices_final %>%
     dplyr::mutate(pt_num=dplyr::row_number()) %>% dplyr::group_by() %>%
     tidyr::gather(var,val,x,y) %>%
     tidyr::unite("pt",var,pt_num,sep = "") %>%
@@ -163,8 +158,8 @@ bounds_to_sf <- function(bounds,crs) {
 
 #' Get vertices of a quadrangle
 #'
-#' Get the 4 vertices correspondingt to quadrangle of 4 lines
-#' @param bounds a data.frame containing 4 lines (rows) defined, respectively, by x1, y1, x2, y2
+#' Get the 4 vertices corresponding to quadrangle of 4 lines
+#' @param bounds a data.frame containing 4 lines (rows) defined by bID and x1, y1, x2, y2, or m and b
 #' @importFrom magrittr %>%
 #' @return Returns a data.frame vertices for each of the 4 bounds. The bounds
 #' are given an id, and there is one row in the output which identifies the opposide bound
@@ -181,6 +176,12 @@ bounds_to_sf <- function(bounds,crs) {
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
 #'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
 #'   scale_shape_manual(values=1:4)
+#'
+#' bounds <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' quad_vertices <- get_quad_vertices(bounds)
+#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal() +
+#'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+#'   scale_shape_manual(values=1:4)
 get_quad_vertices <- function(bounds) {
   if (max(grepl("sf",class(bounds)))) {
     bounds <- bounds %>% sf::st_set_geometry(NULL)
@@ -189,8 +190,8 @@ get_quad_vertices <- function(bounds) {
     bounds_w_slope <- bounds %>% dplyr::select(m,b,bID)
   } else if (min(c('x1','x2','y1','y2') %in% names(bounds))) {
     bounds_w_slope <- bounds %>%
-      dplyr::mutate(m=(y2-y1)/(x2-x1),
-                    b=y1 - m*x1) %>% dplyr::select(m,b,bID)
+      dplyr::mutate(m=get_slope_intercept(x1,y1,x2,y2)$m,
+                    b=get_slope_intercept(x1,y1,x2,y2)$b) %>% dplyr::select(m,b,bID)
   }
   vertices <- bounds_w_slope %>%
     tidyr::crossing(bounds_w_slope %>% dplyr::rename(m2=m,b2=b,bID2=bID)) %>%
@@ -246,10 +247,22 @@ get_point_on_quandrangle <- function(x,y,axis) {
   return(point)
 }
 
+#' Get intersection of two lines
+#'
 #' Get intersection of two lines specified by slope m and intercept, b
+#' @examples
+#' get_intersection(1,0,-1,2)
+#' get_intersection(Inf,1,0,2)
+#' get_intersection(Inf,1,Inf,2)
 get_intersection <- function(m1,b1,m2,b2) {
-  x <- (b2-b1)/(m1-m2)
-  y <- m2*x + b2
+  x <- ifelse(m1==m2,NaN,
+              ifelse(m1==Inf, b1,
+                     ifelse(m2==Inf, b2,
+                            (b2-b1)/(m1-m2))))
+  y <- ifelse(m1==m2,NaN,
+              ifelse(m1==Inf, m2*x + b2,
+                     ifelse(m2==Inf, m1*x + b1,
+                            m2*x + b2)))
   intersections <- data.frame(x=x,y=y)
   return(intersections)
 }
@@ -279,6 +292,7 @@ gen_circ <- function(x,y,r) {
 #' Generate an object that acts like a circle
 #'
 #' @param df data.frame with columns x, y, r
+#' @export
 #' @examples
 #' df <- data.frame(x=1:3,y=1:3,roi=c(0.5,1,1.5))
 #' circles <- gen_circles(df %>% rename(r=roi))
@@ -287,4 +301,49 @@ gen_circles <- function(df) {
   df$id <- 1:dim(df)[1]
   circles <- do.call(rbind,lapply(split(df,df$id),gen_circleFun))
   return(circles)
+}
+
+#' Get quadrangle vertices
+#'
+#' Get quadrangle vertices in wide format
+get_quad_vertices_wide <- function(bounds) {
+  bounds <- get_quad_vertices(bounds) %>% filter(!is.na(x)) %>% group_by(bID) %>%
+    mutate(num=rank(intersection_bID)) %>% select(-intersection_bID) %>%
+    gather(axis,val,x,y) %>% unite(pt,axis,num) %>% spread(pt,val)
+  return(bounds)
+}
+
+#' Get slope and intercept
+#'
+#' Get slope and intercept of a line defined by x1, y1, x2, y2
+#' @examples
+#' get_slope_intercept(0,0,1,2)
+#' get_slope_intercept(0,-0,2,-1)
+#' get_slope_intercept(0,0,0,3)
+#' get_slope_intercept(0,2,3,2)
+#' get_slope_intercept(1,1,m=-1)
+#' get_slope_intercept(1,1,m=Inf)
+get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
+  if (is.null(m)) {
+    m <- dplyr::if_else(x2==x1, Inf, (y2-y1)/(x2-x1))
+    b <- dplyr::if_else(x2==x1, x1, y1 - m*x1)
+  } else {
+    b <- dplyr::if_else(abs(m)==Inf, x1, y1 - m*x1)
+  }
+  return(list(m=m,b=b))
+}
+
+#' Print data frame for re-entry
+#' @examples
+#' df <- data.frame(a=1:4,b=11:14,c=c("a","b","c","q"))
+#' print_data_frame_for_entry(df)
+print_data_frame_for_entry <- function(df) {
+  df_names <- names(df)
+  N <- length(df_names)
+  cat("df <- data.frame(")
+  for (i in 1:N) {
+    char_end <- ifelse(i!=N,",",")")
+    cat(paste0(df_names[i],"=",paste(df[,i],collapse=","),"",char_end,"\n"))
+  }
+
 }

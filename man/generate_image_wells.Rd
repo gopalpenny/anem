@@ -2,20 +2,20 @@
 % Please edit documentation in R/anem_imaging.R
 \name{generate_image_wells}
 \alias{generate_image_wells}
-\title{Mirror wells across rectangular boundaries}
+\title{Generate image wells across rectangular boundaries}
 \usage{
-generate_image_wells(wells, bounds, num_levels)
+generate_image_wells(wells, aquifer, num_levels)
 }
 \arguments{
-\item{wells}{Wells with columns rate, diam, x0, y0}
-
-\item{bounds}{Bounds with columns bID, bGroup, bound_type, m, b}
+\item{wells}{Wells with columns Q, diam, x, y}
 
 \item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
+
+\item{bounds}{Bounds with columns bID, bound_type, m, b}
 }
 \value{
 A data.frame containing original and mirrored wells, with the following columns:
-  x0, y0, rate, diam, path, origin, transform (boundary type), source_bound.
+  x, y, Q, diam, path, origin, transform (boundary type), source_bound.
   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 }
 \description{
@@ -23,33 +23,34 @@ Mirror wells across 2 parallel bounds, then the two perpendicular bounds
 }
 \section{Method}{
 
-The original wells are labelled L0. These wells are mirrored across the
-parallel boundaries from bGroup 1. Each mirrored well (L1) has a source well (L0) and source
+The original wells are labelled L0. These wells are mirrored across a set of
+parallel boundaries. Each mirrored well (L1) has a source well (L0) and source
 boundary (the bound across which it was mirrored). The L1 wells then need to
-be mirrored across the other boundary from bGroup 1. The wells from level Lx are mirrored
-across the other (except for the source boundary), and each mirror
+be mirrored across the other parallel boundary. The wells from level Lx are mirrored
+across the other boundary (ie, not the source boundary), and each mirror
 well (L+) has a source well (Lx) and source boundary (the bound across
-which it was mirrored). This is done for the parallel boundaries in bGroup 1,
-then repeated for the other two boundaries in bGroup 2.
+which it was mirrored). This is done for a first set of parallel boundaries,
+then repeated for the other two perpendicular boundaries.
 }
 
 \section{Notes}{
 
-The function requires that the wells are labeled with a column of identifiers, pID. If it is not
-present, the function generates them. The image well pID's are always generated automatically.
+The function requires that the wells are labeled with a column of identifiers, wID. If it is not
+present, the function generates them. The image well wID's are always generated automatically.
 not present.
 }
 
 \examples{
-wells <- data.frame(x0=c(5,0.5),y0=c(2.5,0.25),rate=c(0.5,-0.2),diam=c(0.75,0.8))
-bounds <- tibble(bound_type=c("CH","NF","NF","NF"),
-                 m=c(0.8,-1.25,0.8,-1.25),b=c(0.3,10,-2.5,0.1),
-                 bID=as.numeric(1:4),bGroup=c(2,1,2,1))
+wells <- define_wells(x=c(5,0.5),y=c(2.5,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
+bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
+                    m=c(0.8,-1.25,0.8,-1.25),b=c(0.3,10,-2.5,0.1),
+                    bID=as.numeric(1:4))
+bounds <- define_bounds(bounds_df)
 image_wells <- generate_image_wells(wells,bounds,num_levels=1)
 image_wells <- generate_image_wells(wells,bounds,num_levels=2) \%>\% mutate(original=level==0)
 ggplot() +
   geom_abline(data=bounds,aes(slope=m,intercept=b)) +
-  geom_point(data=image_wells,aes(x0,y0,color=as.factor(origin),shape=original)) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
+  geom_point(data=image_wells,aes(x,y,color=as.factor(origin),shape=original)) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()
 }

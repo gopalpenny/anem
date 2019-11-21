@@ -4,24 +4,14 @@
 \alias{get_segments_behavior}
 \title{Get hydraulic behavior along segments}
 \usage{
-get_segments_behavior(wells, segments, h0, Ksat, z0 = z0, aquifer_type,
-  length.out = 100, eps = 1e-10)
+get_segments_behavior(wells, segments, aquifer, length.out = 100,
+  eps = 1e-10)
 }
 \arguments{
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
-radius of influence roi [m], & coordinates x0 [m], y0 [m]}
+radius of influence R [m], & coordinates x [m], y [m]}
 
 \item{segments}{A data.frame containing, m, b, sID, x_1, x_2, y_1, y_2}
-
-\item{h0}{resting hydraulic head [m] of the aquifer without any pumping. For
-an unconfined aquifer, this must be the thickness of the water table.}
-
-\item{Ksat}{saturated hydraulic conductivity [m/s]}
-
-\item{z0}{thickness of the confined aquifer (confining case only)}
-
-\item{aquifer_type}{"confined" or "unconfined". Determines the calculation
-and output units.}
 
 \item{length.out}{The number of points to check on each segment}
 }
@@ -35,13 +25,14 @@ Each row represents a point along sID and contains the head and flow as:
 Get hydraulic head and flow on segments
 }
 \examples{
-wells <- data.frame(x0=c(50,10),y0=c(25,2.5),rate=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\% as_tibble() \%>\%
-  mutate(roi=get_radius_of_influence(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds <- tibble(bound_type=c("CH","NF"), m=c(1,-1),b=c(0,100), bID=as.numeric(1:2), bGroup=c(2,1))
-well_images <- generate_image_wells(wells,bounds,num_levels=2) \%>\% filter(max_mirror_dist<roi)
-segments <- bounds \%>\% rename(sID=bID) \%>\% mutate(x_1=c(0,50),x_2=c(50,75),y_1=c(0,50),y_2=c(50,25)) \%>\%
-  dplyr::mutate(y_unit_norm=sqrt(1/(1+m^2)),y_unit_norm=-sign(m)*sqrt(m^2/(1+m^2)))
-segments_behavior <- get_segments_behavior(well_images,segments,h0=100,Ksat=1,z0=100,aquifer_type="confined") \%>\% as_tibble()
+wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\%
+  mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
+aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
+well_images <- generate_image_wells(wells,bounds,num_levels=2) \%>\% filter(max_mirror_dist<R)
+segments <- bounds[1:2,] \%>\% rename(sID=bID) \%>\% mutate(x_1=c(0,50),x_2=c(50,75),y_1=c(0,50),y_2=c(50,25)) \%>\%
+  dplyr::mutate(x_unit_norm=sqrt(m^2/(1+m^2)),y_unit_norm=-sign(m)*sqrt(1/(1+m^2)))
+segments_behavior <- get_segments_behavior(well_images,segments,aquifer) \%>\% as_tibble()
 p_domain <- ggplot() +
   geom_point(data=well_images,aes(x0,y0,fill=rate),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray")+

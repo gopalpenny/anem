@@ -29,6 +29,7 @@
 #'     \item Ksat = saturated hydraulic conductivity [m/s]
 #'     \item s = drawdown in the borehole [m]
 #'   }
+#' @export
 #' @examples
 #' get_ROI(Tr=0.01,t=3600*12,S=1,method="cooper-jacob")
 #' get_ROI(Ksat=0.0001,h=50,t=3600*12,n=0.4,method="aravin-numerov")
@@ -77,6 +78,7 @@ get_row_as_vector <- function(df,row=1) {
 #'   \describe{
 #'   \item{aquifer_type="confined"}{\eqn{h=h_0+dP}}
 #'   \item{aquifer_type="unconfined"}{\eqn{h=\sqrt{h_0^2+dP}}} }
+#' @export
 #' @examples
 #' well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.75,R=300)
 #' well2 <- define_wells(x=0.5,y=0.25,Q=-2e-3,diam=0.8,R=300)
@@ -136,6 +138,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #'   then the output is also a dataframe with columns \code{dx} and \code{dy}. The two values
 #'   indicate the flow direction, and are equivalent to \eqn{-dh/dx}
 #'   and \eqn{-dh/dy}.
+#' @export
 #' @examples
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
@@ -168,6 +171,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' library(ggplot2)
 #' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) + geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
+  cAquifer <- check_aquifer(aquifer)
 
   loc_class <- class(loc)
   # get change in potential due to wells
@@ -215,6 +219,7 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
 #'   Note: if the \code{loc} is contained within the diameter of a well, the distance between the location
 #'   and that well is automatically adjusted to the edge of the well screen (i.e., well$diam/2). Similar any well-location
 #'   distance that exceeds the radius of influence of the well, R, is set equal to R
+#' @export
 #' @examples
 #' # Single test location
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-4,-2e-4),diam=c(0.75,0.8),R=c(300,300))

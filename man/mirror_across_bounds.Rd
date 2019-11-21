@@ -7,7 +7,7 @@
 mirror_across_bounds(wells, bounds, num_levels, first_mirror = TRUE)
 }
 \arguments{
-\item{wells}{Wells with columns rate, diam, x0, y0}
+\item{wells}{Wells with columns Q, diam, x, y}
 
 \item{bounds}{Bounds with columns bID, bound_type, m, b}
 
@@ -15,7 +15,7 @@ mirror_across_bounds(wells, bounds, num_levels, first_mirror = TRUE)
 }
 \value{
 A data.frame containing original and mirrored wells, with the following columns:
-  x0, y0, rate, diam, path, origin, transform (boundary type), source_bound.
+  x, y, Q, diam, path, origin, transform (boundary type), source_bound.
   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 }
 \description{
@@ -35,13 +35,13 @@ which it was mirrored).
 
 \section{Notes}{
 
-The function requires that the wells are labeled with a column of identifiers, pID. If it is not
-present, the function generates them. The image well pID's are always generated automatically.
+The function requires that the wells are labeled with a column of identifiers, wID. If it is not
+present, the function generates them. The image well wID's are always generated automatically.
 not present.
 }
 
 \examples{
-wells <- data.frame(x0=c(0,0.5),y0=c(0,0.25),rate=c(0.5,-0.2),diam=c(0.75,0.8))
+wells <- data.frame(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
 bounds <- data.frame(m=c(1,-1),b=c(0.5,1),bound_type=c("CH","NF"),bID=c(1,2))
 mirror_across_bounds(wells,bounds,num_levels=1)
 mirror_across_bounds(wells,bounds,num_levels=2)
