@@ -229,3 +229,36 @@ check_bounds <- function(bounds) {
   }
   return(warn)
 }
+
+
+#' Check wells
+#'
+#' Check that wells have standard columns and that specified columns have no NA values
+#' @examples
+#' wells_df <- data.frame(R=1:10,Q=NA,x=10:1,y=1:10,image=NA,diam=NA)
+#' wells <- define_wells(wells_df)
+#' check_wells(wells)
+#' check_wells(wells,c("R"))
+#' check_wells(wells,c("R","Q","well_type"))
+check_wells <- function(wells,columns=NULL) {
+  standard_names <- c("wID","Q","R","diam","x","y","well_type","well_image")
+  missing_columns <- standard_names[!(standard_names %in% names(wells))]
+  cWells <- "Good"
+
+  if (length(missing_columns) > 0) {
+    cWells <- "Warning"
+    warning("Wells missing fields: ",paste(missing_columns,collapse=", "))
+  }
+
+  if (!is.null(columns)) {
+    wells_NA_check <- lapply(wells[,columns],function(x) (max(is.na(x))==1)) %>% as.data.frame() %>% tidyr::gather(var,has_NA)
+
+    if (max(wells_NA_check$has_NA)) {
+      columns_with_NA <- wells_NA_check$var[wells_NA_check$has_NA]
+      cWells <- "Warning"
+      warning("Wells columns (",paste(columns_with_NA,collapse=", "),") contain NA values.")
+    }
+  }
+
+  return(cWells)
+}

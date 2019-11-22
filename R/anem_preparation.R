@@ -77,8 +77,9 @@ define_wells <- function(wells_df=NULL,...) {
   wells <- wells[,!(names(wells) %in% names(params))] %>%
     dplyr::bind_cols(params) %>%
     dplyr::mutate(wID=dplyr::row_number(),
-                  well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection"))) %>%
-    dplyr::select(wID,Q,R,diam,x,y,well_type,dplyr::everything()) %>% tibble::as_tibble()
+                  well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection")),
+                  well_image="Actual") %>%
+    dplyr::select(wID,Q,R,diam,x,y,well_type,well_image,dplyr::everything()) %>% tibble::as_tibble()
 
   if (is_sf) {
     wells <- wells %>% dplyr::mutate(X=x,Y=y) %>% sf::st_as_sf(coords=c("X","Y"),crs=wells_crs)
