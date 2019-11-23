@@ -90,7 +90,10 @@ get_pumping_relationships <- function(wells,aquifer,group_column,weights_column)
 #'                 country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
 #'   group_by(country) %>% mutate(weights=row_number()) %>% group_by()
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_confined)
+#'
+#' # Get drawdown relationship
 #' get_single_drawdown_relationship(wells, aquifer_confined, group_column=country, weights_column=weights,loc_group="A", pump_group="B")
+#'
 #' ggplot() +
 #'   geom_segment(data=aquifer_confined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
 #'   geom_abline(slope=0,intercept=500,linetype="dashed") +
@@ -110,6 +113,8 @@ get_single_drawdown_relationship <- function(wells, aquifer, group_column, weigh
   }
 
   var_type <- ifelse(aquifer$aquifer_type=="confined","D","PHI")
+  var_name <- ifelse(aquifer$aquifer_type=="confined","hydraulic head","discharge potential")
+
   loc <- wells %>% dplyr::filter(well_image=="Actual",!! group_column==loc_group)
   pump_wells <- wells %>% dplyr::filter(!! group_column==pump_group) %>%
     dplyr::mutate(Q=!! weights_column / sum((!! weights_column)[well_image=="Actual"]))
@@ -117,7 +122,7 @@ get_single_drawdown_relationship <- function(wells, aquifer, group_column, weigh
   weighted_potential <- loc_potential %>% dplyr::group_by() %>%
     dplyr::summarize(var=paste(var_type,loc_group,pump_group,sep="_"),
                      pot=weighted.mean(potential,!! weights_column),
-                     description=paste("Weighted effect of wells in group",pump_group,"on wells in group",loc_group))
+                     description=paste("Weighted effect of pumping in group",pump_group,"on",var_name,"in group",loc_group))
 
   return(weighted_potential)
 }

@@ -45,7 +45,10 @@ wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) \%>\%
                 country=factor(y>500,levels=c(F,T),labels=c("A","B"))) \%>\%
   group_by(country) \%>\% mutate(weights=row_number()) \%>\% group_by()
 wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer_confined)
+
+# Get drawdown relationship
 get_single_drawdown_relationship(wells, aquifer_confined, group_column=country, weights_column=weights,loc_group="A", pump_group="B")
+
 ggplot() +
   geom_segment(data=aquifer_confined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
