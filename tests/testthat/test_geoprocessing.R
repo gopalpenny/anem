@@ -80,3 +80,17 @@ test_that("get_quad_vertices returns data.frame with proper vertices from vertic
   expect_equal(get_quad_vertices(bounds) %>% dplyr::filter(!is.na(x)),df)
 })
 
+
+
+
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+loc <- c(150,150)
+test_that("get_distance_to_bounds works for single location",{
+  expect_equal(round(get_distance_to_bounds(loc,bounds),5),70.71068)
+})
+
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+loc <- data.frame(x=c(-200,0,200),y=c(-200,0,200))
+test_that("get_distance_to_bounds works for data.frame location",{
+  expect_equal(round(get_distance_to_bounds(loc,bounds),4),c(282.8427,0.0000,234.7765))
+})

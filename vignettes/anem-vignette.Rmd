@@ -209,9 +209,7 @@ The `aquifer_unconfined` has boundaries defined, but these boundaries won't actu
 Lastly, to know the effect of a well on any given location, we need to know the radius of influence of the well. This package provides a couple ways to do this through the `get_ROI` function. See `?get_ROI` for more resources. 
 
 ```{r well_imaging,fig.width=6,fig.height=3.5}
-well_images <- generate_image_wells(wells,aquifer_unconfined,num_levels=3) #%>%
-  # mutate(R=get_ROI(Ksat=aquifer_unconfined$Ksat,h=aquifer_unconfined$h0,t=3600*24*365*100,n=0.4,method="aravin-numerov"))
-
+well_images <- generate_image_wells(wells,aquifer_unconfined) 
 well_roi <- gen_circles(well_images %>% rename(r=R))
 
 ggplot()  +
@@ -226,13 +224,13 @@ ggplot()  +
 Some of the images wells are too far away to affect the aquifer. Select only the wells that have a mirror distance less than the radius of influence of the wells.
 
 ```{r well_imaging_filter,fig.width=6,fig.height=3.5}
-well_images <- well_images %>% filter(max_mirror_dist<R)
-well_roi <- gen_circles(well_images %>% rename(r=R))
+# well_images <- well_images %>% filter(max_mirror_dist<R)
+# well_roi <- gen_circles(well_images %>% rename(r=R))
 ggplot()  +
   geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray")+
-  geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.1,color="black") + 
-  geom_sf(data=aquifer_unconfined$bounds, aes(color=as.factor(bID)),size=1) + 
-  geom_point(data=well_images,aes(x,y,fill=Q),alpha=0.5,size=3,shape=21) + 
+  geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.1,color="black") +
+  geom_sf(data=aquifer_unconfined$bounds, aes(color=as.factor(bID)),size=1) +
+  geom_point(data=well_images,aes(x,y,fill=Q),alpha=0.5,size=3,shape=21) +
   scale_fill_gradient2("Pumping rate",low="blue",mid="gray",high="red") +
   scale_color_discrete("Boundary")
 ```

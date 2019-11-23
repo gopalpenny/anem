@@ -4,45 +4,58 @@
 \alias{mirror_across_bounds}
 \title{Recursively mirror wells across boundaries}
 \usage{
-mirror_across_bounds(wells, bounds, num_levels, first_mirror = TRUE)
+mirror_across_bounds(wells, bounds, num_levels = NULL,
+  first_mirror = TRUE)
 }
 \arguments{
-\item{wells}{Wells with columns Q, diam, x, y}
+\item{wells}{Wells with columns Q, R, diam, x, y}
 
 \item{bounds}{Bounds with columns bID, bound_type, m, b}
 
-\item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
+\item{num_levels}{(optional) Maximum number of iterations to image wells (and
+well images). Greater than or equal to 1. If not specified, then the number
+of levels is automatically estimated.}
+
+\item{first_mirror}{If TRUE, create columns (path, orig_wID, transform,
+source_bound,max_miror_dist) for all wells. If FALSE, do not generate these
+columns}
 }
 \value{
-A data.frame containing original and mirrored wells, with the following columns:
-  x, y, Q, diam, path, origin, transform (boundary type), source_bound.
-  Columns in wells that are not reproduced by this function are filled with \code{NA}.
+A data.frame containing original and mirrored wells, with the
+  following columns: x, y, Q, diam, path, orig_wID, transform (boundary type),
+  source_bound. Columns in wells that are not reproduced by this function are
+  filled with \code{NA}.
 }
 \description{
 Recursively mirror wells across boundaries
 }
 \section{Method}{
-
-The original wells are labelled L0. These wells are mirrored across the
-boundaries, and each mirrored well (L1) has a source well (L0) and source
-boundary (the bound across which it was mirrored) The L1 wells then need to
-be mirrored across all boundaries except for the source boundary (which
-would replicate the actual well). The wells from level Lx are mirrored
-across the boundaries (except for the source boundary), and each mirror
-well (L+) has a source well (Lx) and source boundary (the bound across
-which it was mirrored).
+ The original wells are labelled L0. These wells are mirrored
+  across the boundaries, and each mirrored well (L1) has a source well (L0)
+  and source boundary (the bound across which it was mirrored) The L1 wells
+  then need to be mirrored across all boundaries except for the source
+  boundary (which would replicate the actual well). The wells from level Lx
+  are mirrored across the boundaries (except for the source boundary), and
+  each mirror well (L+) has a source well (Lx) and source boundary (the bound
+  across which it was mirrored).
 }
 
 \section{Notes}{
-
-The function requires that the wells are labeled with a column of identifiers, wID. If it is not
-present, the function generates them. The image well wID's are always generated automatically.
-not present.
+ The function requires that the wells are labeled with a
+  column of identifiers, wID. If it is not present, the function generates
+  them. The image well wID's are always generated automatically. not present.
 }
 
 \examples{
-wells <- data.frame(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
-bounds <- data.frame(m=c(1,-1),b=c(0.5,1),bound_type=c("CH","NF"),bID=c(1,2))
-mirror_across_bounds(wells,bounds,num_levels=1)
-mirror_across_bounds(wells,bounds,num_levels=2)
+wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
+bounds <- data.frame(m=1,b=1,bound_type="CH",bID=1)
+mirror_across_bounds(wells,bounds)
+
+well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+wells <- define_wells(bind_rows(well1,well2))
+bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
+bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
+mirror_across_bounds(well1,bounds)
+mirror_across_bounds(wells,bounds)
 }

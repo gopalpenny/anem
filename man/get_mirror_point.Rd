@@ -10,7 +10,7 @@ get_mirror_point(well, boundary, new_wID = NA)
 \item{well}{single well as a list (or sf object single well feature)
 containing coordinates (well$x, well$y), and pumping rate (well$Q),
 which is positive for injection, negative for pumping. Should also have:
-diam, path, origin.}
+diam, path, orig_wID.}
 
 \item{boundary}{single line as a list (or sf object single line feature)
 containing slope (as boundary$m) and intercept (as boundary$b), as well as
@@ -20,7 +20,7 @@ the boundary type (bound_type) as "CH" for constant head or "NF" for no flow}
 }
 \value{
 a row (same class as well input) containing the new imaged well and
-  the following columns: x, y, Q, diam, path, origin, transform
+  the following columns: x, y, Q, diam, path, orig_wID, transform
   (boundary type),
   source_bound
 }
@@ -29,16 +29,16 @@ Mirror a well across a boundary, specified as constant head (CH) or no flow
 (NF) and defined by the line \eqn{m x + b})
 }
 \examples{
-well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
 get_mirror_point(well, boundary, new_wID=2)
 
-well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 boundary <- data.frame(bID=1,m=Inf,b=1,bound_type="NF")
 get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
 
 
-well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
 }

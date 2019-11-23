@@ -349,3 +349,39 @@ print_data_frame_for_entry <- function(df) {
   }
 
 }
+
+
+#' Get distance from point to bounds
+#'
+#' Get distance from point to bounds
+#' @param loc Location given as c(x,y) or as data.frame and $x, $y
+#' @bounds
+#' @importFrom magrittr %>%
+#' @examples
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' loc <- c(150,150)
+#' get_distance_to_bounds(loc,bounds)
+#'
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+#' loc <- data.frame(x=c(-200,0,200),y=c(-200,0,200))
+#' get_distance_to_bounds(loc,bounds)
+#' ggplot(bounds) + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2))
+get_distance_to_bounds <- function(loc,bounds) {
+  if (max(grepl("data.frame",class(loc)))) {
+    x_loc <- loc$x
+    y_loc <- loc$y
+  } else {
+    x_loc <- loc[1]
+    y_loc <- loc[2]
+  }
+  dist <- rep(NA,length(x_loc))
+  bound_vertices <- get_quad_vertices(bounds) %>% dplyr::filter(!is.na(x)) %>% dplyr::select(bound_x=x,bound_y=y) %>% dplyr::distinct()
+
+  for (i in 1:length(dist)) {
+    dist[i] <- bound_vertices %>%
+      dplyr::mutate(dist=sqrt((bound_x-x_loc[i])^2+(bound_y-y_loc[i])^2)) %>%
+      dplyr::pull(dist) %>% min()
+  }
+
+  return(dist)
+}

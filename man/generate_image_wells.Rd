@@ -4,18 +4,19 @@
 \alias{generate_image_wells}
 \title{Generate image wells across rectangular boundaries}
 \usage{
-generate_image_wells(wells, aquifer, num_levels)
+generate_image_wells(wells, aquifer, include_image_columns = FALSE)
 }
 \arguments{
-\item{wells}{Wells with columns Q, diam, x, y}
+\item{wells}{Wells with columns Q, R, diam, x, y}
 
 \item{aquifer}{Aquifer object with bounds defined including columns for bID, bound_type, m, b}
 
-\item{num_levels}{Maximum number of iterations to image wells (and well images). Greater than or equal to 1.}
+\item{include_image_columns}{If FALSE, no new columns are added. If TRUE, columns for well
+imaging are included in the result.}
 }
 \value{
 A tibble containing original and mirrored wells, with the following columns:
-  x, y, Q, diam, path, origin, transform (boundary type), source_bound.
+  x, y, Q, diam, path, orig_wID, transform (boundary type), source_bound.
   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 }
 \description{
@@ -41,16 +42,16 @@ not present.
 }
 
 \examples{
-wells <- define_wells(x=c(5,0.5),y=c(2.5,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
-bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
-                    m=c(0.8,-1.25,0.8,-1.25),b=c(0.3,10,-2.5,0.1),
-                    bID=as.numeric(1:4))
-bounds <- define_bounds(bounds_df)
-image_wells <- generate_image_wells(wells,bounds,num_levels=1)
-image_wells <- generate_image_wells(wells,bounds,num_levels=2) \%>\% mutate(original=level==0)
+well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+wells <- define_wells(bind_rows(well1,well2))
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+image_wells <- generate_image_wells(wells,bounds)
+
 ggplot() +
   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
-  geom_point(data=image_wells,aes(x,y,color=as.factor(origin))) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
+  geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()
 }

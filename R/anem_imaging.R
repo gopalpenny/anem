@@ -8,27 +8,27 @@
 #' @param well single well as a list (or sf object single well feature)
 #'   containing coordinates (well$x, well$y), and pumping rate (well$Q),
 #'   which is positive for injection, negative for pumping. Should also have:
-#'   diam, path, origin.
+#'   diam, path, orig_wID.
 #' @param boundary single line as a list (or sf object single line feature)
 #'   containing slope (as boundary$m) and intercept (as boundary$b), as well as
 #'   the boundary type (bound_type) as "CH" for constant head or "NF" for no flow
 #' @param new_wID integer ID for the new well to be created
 #' @return a row (same class as well input) containing the new imaged well and
-#'   the following columns: x, y, Q, diam, path, origin, transform
+#'   the following columns: x, y, Q, diam, path, orig_wID, transform
 #'   (boundary type),
 #'   source_bound
 #' @importFrom magrittr %>%
 #' @examples
-#' well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+#' well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 #' boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2)
 #'
-#' well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+#' well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 #' boundary <- data.frame(bID=1,m=Inf,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2) %>% select(x,y)
 #'
 #'
-#' well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,origin=1,well_group="a")
+#' well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 #' boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2) %>% select(x,y)
 get_mirror_point <- function(well, boundary, new_wID=NA) {
@@ -76,7 +76,7 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 
   # return well
   pt_df_props <- tibble::tibble(wID=new_wID,Q=Q,x=x1,y=y1,
-                                origin=well$origin,transform=boundary$bound_type,source_bound=boundary$bID,path=path,
+                                orig_wID=well$orig_wID,transform=boundary$bound_type,source_bound=boundary$bID,path=path,
                                 max_mirror_dist=max_mirror_dist,well_image="Image")
   pt_df <- well[!(names(well) %in% names(pt_df_props))] %>% dplyr::bind_cols(pt_df_props)
 
@@ -89,15 +89,16 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 
 #' Recursively mirror wells across boundaries
 #'
-#' @param wells Wells with columns Q, diam, x, y
+#' @param wells Wells with columns Q, R, diam, x, y
 #' @param bounds Bounds with columns bID, bound_type, m, b
-#' @param num_levels Maximum number of iterations to image wells (and well
-#'   images). Greater than or equal to 1.
-#' @param first_mirror If TRUE, create columns (path, origin, transform,
+#' @param num_levels (optional) Maximum number of iterations to image wells (and
+#'   well images). Greater than or equal to 1. If not specified, then the number
+#'   of levels is automatically estimated.
+#' @param first_mirror If TRUE, create columns (path, orig_wID, transform,
 #'   source_bound,max_miror_dist) for all wells. If FALSE, do not generate these
 #'   columns
 #' @return A data.frame containing original and mirrored wells, with the
-#'   following columns: x, y, Q, diam, path, origin, transform (boundary type),
+#'   following columns: x, y, Q, diam, path, orig_wID, transform (boundary type),
 #'   source_bound. Columns in wells that are not reproduced by this function are
 #'   filled with \code{NA}.
 #' @section Method: The original wells are labelled L0. These wells are mirrored
@@ -113,14 +114,18 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #'   them. The image well wID's are always generated automatically. not present.
 #' @importFrom magrittr %>%
 #' @examples
-#' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(0.75,0.8))
-#' bounds <- data.frame(m=c(1,-1),b=c(0.5,1),bound_type=c("CH","NF"),bID=c(1,2))
-#' mirror_across_bounds(wells,bounds,num_levels=1)
-#' mirror_across_bounds(wells,bounds,num_levels=2)
+#' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
+#' bounds <- data.frame(m=1,b=1,bound_type="CH",bID=1)
+#' mirror_across_bounds(wells,bounds)
 #'
-#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(-1,-1,2,2))
-#' bounds <- define_bounds(bounds_df)
-mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
+#' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
+#' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+#' wells <- define_wells(bind_rows(well1,well2))
+#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
+#' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
+#' mirror_across_bounds(well1,bounds)
+#' mirror_across_bounds(wells,bounds)
+mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE) {
   # make sure boundaries are parallel
   if (length(unique(round(bounds$m,10)))>1) {
     stop("mirror_across_bounds can only mirror across parallel boundaries.")
@@ -128,7 +133,9 @@ mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
 
 
   # estimate number of levels
-  if (length(bounds$m)==1) {
+  if (!is.null(num_levels)) {
+    num_levels <- num_levels
+  } else if (length(bounds$m)==1) {
     # if there is 1 boundary, we only need 1 image
     num_levels <- 1
   } else if (length(bounds$m)==2) {
@@ -160,7 +167,7 @@ mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
   }
 
   if (first_mirror) { # initialize wells
-    wells <- wells %>% dplyr::mutate(origin=wID,transform="none",source_bound="none",path="x",max_mirror_dist=0)
+    wells <- wells %>% dplyr::mutate(orig_wID=wID,transform="none",source_bound="none",path="x",max_mirror_dist=0)
   }
   well_cols <- names(wells)
 
@@ -184,7 +191,7 @@ mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
   }
 
   wells <- do.call(rbind,wells_full) %>%
-    dplyr::mutate(level=as.factor(stringr::str_count(path,":")))
+    dplyr::mutate(level=as.integer(stringr::str_count(path,":")))
   return(wells)
 }
 
@@ -194,9 +201,11 @@ mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
 #' Mirror wells across 2 parallel bounds, then the two perpendicular bounds
 #'
 #' @param aquifer Aquifer object with bounds defined including columns for bID, bound_type, m, b
+#' @param include_image_columns If FALSE, no new columns are added. If TRUE, columns for well
+#'   imaging are included in the result.
 #' @inheritParams mirror_across_bounds
 #' @return A tibble containing original and mirrored wells, with the following columns:
-#'   x, y, Q, diam, path, origin, transform (boundary type), source_bound.
+#'   x, y, Q, diam, path, orig_wID, transform (boundary type), source_bound.
 #'   Columns in wells that are not reproduced by this function are filled with \code{NA}.
 #' @section Method:
 #' The original wells are labelled L0. These wells are mirrored across a set of
@@ -214,24 +223,26 @@ mirror_across_bounds <- function(wells,bounds,first_mirror=TRUE) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' wells <- define_wells(x=c(5,0.5),y=c(2.5,0.25),Q=c(0.5,-0.2),diam=c(0.75,0.8))
-#' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
-#'                     m=c(0.8,-1.25,0.8,-1.25),b=c(0.3,10,-2.5,0.1),
-#'                     bID=as.numeric(1:4))
-#' bounds <- define_bounds(bounds_df)
+#' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
+#' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+#' wells <- define_wells(bind_rows(well1,well2))
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
 #' image_wells <- generate_image_wells(wells,bounds)
+#'
 #' ggplot() +
 #'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_point(data=image_wells,aes(x,y,color=as.factor(origin))) + #ylim(c(-3,5)) + xlim(c(-1,7)) +
+#'   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
 #'   scale_shape_manual(values=c(1,16)) +
 #'   coord_equal()
-generate_image_wells <- function(wells,aquifer) {
+generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
   if (max(grepl("aquifer",class(aquifer)))) {
     bounds <- aquifer$bounds
   } else {
     bounds <- aquifer
   }
   bcheck <- check_bounds(bounds)
+  wells_column_names <- names(wells)
 
   bounds <- bounds %>% dplyr::mutate(bGroup=as.integer(as.factor(round(m,10))))
 
@@ -240,9 +251,15 @@ generate_image_wells <- function(wells,aquifer) {
   }
 
   image_wells1 <- mirror_across_bounds(wells,bounds %>% dplyr::filter(bGroup==1))
-  image_wells <- mirror_across_bounds(image_wells1,bounds %>% dplyr::filter(bGroup==2),first_mirror=FALSE)
-  image_wells <- define_wells(image_wells)
+  image_wells2 <- mirror_across_bounds(image_wells1,bounds %>% dplyr::filter(bGroup==2),first_mirror=FALSE)
+
+  # remove image wells with R greater than the distance to the boundaries
+  image_wells <- image_wells2 %>% dplyr::mutate(dist=get_distance_to_bounds(.,bounds)) %>%
+    dplyr::filter(!(dist>R & well_image=="Image"))
+
+  if (!include_image_columns) {
+    image_wells <- image_wells %>% dplyr::select(dplyr::one_of(c(wells_column_names,"orig_wID")))
+  }
+
   return(image_wells)
 }
-
-#' Get distance between parallel lines
