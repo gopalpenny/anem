@@ -1,0 +1,54 @@
+---
+title: "anem-validation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{anem-validation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+# devtools::install_github("https://github.com/gopalpenny/anem")
+library(anem)
+```
+
+We need to validate the anem package for some simple use cases. In this validation we will consider:
+
+1. hydraulic head in a confined aquifer
+2. discharge potential in an unconfined aquifer
+3. flow direction
+4. behavior along boundaries 
+
+### Hydraulic head in a confined aquifer
+
+We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-Dimensional and parallel to the aquifer bottom, which is horizontal. Flow is governed by Darcy's law, which can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity ($r<R$) of a pumping well:
+
+$$h - h_0 = \frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right),$$
+
+where $h$ is hydraulic head at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $h_0$ is the undisturbed hydraulic head when $Q=0$, $T$ is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer ($T= K_{sat} z_0$), and $R$ is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping ($h=h_0$). This solution is valid for steady state flow in confined aquifers.
+
+To test the behavior, we define a confined aquifer with the following parameters and rectangular no-flow boundaries:
+```{r}
+aquifer <- define_aquifer(
+  aquifer_type = "confined",
+  Ksat=1e-4,
+  z0=10,
+  bounds=data.frame(bound_type=rep("NF",4),m=c(Inf,0,Inf,0),b=c(0,0,500,500))
+)
+print(aquifer)
+```
+
+
+
+### Hydraulic head in an unconfined aquifer
+
+The solution can also be written for unconfined aquifers in terms of discharge potential, $\phi$:
+$$\phi - \phi_0 = \frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
+where discharge potential is defines as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potentil when $Q=0$.

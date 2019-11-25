@@ -4,6 +4,7 @@
 #' S3 Print method for class "aquifer"
 #'
 #' @param aquifer Object of type aquifer
+#' @export
 print.aquifer <- function(aquifer) {
   aquifer_names <- names(aquifer)
 
