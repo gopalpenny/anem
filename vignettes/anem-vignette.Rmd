@@ -36,7 +36,7 @@ library(tidyverse)
 library(sf)
 # devtools::load_all("~/Projects/R_packages/anem")
 # devtools::install_github("https://github.com/gopalpenny/anem")
-# library(anem)
+library(anem)
 ```
 
 Aquifers in this package are characterized by:

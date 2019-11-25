@@ -14,9 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup,message=FALSE}
 # devtools::install_github("https://github.com/gopalpenny/anem")
-library(anem)
+library(tidyverse)
+# library(anem)
+devtools::load_all("~/Projects/R_packages/anem")
 ```
 
 We need to validate the anem package for some simple use cases. In this validation we will consider:
@@ -26,11 +28,14 @@ We need to validate the anem package for some simple use cases. In this validati
 3. flow direction
 4. behavior along boundaries 
 
-### Hydraulic head in a confined aquifer
+## Hydraulic head in a confined aquifer
 
 We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-Dimensional and parallel to the aquifer bottom, which is horizontal. Flow is governed by Darcy's law, which can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity ($r<R$) of a pumping well:
 
-$$h - h_0 = \frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right),$$
+\begin{align}
+h - h_0 = -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right)
+\label{eq:thiemunconfined}
+\end{align}
 
 where $h$ is hydraulic head at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $h_0$ is the undisturbed hydraulic head when $Q=0$, $T$ is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer ($T= K_{sat} z_0$), and $R$ is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping ($h=h_0$). This solution is valid for steady state flow in confined aquifers.
 
@@ -40,15 +45,159 @@ aquifer <- define_aquifer(
   aquifer_type = "confined",
   Ksat=1e-4,
   z0=10,
-  bounds=data.frame(bound_type=rep("NF",4),m=c(Inf,0,Inf,0),b=c(0,0,500,500))
+  bounds=data.frame(bound_type=rep("NF",4),m=c(Inf,0,Inf,0),b=c(0,0,1000,1000))
 )
 print(aquifer)
 ```
 
+We define a single pumping well in the center of the aquifer, with a pumping radius just less than the width of the aquifer.
+
+```{r}
+well <- define_wells(
+  Q=-1,
+  R=1200,
+  diam=1,
+  x=500,
+  y=500
+) %>%
+  generate_image_wells(aquifer)
+print(well)
+```
+
+And finally, we select three locations for observation, including one at the well:
+
+```{r}
+loc <- tribble(~pID,~x,~y,
+               1, 750, 500,
+               2, 625, 750,
+               3, 500, 500)
+```
+
+The well and its images and radii of influence, along with observation locations, look like this:
+
+```{r confined_plot,fig.width=8,warning=FALSE,echo=FALSE,message=FALSE}
+p_full <- ggplot() +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2)) +
+  geom_polygon(data=gen_circles(well),aes(x,y,group=id),alpha=0.25) +
+  geom_point(data=well,aes(x,y,color=well_image)) +
+  geom_point(data=loc,aes(x,y,shape="obs location")) +
+  scale_shape_manual(values=4) +
+  coord_equal()
+p_aquifer <- p_full + coord_equal(xlim=c(0,1000),ylim=c(0,1000))
+gridExtra::grid.arrange(p_full,p_aquifer,nrow=1)
+```
+
+The image wells are labeled "Image (+Q)", indicating they have the same sign as the "Actual" well. If the "Actual" well is negative, the images will also have negative pumping rates. The first point (pID=1) is within the radius of influence of four wells. We can manually calculate $h-h_0$ using the Thiem solution for the influence of each well
+
+```{r loc_radii,echo=FALSE}
+loc_radii <- loc %>% crossing(well %>% rename(xw=x,yw=y)) %>% 
+  mutate(r=sqrt((xw-x)^2+(yw-y)^2),r=if_else(r<diam/2,diam/2,r)) %>%
+  filter(r<R) %>%
+  mutate(`h-h0`=-Q/(2*pi*aquifer$Ksat*aquifer$z0)*log(r/R))
+loc_radii %>% filter(pID==1,r<R) %>% select(pID,wID,Q,well_image,r,`h-h0`) %>% 
+  knitr::kable("html",1)
+loc_radii_net <- loc_radii %>% group_by(pID) %>% summarize(net=sum(`h-h0`))
+```
+
+The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==1],4)`. We can compare these results with those from `anem` and `get_potential_differential()`:
+
+```{r}
+get_potential_differential(loc[loc$pID==1,],well,aquifer)
+```
+
+We can compare the same results for the second observation point: 
+
+```{r loc_radii2,echo=FALSE}
+loc_radii %>% filter(pID==2,r<R) %>% select(pID,wID,Q,well_image,r,`h-h0`) %>% 
+  knitr::kable("html",1)
+```
+
+The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==2],4)`.
+
+```{r}
+get_potential_differential(loc[loc$pID==2,],well,aquifer)
+```
+
+And the results for the third observation point.
+
+```{r loc_radii3,echo=FALSE}
+loc_radii %>% 
+  filter(pID==3,r<R) %>% mutate(r=format(r, scientific=F)) %>%
+  select(pID,wID,Q,well_image,r,`h-h0`) %>% 
+  knitr::kable("html",1,align=c('r','r','r','l','r','r'))
+```
+
+The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==3],3)`.
+
+```{r}
+get_potential_differential(loc[loc$pID==3,],well,aquifer)
+```
+
+In this last case, the observation location is within the radius of the well casing, which means that the effect of the co-located well is measured a distance of $r=diam/2=0.5$. In this case, the results are also valid.
+
+## Hydraulic head in an unconfined aquifer
+
+The solution can also be written for unconfined aquifers in terms of *discharge potential*, $\phi$:
+$$\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
+where discharge potential is defined as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potential when $Q=0$.
+
+Following the same analysis as above but redefining the aquifer as "unconfined", we further validate the package.
+
+```{r}
+aquifer_uconfined <- define_aquifer(
+  aquifer_type="unconfined",
+  Ksat=1e-4,
+  bounds=aquifer$bounds
+)
+print(aquifer_uconfined)
+```
 
 
-### Hydraulic head in an unconfined aquifer
+The first point (pID=1) is within the radius of influence of four wells. We can manually calculate $h-h_0$ using the Thiem solution for the influence of each well
 
-The solution can also be written for unconfined aquifers in terms of discharge potential, $\phi$:
-$$\phi - \phi_0 = \frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
-where discharge potential is defines as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potentil when $Q=0$.
+```{r loc_radii_unconf,echo=FALSE}
+loc_radii <- loc %>% crossing(well %>% rename(xw=x,yw=y)) %>% 
+  mutate(r=sqrt((xw-x)^2+(yw-y)^2),r=if_else(r<diam/2,diam/2,r)) %>%
+  filter(r<R) %>%
+  mutate(`phi-phi0`=-Q/(pi*aquifer_uconfined$Ksat)*log(r/R))
+loc_radii %>% filter(pID==1,r<R) %>% select(pID,wID,Q,well_image,r,`phi-phi0`) %>% 
+  knitr::kable("html",1)
+loc_radii_net <- loc_radii %>% group_by(pID) %>% summarize(net=sum(`phi-phi0`))
+```
+
+The sum of the $\phi-\phi_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==1],3)`. We can compare these results with those from `anem` and `get_potential_differential()`:
+
+```{r}
+get_potential_differential(loc[loc$pID==1,],well,aquifer_uconfined)
+```
+
+We can compare the same results for the second observation point: 
+
+```{r loc_radii_unconf2,echo=FALSE}
+loc_radii %>% filter(pID==2,r<R) %>% select(pID,wID,Q,well_image,r,`phi-phi0`) %>% 
+  knitr::kable("html",1)
+```
+
+The sum of the $\phi-\phi_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==2],3)`.
+
+```{r}
+get_potential_differential(loc[loc$pID==2,],well,aquifer_uconfined)
+```
+
+And the results for the third observation point.
+
+```{r loc_radii_unconf3,echo=FALSE}
+loc_radii %>% 
+  filter(pID==3,r<R) %>% mutate(r=format(r, scientific=F)) %>%
+  select(pID,wID,Q,well_image,r,`phi-phi0`) %>% 
+  knitr::kable("html",1,align=c('r','r','r','l','r','r'))
+```
+
+The sum of the $\phi-\phi_0$ column is `r format(loc_radii_net$net[loc_radii_net$pID==3],scientific=F,nsmall=3)`.
+
+```{r}
+get_potential_differential(loc[loc$pID==3,],well,aquifer_uconfined)
+```
+
+In this last case, the observation location is within the radius of the well casing, which means that the effect of the co-located well is measured a distance of $r=diam/2=0.5$. In this case, the results are also valid.
+

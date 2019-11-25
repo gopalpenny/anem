@@ -271,11 +271,17 @@ get_intersection <- function(m1,b1,m2,b2) {
 
 #' Generate outline of circle
 #'
-#' @param circle A \code{data.frame} with $x, $y, and $r columns. $id optional
+#' @param circle A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional
 #' @importFrom magrittr %>%
 gen_circleFun <- function(circle, npoints = 100){
   center <- c(circle$x,circle$y)
-  r <- circle$r
+  if("r" %in% names(circle)) {
+    r <- circle$r
+  } else if("R" %in% names(circle)) {
+    r <- circle$R
+  } else {
+    stop("Need to properly define the circle radius as $r or $R.")
+  }
   tt <- seq(0,2*pi,length.out = npoints)
   xx <- center[1] + r * cos(tt)
   yy <- center[2] + r * sin(tt)
