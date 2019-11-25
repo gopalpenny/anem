@@ -17,7 +17,7 @@ boundary3 <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 test_that("get_mirror_point accurately mirrors the point", {
   expect_equal(get_mirror_point(point, boundary, new_wID=2) %>% dplyr::select(-max_mirror_dist,-well_type),
                tibble::tibble(wID=2,Q=0.5,diam=0.75,x=1,y=1,orig_wID=1,transform="NF",R=5,
-                              source_bound=1,path="1 : 1 (1-NF)",w_group="a",well_image="Image"))
+                              source_bound=1,path="1 : 1 (1-NF)",w_group="a",well_image="Image (+Q)"))
   expect_equal(get_mirror_point(well2, boundary2, new_wID=2) %>% dplyr::select(x,y),
                tibble::tibble(x=0,y=2))
   expect_equal(get_mirror_point(well3, boundary3, new_wID=2) %>% dplyr::select(x,y),
@@ -47,7 +47,7 @@ df <- tibble::tibble(wID=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
                  diam=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
                  x=c(50, 25, -50, 150, -25, 175, 250, -150, 225, -175),
                  y=c(50, 75, 50, 50, 75, 75, 50, 50, 75, 75),
-                 well_image=c("Actual", "Actual", "Image", "Image", "Image", "Image", "Image", "Image", "Image", "Image"),
+                 well_image=c("Actual", "Actual", "Image (-Q)", "Image (+Q)", "Image (-Q)", "Image (+Q)", "Image (-Q)", "Image (-Q)", "Image (-Q)", "Image (-Q)"),
                  orig_wID=as.integer(c(1, 2, 1, 1, 2, 2, 1, 1, 2, 2)),
                  transform=c("none", "none", "CH", "NF", "CH", "NF", "NF", "CH", "NF", "CH"),
                  source_bound=c("none", "none", "1", "3", "1", "3", "3", "1", "3", "1"),
@@ -58,6 +58,7 @@ test_that("mirror_across_bounds reproduces correct results for simple example", 
   expect_equivalent(mirror_across_bounds(wells,bounds) %>% dplyr::select(-well_type),df)
 })
 
+paste(mirror_across_bounds(wells,bounds)$well_image,collapse="\",\"")
 
 # generate_image_wells testing
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
@@ -71,15 +72,31 @@ df <- tibble::tibble(wID=c(1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                  diam=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
                  x=c(50, 25, 50, 50, 25, 25, -50, 150, -25, 175, -50, 150, -50, 150, -25, -25, 175),
                  y=c(50, 75, -50, 150, -75, 125, 50, 50, 75, 75, -50, -50, 150, 150, -75, 125, 125),
-                 well_image=c("Actual", "Actual", rep("Image", 15)),
+                 well_image=c("Actual","Actual","Image (+Q)","Image (+Q)","Image (+Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (-Q)","Image (+Q)"),
                  orig_wID=as.integer(c(1, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 2)))
 # generate_image_wells(wells,bounds) %>% print_data_frame_for_entry()
 test_that("generate_image_wells returns correct data.frame",{
   expect_equal(generate_image_wells(wells,bounds) %>% dplyr::select(-well_type),df)
 })
+paste(generate_image_wells(wells,bounds)$well_image,collapse="\",\"")
 
 wells_sf <- wells %>% dplyr::mutate(X=x,Y=y) %>% sf::st_as_sf(coords=c("X","Y"))
 test_that("generate_image_wells returns the proper type",{
   expect_equal(class(generate_image_wells(wells_sf,bounds)),
                c("sf","tbl_df","tbl","data.frame"))
+})
+
+
+
+well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)
+wells <- define_wells(dplyr::bind_rows(well1,well2))
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>%
+  define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+image_wells <- generate_image_wells(wells,bounds)
+image_wells_image_NA <- image_wells %>%
+  dplyr::mutate(Q=dplyr::case_when(grepl("Image",well_image)~as.numeric(NA),TRUE~Q))
+test_that("reconstruct_image_pumping accurately reconstructs image pumping for + and - Q, and CH and NF boundaries",{
+  expect_equal(reconstruct_image_pumping(image_wells_image_NA),image_wells)
 })

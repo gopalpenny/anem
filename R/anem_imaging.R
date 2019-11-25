@@ -6,7 +6,8 @@
 #' (NF) and defined by the line \eqn{m x + b})
 #'
 #' @param well single well as a list (or sf object single well feature)
-#'   containing coordinates (well$x, well$y), and pumping rate (well$Q),
+#'   containing coordinates (well$x, well$y), pumping rate (well$Q), and
+#'   well_image ("Actual" or "Image (+Q)" or "Image (-Q)").
 #'   which is positive for injection, negative for pumping. Should also have:
 #'   diam, path, orig_wID.
 #' @param boundary single line as a list (or sf object single line feature)
@@ -19,6 +20,10 @@
 #'   source_bound
 #' @importFrom magrittr %>%
 #' @examples
+#' well <- define_wells(wID=1,x=0,y=0,path=1,orig_wID=1)
+#' boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
+#' get_mirror_point(well, boundary, new_wID=2)
+#'
 #' well <- define_wells(wID=1,x=0,y=0,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 #' boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2)
@@ -32,6 +37,7 @@
 #' boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2) %>% select(x,y)
 get_mirror_point <- function(well, boundary, new_wID=NA) {
+  check_wells(well,c("x","y","well_image"))
   is_sf <- max(grepl("sf",class(well)))
   if (is_sf) {
     well_crs <- sf::st_crs(well)
@@ -65,19 +71,23 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 
   max_mirror_dist <- pmax(with(well,sqrt((xi-x)^2+(yi-y)^2)),well$max_mirror_dist)
 
+  # set well_image field
+  next_well_image <- set_pumping_sign(well$well_image,boundary$bound_type)$well_image
+
   # get pumping rate (depending on NF or CH)
   Q <- dplyr::case_when(
     boundary$bound_type=="NF"~well$Q,
     boundary$bound_type=="CH"~-well$Q,
     TRUE~Inf)
 
+
   # set path
   path <- paste(well$path," : ",well$wID," (",boundary$bID,"-",boundary$bound_type,")",sep="")
 
   # return well
-  pt_df_props <- tibble::tibble(wID=new_wID,Q=Q,x=x1,y=y1,
+  pt_df_props <- tibble::tibble(wID=new_wID,Q=Q,x=x1,y=y1,well_image=next_well_image,
                                 orig_wID=well$orig_wID,transform=boundary$bound_type,source_bound=boundary$bID,path=path,
-                                max_mirror_dist=max_mirror_dist,well_image="Image")
+                                max_mirror_dist=max_mirror_dist)
   pt_df <- well[!(names(well) %in% names(pt_df_props))] %>% dplyr::bind_cols(pt_df_props)
 
   if (is_sf) {
@@ -86,6 +96,50 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
   }
   return(pt_df)
 }
+
+#' Get pumping sign
+#'
+#' @examples
+#' get_pumping_sign("Actual")
+#' get_pumping_sign("Image (+Q)")
+#' get_pumping_sign("Image (-Q)")
+get_pumping_sign <- function(well_image) {
+  sign <- dplyr::case_when(
+    grepl("Actual|\\+Q",well_image)~1,
+    grepl("\\-Q",well_image)~-1,
+    TRUE~Inf)
+  return(sign)
+}
+
+
+#' Get pumping sign
+#'
+#' Get sign of pumping relative to pumping of Actual well (associated by orig_wID)
+#' @examples
+#' set_pumping_sign("Actual","NF")
+#' set_pumping_sign("Actual","CH")
+#' set_pumping_sign("Image (+Q)","NF")
+#' set_pumping_sign("Image (+Q)","CH")
+#' set_pumping_sign("Image (-Q)","NF")
+#' set_pumping_sign("Image (-Q)","CH")
+set_pumping_sign <- function(well_image,bound_type,type="text") {
+  prev_sign <- dplyr::case_when(
+    grepl("Actual|\\+Q",well_image)~1,
+    grepl("\\-Q",well_image)~-1,
+    TRUE~Inf)
+  change_sign <- dplyr::case_when(
+    bound_type=="NF"~1,
+    bound_type=="CH"~-1,
+    TRUE~Inf)
+  new_sign <- prev_sign * change_sign
+  text_sign <- dplyr::case_when(
+    new_sign==1~"Image (+Q)",
+    new_sign==-1~"Image (-Q)",
+    TRUE~"Inf"
+  )
+  return(list(sign=new_sign,well_image=text_sign))
+}
+
 
 #' Recursively mirror wells across boundaries
 #'
@@ -244,6 +298,11 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
   bcheck <- check_bounds(bounds)
   wells_column_names <- names(wells)
 
+  # check for no images
+  if (max(unique(wells$well_image)=="Image")==1) {
+    stop("Stopping generate_image_wells. Won't generate image wells for wells already labeled as wells$well_image=\"Image\".")
+  }
+
   bounds <- bounds %>% dplyr::mutate(bGroup=as.integer(as.factor(round(m,10))))
 
   if (!max(grepl("^wID$",names(wells)))) { # generate wID's if they are not present
@@ -255,11 +314,36 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 
   # remove image wells with R greater than the distance to the boundaries
   image_wells <- image_wells2 %>% dplyr::mutate(dist=get_distance_to_bounds(.,bounds)) %>%
-    dplyr::filter(!(dist>R & well_image=="Image"))
+    dplyr::filter(!(dist>R & grepl("Image",well_image)))
 
   if (!include_image_columns) {
     image_wells <- image_wells %>% dplyr::select(dplyr::one_of(c(wells_column_names,"orig_wID")))
   }
 
   return(image_wells)
+}
+
+#' Reproduce pumping at image wells
+#'
+#' Reproduce pumping of actual wells at image wells
+#' @param wells A data.frame object of wells, containing well_image column with
+#' "Actual", "Image (+Q)", or "Image (-Q)" text.
+#' @return A tibble containing wells where Image wells contain pumping rates similar to
+#' generate_image_wells.
+#' @examples
+#' well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
+#' well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)
+#' wells <- define_wells(bind_rows(well1,well2))
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+#' image_wells <- generate_image_wells(wells,bounds)
+#' image_wells_image_NA <- image_wells %>%
+#'   dplyr::mutate(Q=dplyr::case_when(grepl("Image",well_image)~as.numeric(NA),TRUE~Q))
+#' image_wells_reconstructed <- reconstruct_image_pumping(image_wells_image_NA)
+#' identical(image_wells,image_wells_reconstructed)
+reconstruct_image_pumping <- function(image_wells) {
+  image_wells_reconstructed <- image_wells %>% dplyr::arrange(orig_wID,well_image) %>%
+    tidyr::fill(Q) %>% dplyr::mutate(Q=Q*get_pumping_sign(well_image)) %>%
+    dplyr::arrange(wID)
+  return(image_wells_reconstructed)
 }

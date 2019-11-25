@@ -1,11 +1,7 @@
-#' # anem_wrappers.R # wrapper functions to perform high level analysis with
-#' anem
-#'
-#' library(tidyverse)
-#'
-#'
-#'
-#' Get pumping relationships
+# anem_wrappers.R # wrapper functions to perform high level analysis with
+
+
+#' Get drawdown relationships
 #'
 #' Calculate Dii, Dij (or PHIii, PHIij) for groups of wells
 #'
@@ -23,22 +19,25 @@
 #' @examples
 #' # define aquifer
 #' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-#' aquifer_confined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
+#' aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
 #'
 #' # define wells and well images
 #' set.seed(30)
 #' wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
-#'   dplyr::mutate(R=get_ROI(Ksat=aquifer_confined$Ksat,h=aquifer_confined$h0,t=3600*24*365,n=0.4,method="aravin-numerov"),  # t = 1 year
-#'                 country=factor(y>500,levels=c(F,T),labels=c("A","B")),
-#'                 weights=1)
-#' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_confined)
-#' get_pumping_relationships(wells,aquifer_confined,country,weights)
+#'   mutate(R=1000,  # t = 1 year
+#'          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+#'   group_by(country) %>%
+#'   mutate(weights=1,Q=1/n()) %>% group_by()
+#' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
+#'
+#' get_drawdown_relationships(wells, aquifer_unconfined, group_column=country, weights_column=weights)
+#'
 #' ggplot() +
 #'   geom_segment(data=aquifer_confined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
 #'   geom_abline(slope=0,intercept=500,linetype="dashed") +
 #'   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
 #'   coord_equal()
-get_pumping_relationships <- function(wells,aquifer,group_column,weights_column) {
+get_drawdown_relationships <- function(wells,aquifer,group_column,weights_column) {
   # enquo weights column
   # weights_column <- enquo(weights_column)
   # if (!is.null(weights_column)) {
@@ -70,7 +69,7 @@ get_pumping_relationships <- function(wells,aquifer,group_column,weights_column)
 #' Get drawdown relationship at locations locations due to unit pumping from wells. Include weights on location and wells.
 #' @param loc_group Value in wells$group_column where drawdown should be measured
 #' @param pump_group Value in wells$group_column which identifies wells
-#' @inheritParams get_pumping_relationships
+#' @inheritParams get_drawdown_relationships
 #' @return Returns a list with two values:
 #' pot, which is the potential differential due to unit pumping from the pumping wells in pump_group.
 #'
@@ -86,13 +85,13 @@ get_pumping_relationships <- function(wells,aquifer,group_column,weights_column)
 #' # define wells and well images
 #' set.seed(30)
 #' wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
-#'   dplyr::mutate(R=1000,  # t = 1 year
-#'                 country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
-#'   group_by(country) %>% mutate(weights=row_number()) %>% group_by()
+#'   mutate(R=1000,  # t = 1 year
+#'          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+#'   group_by(country) %>%
+#'   mutate(weights=1,Q=1/n()) %>% group_by()
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_confined)
 #'
-#' # Get drawdown relationship
-#' get_single_drawdown_relationship(wells, aquifer_confined, group_column=country, weights_column=weights,loc_group="A", pump_group="B")
+#' get_single_drawdown_relationship(wells, aquifer_confined, group_column=country, weights_column=weights,loc_group="S", pump_group="F")
 #'
 #' ggplot() +
 #'   geom_segment(data=aquifer_confined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
@@ -100,11 +99,22 @@ get_pumping_relationships <- function(wells,aquifer,group_column,weights_column)
 #'   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
 #'   coord_equal()
 get_single_drawdown_relationship <- function(wells, aquifer, group_column, weights_column, loc_group, pump_group) {
+  is_sf <- max(grepl("sf",class(wells)))
+  if (is_sf) {
+    wells <- wells %>% sf::st_set_geometry(NULL)
+  }
   wells <- wells %>% dplyr::group_by()
   group_column <- rlang::enquo(group_column)
   weights_column <- rlang::enquo(weights_column)
 
+  # for debugging only:
   # weights_column <- rlang::quo(weights)
+  # group_column <- rlang::quo(country)
+  # aquifer <- aquifer_confined
+  # loc_group <- "F"
+  # pump_group <- "S"
+  # end debugging code
+
   check_weights <- wells %>% dplyr::select(orig_wID,!! weights_column) %>% dplyr::distinct() %>%
     dplyr::group_by(orig_wID) %>%
     dplyr::summarize(n=dplyr::n())
@@ -117,8 +127,10 @@ get_single_drawdown_relationship <- function(wells, aquifer, group_column, weigh
 
   loc <- wells %>% dplyr::filter(well_image=="Actual",!! group_column==loc_group)
   pump_wells <- wells %>% dplyr::filter(!! group_column==pump_group) %>%
-    dplyr::mutate(Q=!! weights_column / sum((!! weights_column)[well_image=="Actual"]))
+    dplyr::mutate(Q=!! weights_column / sum((!! weights_column)[well_image=="Actual"])) %>%
+    reconstruct_image_pumping()
   loc_potential <- loc %>% dplyr::mutate(potential=get_potential_differential(loc,pump_wells,aquifer = aquifer))
+
   weighted_potential <- loc_potential %>% dplyr::group_by() %>%
     dplyr::summarize(var=paste(var_type,loc_group,pump_group,sep="_"),
                      pot=weighted.mean(potential,!! weights_column),

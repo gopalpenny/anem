@@ -160,7 +160,7 @@ plot_bounds_behavior <- function(well_images,aquifer,length.out=100) {
     aquifer$bounds <- aquifer$bounds %>% sf::st_set_geometry(NULL)
   }
 
-  wells_noimages <- well_images %>% dplyr::filter(wID==origin)
+  wells_noimages <- well_images %>% dplyr::filter(wID==orig_wID)
 
   bounds_behavior_noim <- get_bounds_behavior(wells_noimages,aquifer,length.out=length.out) %>%
     dplyr::mutate(im="no_images")

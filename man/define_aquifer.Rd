@@ -10,6 +10,8 @@ define_aquifer(aquifer_type, Ksat, ...)
 \item{aquifer_type}{"confined" or "unconfined"}
 
 \item{Ksat}{Saturated hydraulic conductivity}
+
+\item{...}{Optional parameters including boundaries, recharge zone, and aquifer thickness}
 }
 \value{
 This function returns an S3 "aquifer" object that behaves as a list and contains

@@ -19,34 +19,15 @@ devtools::load_all()
 
 This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.
 
-This package models simple aquifer and well configurations, with an emphasis on *simple*. The boundaries of the aquifer can be specified as *no flow* or *constant head* boundaries, and the corners of the aquifer must be right angles. For fully bounded aquifers, this means that the aquifer must be a rectangle. The constant head boundaries take the head of the undisturbed aquifer, h_0.
+This package models *simple* aquifer and well configurations. The boundaries of the aquifer can be specified as *no flow* or *constant head* boundaries, and the corners of the aquifer must be right angles. For fully bounded aquifers, this means that the aquifer must be a rectangle. The constant head boundaries take the head of the undisturbed aquifer, h0.
 
-Units are designed for length dimensions given in meters (or m^2), and time in seconds
+Units are designed for length dimensions given in meters (or m^2^), and time in seconds
 
-Wells are characterized by:
+As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. 
 
-* Location x, y
-* Pumping rate (+ for injection, - for pumping), Q
-* Diameter, diam
-* Radius of influence, R
+The first section, however, describes how to obtain drawdown relationships between groups of wells.
 
-Aquifer boundaries are characterized by:
-
-* Coordinates in a cartesian plane
-* Slope, m, and intercept, b
-* Boundary type, NF or CH
-* Boundary group (parallel boundaries are grouped together)
-
-And the aquifer is characterized by:
-
-* Aquifer type, confined or unconfined
-* Saturated hydraulic conductivity, Ksat
-* Resting hydraulic head, h_0
-* Thickness of the aquifer, z0 (confined aquifers only)
-
-As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared.
-
-## Intialization and data prep
+## A simple example of drawdown relationships
 
 Load packages for the vignette
 
@@ -57,6 +38,78 @@ library(sf)
 # devtools::install_github("https://github.com/gopalpenny/anem")
 # library(anem)
 ```
+
+Aquifers in this package are characterized by:
+
+* Aquifer type, confined or unconfined
+* Saturated hydraulic conductivity, Ksat
+* Resting hydraulic head, h0
+* Thickness of the aquifer, z0 (confined aquifers only)
+* Aquifer boundaries, characterized by:
+  + Boundary ID, or bID
+  + Coordinates in a cartesian plane, given as slope, m, and intercept, b, and coordinates (x1, y1, x2, y2)
+  + Boundary type, NF or CH
+* Additional user-defined parameters
+
+Use the `define_aquifer()` function to create a new aquifer, which has the class `aquifer`. This class is essentially a list with names parameters and a separate print method.
+
+```{r}
+# define aquifer
+bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
+aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
+print(aquifer_unconfined)
+```
+
+Wells are characterized by:
+
+* Well ID, or wID
+* Location x, y
+* Pumping rate (+ for injection, - for pumping), Q
+* Radius of influence, R
+* Diameter, diam
+* Well images (which are noted in the `well_image` column)
+* Additional user-defined columns, including groups or weights.
+
+Define pumping wells using random locations and set a "border" between two countries at y = 500 m. This is done manually, below, by randomly generating well locations and setting wells with y > 500 as country "B". The `define_wells()` function ensures that the wells have all appropriate columns, and the class of the returned object is a `tibble` (which functions like a `data.frame`, but has a couple bells and whistles). Also note that the radius of influence (R) is defined arbitrarily, but there is also a function to calculate this manually -- see `?get_ROI` for more details. 
+
+The `generate_image_wells()` function generates well images to recreate the bounderies defined by `aquifer_unconfined`.
+
+```{r set_simple_aquifer}
+# define wells and well images
+set.seed(30)
+wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
+  mutate(R=1000,  #
+         country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+  group_by(country) %>%
+  mutate(weights=1,Q=1/n()) %>% group_by()
+wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
+print(wells)
+```
+
+Plot the aquifer and wells.
+
+```{r set_simple_wells}
+ggplot() +
+  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_abline(slope=0,intercept=500,linetype="dashed") +
+  geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
+  coord_equal()
+```
+
+Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean.
+
+```{r drawdown_relationships,results='hide'}
+drawdown_relationships <- get_drawdown_relationships(wells, aquifer_unconfined, group_column=country, weights_column=weights)
+```
+
+The following results show $\Phi_{ii}$ and $\Phi_{ij}$.
+```{r print_drawdown_kable,echo=FALSE}
+drawdown_relationships %>% knitr::kable("html") %>% kableExtra::kable_styling()
+```
+
+## Additional examples using shapefile data inputs from Switzerland and France
+
+## Data prep
 
 ### Examine the data
 
@@ -273,7 +326,7 @@ ggplot(head_unconf_df) +
   geom_contour(aes(x,y,z=head_m),bins=20,color="gray",linetype="dashed")  + 
   geom_sf(data=aquifer_unconfined$bounds, aes()) + 
   # geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-  geom_point(data=well_images %>% filter(level==0),aes(x,y)) +
+  geom_point(data=well_images %>% filter(well_image=="Actual"),aes(x,y)) +
   # geom_sf(data=pts_utm, aes(size=abs(Q),shape=type)) +
   coord_sf(xlim=c(grid_bounds_unconf$xmin,grid_bounds_unconf$xmax),ylim=c(grid_bounds_unconf$ymin,grid_bounds_unconf$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4))
@@ -306,7 +359,7 @@ ggplot(flow_dir_unconf_df) +
   geom_raster(aes(x,y,fill=mag_norm))  + 
   geom_sf(data=aquifer_unconfined$bounds, aes()) + 
   geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-  geom_point(data=well_images %>% filter(level==0),aes(x,y)) +
+  geom_point(data=well_images %>% filter(well_image=="Actual"),aes(x,y)) +
   coord_sf(xlim=c(grid_bounds_unconf$xmin,grid_bounds_unconf$xmax),
            ylim=c(grid_bounds_unconf$ymin,grid_bounds_unconf$ymax)) +
   scale_shape_manual(values=c(1,16),limits=c(3,4))
@@ -320,7 +373,7 @@ ggplot(head_unconf_df) +
   geom_sf(data=aquifer_unconfined$bounds, aes()) + 
   geom_contour(aes(x,y,z=head_m),bins=20,color="gray",linetype="dashed")  + 
   # geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-  geom_point(data=well_images %>% filter(level==0),aes(x,y)) +
+  geom_point(data=well_images %>% filter(well_image=="Actual"),aes(x,y)) +
   geom_segment(data=flow_dir_unconf_df,
                aes(x,y,xend=x2,yend=y2),arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) +
   coord_sf(xlim=c(grid_bounds$xmin,grid_bounds$xmax),ylim=c(grid_bounds$ymin,grid_bounds$ymax)) +
@@ -334,50 +387,31 @@ I will write a function to do this in the future, but it's not too difficult to 
 Set the total pumping rate for each group equal to 1
 
 ```{r generate_game_wells}
-wells_game <- wells %>%
+wells_genevese <- wells %>% filter(well_image=="Actual")
+aquifer_genevese <- aquifer_unconfined
+wells_game <- wells_genevese %>%
   mutate(player=factor(well_group,levels=c("SIG","France","Commune"),labels=c("S","F","Recharge")),
          well_sign=if_else(well_type=="pumping",-1,1)) %>%
   group_by(player) %>% 
-  mutate(Q=well_sign/n()) %>% group_by()
-well_game_images <- generate_image_wells(wells_game,aquifer_unconfined,num_levels=3) %>%
-  filter(max_mirror_dist<R)
+  mutate(weights=1,Q=1/n()) %>% group_by()
+well_game_images <- generate_image_wells(wells_game,aquifer_genevese)
 ```
 
 Calculate Dij as the average effect of wells j on wells i. Note that wells j must include all imaged wells, while the effect is only on the actual wells.
 
 ```{r well_relationships,fig.width=6,fig.height=3.5}
+drawdown_genevese <- get_drawdown_relationships(well_game_images,aquifer_genevese,player,weights)
+```
 
-PHI_SF <- get_potential_differential(loc=wells_game %>% filter(player=="S") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="F"),
-                        aquifer_unconfined) %>% mean()
+```{r print_drawdown_genevese,echo=FALSE}
+drawdown_genevese %>% knitr::kable() %>% kableExtra::kable_styling()
+```
 
-PHI_FS <- get_potential_differential(loc=wells_game %>% filter(player=="F") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="S"),
-                        aquifer_unconfined) %>% mean()
 
-PHI_SS <- get_potential_differential(loc=wells_game %>% filter(player=="S") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="S"),
-                        aquifer_unconfined) %>% mean()
-
-PHI_FF <- get_potential_differential(loc=wells_game %>% filter(player=="F") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="F"),
-                        aquifer_unconfined) %>% mean()
-
-PHI_RS <- get_potential_differential(loc=wells_game %>% filter(player=="S") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="Recharge"),
-                        aquifer_unconfined) %>% mean()
-
-PHI_RF <- get_potential_differential(loc=wells_game %>% filter(player=="F") %>% select(x,y),
-                        wells=well_game_images %>% filter(player=="Recharge"),
-                        aquifer_unconfined) %>% mean()
-
+```{r}
 ggplot() +
   geom_sf(data=aquifer_unconfined$bounds, aes()) + 
   geom_point(data=wells_game,aes(x,y,color=player,shape=well_type),size=3,stroke=1) +
   scale_shape_manual(values=c(1,16)) #+ scale_size_continuous(limits=c(3,4))
-
-data.frame(PHI_SF=PHI_SF,PHI_FS=PHI_FS,PHI_SS=PHI_SS,PHI_FF=PHI_FF,PHI_RS=PHI_RS,PHI_RF=PHI_RF) %>% 
-  gather(PHI_ii,Value) %>% knitr::kable(format="html") %>%
-  kableExtra::kable_styling()
 ```
 

@@ -8,6 +8,8 @@ get_distance_to_bounds(loc, bounds)
 }
 \arguments{
 \item{loc}{Location given as c(x,y) or as data.frame and $x, $y}
+
+\item{bounds}{Boundary object with m and b or x1, y1, x2, y2}
 }
 \description{
 Get distance from point to bounds

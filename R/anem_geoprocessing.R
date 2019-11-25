@@ -355,7 +355,7 @@ print_data_frame_for_entry <- function(df) {
 #'
 #' Get distance from point to bounds
 #' @param loc Location given as c(x,y) or as data.frame and $x, $y
-#' @bounds
+#' @param bounds Boundary object with m and b or x1, y1, x2, y2
 #' @importFrom magrittr %>%
 #' @examples
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()

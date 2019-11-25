@@ -1,5 +1,5 @@
 {
-    "path" : "~/Projects/R_packages/anem/R",
+    "path" : "~/Projects/R_packages/anem/tests/testthat",
     "sortOrder" : [
         {
             "ascending" : true,

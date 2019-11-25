@@ -169,7 +169,7 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #'
 #' @param aquifer_type "confined" or "unconfined"
 #' @param Ksat Saturated hydraulic conductivity
-#' @parm ... Optional parameters including boundaries, recharge zone, and aquifer thickness
+#' @param ... Optional parameters including boundaries, recharge zone, and aquifer thickness
 #' @return This function returns an S3 "aquifer" object that behaves as a list and contains
 #'  the named items:
 #' \itemize{
