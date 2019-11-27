@@ -43,7 +43,7 @@ wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer_unconfined)
 get_drawdown_relationships(wells, aquifer_unconfined, group_column=country, weights_column=weights)
 
 ggplot() +
-  geom_segment(data=aquifer_confined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
   geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
   coord_equal()

@@ -7,7 +7,7 @@
 gen_circleFun(circle, npoints = 100)
 }
 \arguments{
-\item{circle}{A \code{data.frame} with $x, $y, and $r columns. $id optional}
+\item{circle}{A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional}
 }
 \description{
 Generate outline of circle
