@@ -90,7 +90,26 @@ test_that("get_distance_to_bounds works for single location",{
 })
 
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
-loc <- data.frame(x=c(-200,0,200),y=c(-200,0,200))
+loc <- data.frame(x=c(-200,0,200,-50),y=c(-200,0,200,50))
 test_that("get_distance_to_bounds works for data.frame location",{
-  expect_equal(round(get_distance_to_bounds(loc,bounds),4),c(282.8427,0.0000,234.7765))
+  expect_equal(round(get_distance_to_bounds(loc,bounds),4),c(282.8427,0.0000,234.7765,54.0370))
+})
+
+# df <- data.frame(bound_x=c(0, 0, 32, -8),
+#                  bound_y=c(0, 0, 36, 16),
+#                  dist=c(282.8427, 0, 234.7765, 54.037))
+# test_that("get_distance_to_bounds works for data.frame location and returns return_locations",{
+#   expect_equal(round(get_distance_to_bounds(loc,bounds,TRUE),4),df)
+# })
+
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+loc <- data.frame(x=c(-100,0,100),y=c(-150,0,150))
+#' nearest <- get_nearest_point_on_line(loc_rep,m=bounds$m,b=bounds$b)
+test_that("get_nearest_point_on_line works for single line and 3 point",{
+  expect_equal(get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b),data.frame(x=c(40,0,-40),y=c(-80,0,80)))
+})
+
+loc_rep <- data.frame(x=rep(0,4),y=rep(75,4))
+test_that("get_nearest_point_on_line works for single point and 4 lines",{
+  expect_equal(get_nearest_point_on_line(loc_rep,m=bounds$m,b=bounds$b),data.frame(x=c(-30,30,10,22),y=c(60,15,80,31)))
 })

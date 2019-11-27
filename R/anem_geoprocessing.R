@@ -128,7 +128,7 @@ get_rectangle <- function(bounds) {
     quad_vertices_final_sf <- quad_vertices_final %>%
       sf::st_as_sf(coords=c("x","y")) %>%
       sf::st_set_crs(sf::st_crs(bounds))
-    quad_vertices_final_linestring <- quad_vertices_final_sf %>% group_by(bID) %>%
+    quad_vertices_final_linestring <- quad_vertices_final_sf %>% dplyr::group_by(bID) %>%
       dplyr::summarize(geometry=sf::st_union(geometry)) %>%
       sf::st_cast("LINESTRING",union=TRUE) %>%
       sf::st_set_crs(sf::st_crs(bounds))
@@ -269,6 +269,71 @@ get_intersection <- function(m1,b1,m2,b2) {
   return(intersections)
 }
 
+#' Get nearest point on line
+#'
+#' Get nearest point on
+#' @param loc Points as \code{c(x,y)} or a \code{data.frame} with columns \code{x} and \code{y}
+#' @param m Slope of the line
+#' @param b Intercept of the line (if \code{m} is \code{Inf}, \code{b} should be the x-intercept)
+#' @examples
+#' get_nearest_point_on_boundary(c(1,1),)
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' loc <- c(150,150)
+#' get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
+#'
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+#' loc <- data.frame(x=c(-100,0,100),y=c(-150,0,150))
+#' nearest <- get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
+#' ggplot() +
+#'    geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2))  +
+#'    geom_abline(data=bounds[1,],aes(slope=m,intercept=b),linetype="dashed")  +
+#'    geom_point(data=loc,aes(x,y),color="black")  +
+#'    geom_point(data=nearest,aes(x,y),color="red",alpha=0.5) +
+#'    coord_equal()
+#'
+#' loc_rep <- data.frame(x=rep(0,4),y=rep(75,4))
+#' nearest <- get_nearest_point_on_line(loc_rep,m=bounds$m,b=bounds$b)
+#' ggplot() +
+#'    geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2))  +
+#'    geom_abline(data=bounds,aes(slope=m,intercept=b),linetype="dashed")  +
+#'    geom_point(data=loc_rep,aes(x,y),color="black")  +
+#'    geom_point(data=nearest,aes(x,y),color="red",alpha=0.5) +
+#'    coord_equal()
+get_nearest_point_on_line <- function(loc,m,b) {
+  if (max(grepl("data.frame",class(loc)))) {
+    x_loc <- loc$x
+    y_loc <- loc$y
+  } else {
+    x_loc <- loc[1]
+    y_loc <- loc[2]
+  }
+  if (!(length(m) %in% c(1,length(x_loc))) | !(length(b) %in%  c(1,length(x_loc)))) {
+    stop("get_nearest_point_on_line: m has length ",length(m),
+         ", b has length",length(b),". The length of each should be 1 or the number of points.")
+  }
+  if (length(m) == 1) {
+    m <- rep(m,length(x_loc))
+  } else if (length(m)!=length(x_loc)) {
+    stop("get_nearest_point_on_line: m has length ",length(m),
+         ", b has length",length(b),". The length of each should be 1 or the number of points.")
+  }
+  if (length(b) == 1) {
+    b <- rep(b,length(x_loc))
+  } else if (length(b)!=length(x_loc)) {
+    stop("get_nearest_point_on_line: m has length ",length(m),
+         ", b has length",length(b),". The length of each should be 1 or the number of points.")
+  }
+
+  x <- ifelse(m==Inf,b,
+              ifelse(m==0, x_loc,
+                     get_intersection(m,b,-1/m, y_loc  + x_loc/m)$x))
+  y <- ifelse(m==Inf,y_loc,
+              ifelse(m==0, b,
+                     get_intersection(m,b,-1/m, y_loc + x_loc/m)$y))
+  nearest_point <- data.frame(x=x,y=y)
+  return(nearest_point)
+}
+
 #' Generate outline of circle
 #'
 #' @param circle A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional
@@ -315,9 +380,9 @@ gen_circles <- function(df) {
 #'
 #' Get quadrangle vertices in wide format
 get_quad_vertices_wide <- function(bounds) {
-  bounds <- get_quad_vertices(bounds) %>% filter(!is.na(x)) %>% group_by(bID) %>%
-    mutate(num=rank(intersection_bID)) %>% select(-intersection_bID) %>%
-    gather(axis,val,x,y) %>% unite(pt,axis,num) %>% spread(pt,val)
+  bounds <- get_quad_vertices(bounds) %>% dplyr::filter(!is.na(x)) %>% dplyr::group_by(bID) %>%
+    dplyr::mutate(num=rank(intersection_bID)) %>% dplyr::select(-intersection_bID) %>%
+    tidyr::gather(axis,val,x,y) %>% tidyr::unite(pt,axis,num) %>% tidyr::spread(pt,val)
   return(bounds)
 }
 
@@ -359,7 +424,8 @@ print_data_frame_for_entry <- function(df) {
 
 #' Get distance from point to bounds
 #'
-#' Get distance from point to bounds
+#' Get distance from point to bounds. Location on the boundaries
+#' has to fall within the segment x1, y1, x2, y2
 #' @param loc Location given as c(x,y) or as data.frame and $x, $y
 #' @param bounds Boundary object with m and b or x1, y1, x2, y2
 #' @importFrom magrittr %>%
@@ -369,10 +435,13 @@ print_data_frame_for_entry <- function(df) {
 #' get_distance_to_bounds(loc,bounds)
 #'
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
-#' loc <- data.frame(x=c(-200,0,200),y=c(-200,0,200))
+#' loc <- data.frame(x=c(-200,0,200,50),y=c(-200,0,200,-50))
 #' get_distance_to_bounds(loc,bounds)
-#' ggplot(bounds) + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2))
-get_distance_to_bounds <- function(loc,bounds) {
+#' ggplot(bounds) +
+#'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_point(data=loc,aes(x,y)) +
+#'   coord_equal()
+get_distance_to_bounds <- function(loc,bounds,return_locations=FALSE) {
   if (max(grepl("data.frame",class(loc)))) {
     x_loc <- loc$x
     y_loc <- loc$y
@@ -381,13 +450,52 @@ get_distance_to_bounds <- function(loc,bounds) {
     y_loc <- loc[2]
   }
   dist <- rep(NA,length(x_loc))
-  bound_vertices <- get_quad_vertices(bounds) %>% dplyr::filter(!is.na(x)) %>% dplyr::select(bound_x=x,bound_y=y) %>% dplyr::distinct()
 
-  for (i in 1:length(dist)) {
-    dist[i] <- bound_vertices %>%
+  bound_vertices <- get_quad_vertices(bounds) %>%
+    dplyr::filter(!is.na(x)) %>% dplyr::select(bound_x=x,bound_y=y) %>% dplyr::distinct()
+
+  # for each point
+  for (i in 1:length(x_loc)) {
+    nearest_on_line <- get_nearest_point_on_line(data.frame(x=rep(x_loc[i],length(bounds$m)),y=y_loc[i]),
+                                                 bounds$m,bounds$b) %>% dplyr::rename(xL=x,yL=y)
+    nearest_on_bounds <- nearest_on_line %>%
+      dplyr::bind_cols(bounds) %>% dplyr::filter(in_range(xL,x1,x2) & in_range(yL,y1,y2)) %>%
+      dplyr::select(bound_x=xL,bound_y=yL)
+    bound_intersections <- bound_vertices %>% dplyr::bind_rows(nearest_on_bounds)
+    bound_nearest <- bound_intersections %>%
       dplyr::mutate(dist=sqrt((bound_x-x_loc[i])^2+(bound_y-y_loc[i])^2)) %>%
-      dplyr::pull(dist) %>% min()
+      dplyr::filter(dist==min(dist)) %>%
+      dplyr::distinct()
+    dist[i] <- bound_nearest %>% dplyr::pull(dist) %>% min()
+    # if (dim(bound_nearest)[1] > 1) {
+    #   print(i)
+    # }
+    # if (i==1) {
+    #   loc_nearest <- bound_nearest
+    # } else {
+    #   loc_nearest <- loc_nearest %>% dplyr::bind_rows(bound_nearest)
+    # }
   }
 
+  # if (return_locations) {
+  #   dist <- loc_nearest
+  # } else {
+  #   dist <- loc_nearest$dist
+  # }
+
   return(dist)
+}
+
+#' Test if x is in range
+#'
+#' Test if x is in range [x1,x2]
+#' @examples
+#' in_range(5,1,4)
+#' in_range(5,6,4)
+#' in_range(1:5,rep(4,5),c(4,4,5,6,7))
+in_range <- function(x,x1,x2) {
+  x_low <- pmin(x1,x2)
+  x_high <- pmax(x1,x2)
+  in_range <- x >= x_low & x <= x_high
+  return(in_range)
 }

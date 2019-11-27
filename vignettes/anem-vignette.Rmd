@@ -82,7 +82,8 @@ wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
   group_by(country) %>%
   mutate(weights=1,Q=-1/n()) %>% group_by()
-wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
+wells_actual <- define_wells(wells_df)
+wells <- wells_actual %>% generate_image_wells(aquifer_unconfined)
 print(wells)
 ```
 
@@ -104,7 +105,8 @@ drawdown_relationships <- get_drawdown_relationships(wells, aquifer_unconfined, 
 
 The following results show $\Phi_{ii}$ and $\Phi_{ij}$.
 ```{r print_drawdown_kable,echo=FALSE}
-drawdown_relationships %>% knitr::kable("html") %>% kableExtra::kable_styling()
+drawdown_relationships %>% 
+  knitr::kable("html") #%>% kableExtra::kable_styling()
 ```
 
 ### Plot the head and flow
@@ -123,149 +125,7 @@ ggplot() +
   coord_equal()
 ```
 
-
-## Additional examples using shapefile data inputs
-
-### Import and examine the data
-
-Let's begin by loading some data to practice with. The data are stored in two shapefiles included with this package, a `genevese_wells` shapefile containing *point* features with attributes for `rate` and `diameter`, and a second `genevese_boundaries` shapefile with *line* geometries and the property `bound_type`.
-
-```{r data_import}
-pts_wgs <- genevese_wells
-pts_wgs
-
-boundaries_wgs <- genevese_bounds
-boundaries_wgs
-```
-
-### Plot the data
-
-The coordinates of objects should be in a planar coordinate system in meters. Tranform both of the shapefiles to UTM projection, first by getting the UTM zone and proj4string transforming the shapefiles.
-
-```{r transform_to_planar}
-utm_zone <- longitude_to_utm_zone(mean(st_coordinates(pts_wgs)[,'X']))
-utm_proj4 <- utm_zone_to_proj4(utm_zone)
-pts_utm <- pts_wgs %>% sf::st_transform(utm_proj4)
-boundaries_utm <- boundaries_wgs %>% sf::st_transform(utm_proj4)
-
-ggplot() + 
-  geom_sf(data=boundaries_utm, aes()) + 
-  geom_sf(data=pts_utm, aes())
-```
-
-## Two wells in a uniform confined aquifer
-
-### Prepare the aquifer 
-
-We now need to extract the coordinates of the wells and boundaries, as well as get the slope (m) and intercept (b) of the boundaries. This can be done with the `define_aquifer()` function, which creates an `aquifer` (S3 class) object. This function also prepares boundaries using the `define_bounds()` function (e.g., run the commented code to see how it works). The `aquifer` class is essentially a list with properties specific to the aquifer, including Ksat, bounds, etc. It also has its own `print` method. See `?define_aquifer` for more details. Also note that by default, the `define_bounds` functions takes irregular quadrangles and turns them into rectangles. The method of images **only** works for aquifer with rectangular geometries (i.e., boundaries at right angles).
-
-```{r prep_dataframes}
-# bounds <- define_bounds(boundaries_utm)
-aquifer_confined <- define_aquifer("confined",1e-3,bounds=boundaries_utm,h0=100,z0=10)
-print(aquifer_confined)
-```
-
-
-### Prepare the wells 
-
-We also need to prepare the wells. Generate an aquifer polygon and take only the wells that intersect the aquifer. 
-
-```{r prep_wells}
-bounds_polygon <- aquifer_confined$bounds %>% 
-  summarize() %>% st_polygonize() %>% st_collection_extract("POLYGON")
-
-wells_df_in_aquifer <- pts_utm %>% st_intersection(bounds_polygon) %>% group_by() 
-```
-
-Now calculate the radius of influence of each well using `get_ROI` and plot the results. The function `get_ROI` has a few different options for calculating the radius of influence of wells.
-
-```{r define_wells}
-wells_df <- wells_df_in_aquifer %>%
-  mutate(Q=-1e-1/n(),
-         Q=if_else(well_group=="COMMUNE",-2*Q,Q))  %>%
-  mutate(R=get_ROI(Ksat=1e-4,h=100,t=3600*24*365*20,n=0.4,method="aravin-numerov")) 
-wells <- define_wells(wells_df)
-
-ggplot() + 
-  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-  geom_sf(data=aquifer_confined$bounds, aes(color=as.factor(round(m,1)))) + 
-  geom_point(data=wells, aes(x,y))
-```
-
-### Generate hydraulic head
-
-The `wells` object contains a row for each well. Because of the principle of superposition,
-the hydraulic head at any given location is the sum of the effect on hydraulic head of all pumping wells.
-
-The function `get_gridded_hydrodynamics()` can be used to extract gridded hydraulic head and flow.
-
-<!-- First define set of coordinates with which to calculate head by defining a bounding box (`grid_bounds`) and -->
-<!-- using `expand.grid` and `seq` to generate evenly spaced points in the variable `grid_pts_head`. Then, use -->
-<!-- these points and the `well_images` to generate hydraulic head using `get_hydraulic_head()`. -->
-
-```{r hydraulic_head_confined,fig.width=6,fig.height=3.5}
-gridded <- get_gridded_hydrodynamics(wells,aquifer_confined,
-                                     head_dim=c(150,100),flow_dim=c(10,6))
-head <- gridded$head
-flow <- gridded$flow
-
-ggplot() +
-  geom_raster(data=head,aes(x,y,fill=head_m))  +
-  geom_point(data=wells, aes(x,y),shape=1,stroke=1) +
-  geom_contour(data=head,aes(x,y,z=head_m),bins=20,color="gray",linetype="dashed")  + 
-  geom_segment(data=flow,aes(x,y,xend=x2,yend=y2),
-               arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) +
-  coord_equal() +
-  scale_shape_manual(values=c(1,16),limits=c(3,4))
-```
-
-### Get flow direction
-
-## Two wells in an aquifer with bounds on all sides
-
-Here we will use the `wells` object generated for the confined aquifer. However, we need to define a new unconfined auifer. This is done again using the `define_aquifer` function.
-
-```{r prep_unconfined}
-aquifer_unconfined <- define_aquifer("unconfined",Ksat=0.0001,h0=100,bounds=boundaries_utm)
-```
-
-### Generate well images
-
-The `aquifer_unconfined` has boundaries defined, but these boundaries won't actually reproduce the behavior of boundaries in the groundwater model. To reproduce the behavior of the boundaries, we need to generate image wells by mirroring wells across each of the boundaries. Wells are mirrored across no-flow ("NF") boundaries with the inverse rate of pumping, and across constant head ("CH") boundaries with the same pumping rate.
-
-* This mirroring process only works with rectangular boundaries.
-  + Use only straight lines.
-  + No complex shapes.
-  
-Lastly, to know the effect of a well on any given location, we need to know the radius of influence of the well. This package provides a couple ways to do this through the `get_ROI` function. See `?get_ROI` for more resources. 
-
-```{r well_imaging,fig.width=6,fig.height=3.5}
-well_images <- generate_image_wells(wells,aquifer_unconfined) 
-well_roi <- gen_circles(well_images %>% rename(r=R))
-```
-
-```{r include=FALSE}
-# ggplot()  +
-#   geom_sf(data=aquifer_unconfined$bounds, aes()) + 
-#   geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray") + 
-#   geom_point(data=well_images,aes(x,y),alpha=0.5) + 
-#   # geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.3,color="black")  
-#   geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.01)
-```
-
-Some of the images wells are too far away to affect the aquifer. Select only the wells that have a mirror distance less than the radius of influence of the wells.
-
-```{r well_imaging_filter,fig.width=6,fig.height=3.5}
-ggplot()  +
-  geom_sf(data=boundaries_utm, aes(), linetype="dashed",alpha=0.5,color="gray")+
-  geom_polygon(data=well_roi,aes(x,y,group=id),alpha=0.1,color=NA) +
-  geom_sf(data=aquifer_unconfined$bounds, aes(color=as.factor(bID)),size=1) +
-  geom_point(data=well_images,aes(x,y,fill=Q),alpha=0.5,size=3,shape=21) +
-  scale_fill_gradient2("Pumping rate",low="blue",mid="gray",high="red") +
-  scale_color_discrete("Boundary")
-```
-
-### Check to ensure the boundaries are working as intended
+### Check the head and flow along the boundaries
 
 The function `get_bounds_behavior()` is a helper function to generate hydraulic properties at the boundaries. It obtains hydraulic head and the flow normal to the boundary. Normal flow is defined such that positive flow has some component in the x-direction (the y-direction depends on the normal vector for the boundary). The function `plot_bounds_behavior()` is a wrapper around `get_bounds_behavior()`, and it can be used to quickly compare the hydraulic head along the boundaries and flow across the boundaries under scenarios: 
 
@@ -273,67 +133,14 @@ The function `get_bounds_behavior()` is a helper function to generate hydraulic 
 * images (ie, aquifer with boundaries -- all well images intact)
 
 ```{r check_bounds,fig.width=6,fig.height=4}
-gg_bounds_behavior <- plot_bounds_behavior(well_images,aquifer_unconfined)
-gridExtra::grid.arrange(gg_bounds_behavior$p_h,gg_bounds_behavior$p_f,nrow=1)
+bounds_behavior <- plot_bounds_behavior(wells,aquifer_unconfined)
+gridExtra::grid.arrange(bounds_behavior$p_h,bounds_behavior$p_f,nrow=1)
 ```
 
-### Generate hydraulic head
+And finally, to numerically check that the boundaries are working well, we can print `bounds_behavior$table`:
 
-The `well_images` object contains a row for each well (including actual wells and well images). Because of the principle of superposition, the hydraulic head at any given location is the sum of the effect on hydraulic head of all pumping wells.
-
-First define set of coordinates with which to calculate head by defining a bounding box (`grid_bounds`) and
-using `expand.grid` and `seq` to generate evenly spaced points in the variable `grid_pts_head`. Then, use
-thes points and the `well_images` to generate hydraulic head using `get_hydraulic_head()`.
-
-```{r hydraulic_head_unconfined,fig.width=7,fig.height=3}
-gridded <- get_gridded_hydrodynamics(well_images,aquifer_unconfined,
-                                     head_dim=c(150,100),flow_dim=c(10,5))
-head <- gridded$head
-flow <- gridded$flow
-
-ggplot() +
-  geom_raster(data=head,aes(x,y,fill=head_m))  +
-  geom_contour(data=head,aes(x,y,z=head_m),bins=20,color="gray",linetype="dashed")  + 
-  geom_segment(data=flow,aes(x,y,xend=x2,yend=y2),
-               arrow = arrow(ends="last",type="closed",length=unit(1,"mm"))) + 
-  geom_point(data=well_images %>% filter(well_image=="Actual"),aes(x,y)) +
-  geom_sf(data=aquifer_unconfined$bounds, aes())
-```
-
-### Get flow direction
-
-Getting flow direction is similar to getting hydraulic head -- the function `get_flowdir()` is a wrapper
-around `get_hydraulic_head()` that incorporates a numeric derivative from the package `numDeriv`. Similar
-to before, define set of coordinates of evenly spaced points. Then, use
-these points and the `well_images` to generate hydraulic head using `get_flowdir()`.
-
-## Calculate Dii, Dij
-
-```{r generate_game_wells}
-wells_genevese <- wells %>% filter(well_image=="Actual")
-aquifer_genevese <- aquifer_unconfined
-wells_game <- wells_genevese %>%
-  mutate(player=factor(well_group,levels=c("SIG","France","Commune"),labels=c("S","F","Recharge")),
-         well_sign=if_else(well_type=="pumping",-1,1)) %>%
-  group_by(player) %>% 
-  mutate(weights=1,Q=1/n()) %>% group_by()
-well_game_images <- generate_image_wells(wells_game,aquifer_genevese)
-```
-
-
-```{r}
-ggplot() +
-  geom_sf(data=aquifer_unconfined$bounds, aes()) + 
-  geom_point(data=wells_game,aes(x,y,color=player),shape=1,size=3,stroke=1) 
-```
-
-Calculate $\Phi_{ij}$ as the average effect of wells j on wells i, using the `get_drawdown_relationships()` function.
-
-```{r well_relationships,fig.width=6,fig.height=3.5}
-drawdown_genevese <- get_drawdown_relationships(well_game_images,aquifer_genevese,player,weights)
-```
-
-```{r print_drawdown_genevese,echo=FALSE}
-drawdown_genevese %>% knitr::kable() %>% kableExtra::kable_styling()
+```{r echo=FALSE}
+bounds_behavior$table %>% 
+  knitr::kable("html") #%>% kableExtra::kable_styling()
 ```
 

@@ -66,19 +66,23 @@ well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
 wells <- define_wells(dplyr::bind_rows(well1,well2))
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
-df <- tibble::tibble(wID=c(1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22),
+df <- tibble::tibble(wID=as.integer(c(1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22)),
                  Q=c(20, 20, 20, 20, 20, 20, -20, 20, -20, 20, -20, 20, -20, 20, -20, -20, 20),
                  R=c(100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100),
                  diam=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
                  x=c(50, 25, 50, 50, 25, 25, -50, 150, -25, 175, -50, 150, -50, 150, -25, -25, 175),
                  y=c(50, 75, -50, 150, -75, 125, 50, 50, 75, 75, -50, -50, 150, 150, -75, 125, 125),
                  well_image=c("Actual","Actual","Image (+Q)","Image (+Q)","Image (+Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (+Q)","Image (-Q)","Image (-Q)","Image (+Q)"),
-                 orig_wID=as.integer(c(1, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 2)))
-# generate_image_wells(wells,bounds) %>% print_data_frame_for_entry()
+                 orig_wID=as.integer(c(1, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 2))) %>%
+  dplyr::arrange(x,y) %>% dplyr::select(-wID)
 test_that("generate_image_wells returns correct data.frame",{
-  expect_equal(generate_image_wells(wells,bounds) %>% dplyr::select(-well_type),df)
+  expect_equal(generate_image_wells(wells,bounds) %>% dplyr::select(-well_type,-wID) %>% dplyr::arrange(x,y),df)
 })
-paste(generate_image_wells(wells,bounds)$well_image,collapse="\",\"")
+
+# NOTE: GROUP IMAGING IS CURRENTLY DISABLED IN generate_image_wells().
+# test_that("generate_image_wells returns correct data.frame group_imaging=TRUE",{
+#   expect_equal(generate_image_wells(wells,bounds,group_imaging=TRUE) %>% dplyr::select(-well_type,-wID) %>% dplyr::arrange(x,y),df)
+# })
 
 wells_sf <- wells %>% dplyr::mutate(X=x,Y=y) %>% sf::st_as_sf(coords=c("X","Y"))
 test_that("generate_image_wells returns the proper type",{
@@ -99,4 +103,35 @@ image_wells_image_NA <- image_wells %>%
   dplyr::mutate(Q=dplyr::case_when(grepl("Image",well_image)~as.numeric(NA),TRUE~Q))
 test_that("reconstruct_image_pumping accurately reconstructs image pumping for + and - Q, and CH and NF boundaries",{
   expect_equal(reconstruct_image_pumping(image_wells_image_NA),image_wells)
+})
+
+
+test_that("gen_well_image_type works for CH, NF boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Actual",10),
+                                   bound_type1=c(rep("CH",10)),bound_type2=c(rep("NF",10)))$sign,rep(c(-1,-1,1,1,-1),each=2))
+})
+
+test_that("gen_well_image_type works for NF, CH boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Actual",10),
+                                   bound_type1=c(rep("NF",10)),bound_type2=c(rep("CH",10)))$sign,rep(c(1,-1,-1,1,1),each=2))
+})
+test_that("gen_well_image_type works for NF, NF boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Actual",10),
+                                   bound_type1=c(rep("NF",10)),bound_type2=c(rep("NF",10)))$sign,rep(c(1,1,1,1,1),each=2))
+})
+
+test_that("gen_well_image_type works for CH, CH boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Actual",10),
+                                   bound_type1=c(rep("CH",10)),bound_type2=c(rep("CH",10)))$sign,rep(c(-1,1,-1,1,-1),each=2))
+})
+
+
+test_that("gen_well_image_type works for CH, CH boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Image (+Q)",10),
+                                   bound_type1=c(rep("CH",10)),bound_type2=c(rep("CH",10)))$sign,rep(c(-1,1,-1,1,-1),each=2))
+})
+
+test_that("gen_well_image_type works for NF, CH boundary",{
+  expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Image (-Q)",10),
+                                   bound_type1=c(rep("NF",10)),bound_type2=c(rep("CH",10)))$sign,rep(c(-1,1,1,-1,-1),each=2))
 })

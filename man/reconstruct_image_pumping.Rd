@@ -2,7 +2,7 @@
 % Please edit documentation in R/anem_imaging.R
 \name{reconstruct_image_pumping}
 \alias{reconstruct_image_pumping}
-\title{Reproduce pumping at image wells}
+\title{Reconstruct pumping at image wells}
 \usage{
 reconstruct_image_pumping(image_wells)
 }
@@ -15,7 +15,7 @@ A tibble containing wells where Image wells contain pumping rates similar to
 generate_image_wells.
 }
 \description{
-Reproduce pumping of actual wells at image wells
+Reconstruct pumping of actual wells at image wells
 }
 \examples{
 well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)

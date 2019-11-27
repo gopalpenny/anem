@@ -11,7 +11,7 @@ get_segments_behavior(wells, segments, aquifer, length.out = 100,
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
 
-\item{segments}{A data.frame containing, m, b, sID, x_1, x_2, y_1, y_2}
+\item{segments}{A data.frame containing, m, b, sID, x1, x2, y1, y2}
 
 \item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 
@@ -31,15 +31,14 @@ wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) \%
   mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
 aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
-well_images <- generate_image_wells(wells,bounds,num_levels=2) \%>\% filter(max_mirror_dist<R)
-segments <- bounds[1:2,] \%>\% rename(sID=bID) \%>\% mutate(x_1=c(0,50),x_2=c(50,75),y_1=c(0,50),y_2=c(50,25)) \%>\%
-  dplyr::mutate(x_unit_norm=sqrt(m^2/(1+m^2)),y_unit_norm=-sign(m)*sqrt(1/(1+m^2)))
+well_images <- generate_image_wells(wells,aquifer)
+segments <- aquifer$bounds[1:2,] \%>\% rename(sID=bID) \%>\%
+  dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),y_unit_norm=get_unit_norm(m,"y"))
 segments_behavior <- get_segments_behavior(well_images,segments,aquifer) \%>\% as_tibble()
 p_domain <- ggplot() +
-  geom_point(data=well_images,aes(x0,y0,fill=rate),color="black",size=2,shape=21) +
+  geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray")+
-  geom_abline(data=bounds,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) +
-  geom_segment(data=segments,aes(x_1,y_1,xend=x_2,yend=y_2),linetype="dashed") +
+  geom_segment(data=segments,aes(x1,y1,xend=x2,yend=y2),linetype="dashed") +
   coord_equal()
 p_segments <- ggplot(segments_behavior \%>\% gather(var,val,head,flow_normal)) +
   geom_line(aes(dist,val,color=as.factor(sID))) + facet_grid(var~sID,scales="free")
