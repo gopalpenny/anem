@@ -1,0 +1,71 @@
+---
+title: "anem-publication"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{anem-publication}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(anem)
+```
+
+### Abstract 
+
+Numerous tools exist for simulating groundwater flow via finite-element models (e.g., MODFLOW) or analytical element models (e.g., gflow).
+However, these tools provide functionality that is often overkill for simple modeling scenarios and integration of these tools with programming and data analysis environments is often complex and time consuming. 
+Tighter integration of groundwater models with analytical environments would provide numerous benefits for quickly analyzing groundwater hydrology problems.
+To this end, we develop an R package designed to simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular geometries.
+The package provides functionality for calculating drawdown relationships among groups of wells. The linear nature of these relationships offer great opportunities for integrating physically plausible groundwater simulations into more complex models of hydrology and coupled human-natural systems. We validate the package and describe multiple scenarios in which drawdown relationships might be used in more complex models.
+
+## Introduction
+
+Groundwater modeling background:
+
+1. needs
+1. existing tools
+    * MODFLOW
+    * gflow
+    * Bakker python packages
+    * other software packages
+1. motivation for this package
+    * ease of use
+    * integration with R, data analytics
+    * precursor to more complex groundwater models
+    * component of more complex hydrological models or coupled models
+    
+
+## Package description
+
+Basic functionality of the package
+
+1. groundwater theory
+    * flow equations
+    * principle of superposition
+    * confined and unconfined flow
+1. defining wells and aquifers in `anem`
+1. generating drawdown relationships
+
+## Validation
+
+Validation of the package
+
+1. hydraulic head in a confined aquifer
+2. discharge potential in an unconfined aquifer
+3. flow direction
+4. behavior along boundaries 
+
+## Use cases
+
+1. Pumping tests?
+1. Well placement?
+1. Game theory?
+1. Dynamical systems?

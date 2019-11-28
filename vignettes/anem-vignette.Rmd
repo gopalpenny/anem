@@ -70,9 +70,9 @@ Wells are characterized by:
 * Well images (which are noted in the `well_image` column)
 * Additional user-defined columns, including groups or weights.
 
-Define pumping wells using random locations and set a "border" between two countries at y = 500 m. This is done manually, below, by randomly generating well locations and setting wells with y > 500 as country "B". The `define_wells()` function ensures that the wells have all appropriate columns, and the class of the returned object is a `tibble` (which functions like a `data.frame`, but has a couple bells and whistles). Also note that the radius of influence (R) is defined arbitrarily, but there is also a function to calculate this manually -- see `?get_ROI` for more details. 
+The code below Defines 8 pumping wells using random locations and arbitrarily divides wells into countries "A" and "B" using a threshold at y = 500 m. The `define_wells()` function ensures that the wells have all appropriate columns, and the class of the returned object is a `tibble` (which functions like a `data.frame`, but has a couple bells and whistles). Also note that the radius of influence (R) is defined arbitrarily, but there is also a function to calculate this manually -- see `?get_ROI` for more details.
 
-The `generate_image_wells()` function generates well images to recreate the bounderies defined by `aquifer_unconfined`.
+The `generate_image_wells()` function generates well images to recreate the bounderies defined by the aquifer, `aquifer_unconfined`.
 
 ```{r set_simple_aquifer}
 # define wells and well images
@@ -97,13 +97,13 @@ ggplot() +
   coord_equal()
 ```
 
-Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean.
+Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean. The results show $\Phi_{ii}$ and $\Phi_{ij}$.
 
 ```{r drawdown_relationships,results='hide'}
 drawdown_relationships <- get_drawdown_relationships(wells, aquifer_unconfined, group_column=country, weights_column=weights)
+drawdown_relationships
 ```
 
-The following results show $\Phi_{ii}$ and $\Phi_{ij}$.
 ```{r print_drawdown_kable,echo=FALSE}
 drawdown_relationships %>% 
   knitr::kable("html") #%>% kableExtra::kable_styling()
