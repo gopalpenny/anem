@@ -66,6 +66,6 @@ Validation of the package
 ## Use cases
 
 1. Pumping tests?
-1. Well placement?
+1. Well placement? (ie., drawdown relationships for wells at the boundary vs center of the aquifer?)
 1. Game theory?
 1. Dynamical systems?

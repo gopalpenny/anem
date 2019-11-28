@@ -76,13 +76,14 @@ The `generate_image_wells()` function generates well images to recreate the boun
 
 ```{r set_simple_aquifer}
 # define wells and well images
-set.seed(30)
-wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
-  mutate(R=1000,  #
-         country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
-  group_by(country) %>%
-  mutate(weights=1,Q=-1/n()) %>% group_by()
-wells_actual <- define_wells(wells_df)
+set.seed(15)
+wells_actual <- define_wells(x = runif(8,0,1000),
+                             y = c(runif(4,0,500),runif(4,500,1000)),
+                             Q = -1/4,
+                             diam = 1,
+                             R = 1000,
+                             weights = 1,
+                             country = rep(c("A","B"),each=4))
 wells <- wells_actual %>% generate_image_wells(aquifer_unconfined)
 print(wells)
 ```
@@ -93,7 +94,7 @@ Plot the aquifer and wells.
 ggplot() +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
-  geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
+  geom_point(data=wells_actual,aes(x,y,fill=country),shape=21) +
   coord_equal()
 ```
 
@@ -127,7 +128,7 @@ ggplot() +
 
 ### Check the head and flow along the boundaries
 
-The function `get_bounds_behavior()` is a helper function to generate hydraulic properties at the boundaries. It obtains hydraulic head and the flow normal to the boundary. Normal flow is defined such that positive flow has some component in the x-direction (the y-direction depends on the normal vector for the boundary). The function `plot_bounds_behavior()` is a wrapper around `get_bounds_behavior()`, and it can be used to quickly compare the hydraulic head along the boundaries and flow across the boundaries under scenarios: 
+The function `get_bounds_behavior()` is a helper function to generate hydraulic properties at the boundaries. It obtains hydraulic head and the flow normal to the boundary. Normal flow is defined such that positive flow has some component in the x-direction (the y-direction depends on the normal vector for the boundary). The function `plot_bounds_behavior()` is a wrapper around `get_bounds_behavior()`, and it can be used to quickly compare the hydraulic head along the boundaries and flow across the boundaries under two scenarios: 
 
 * no images (ie, homogeneous, uniform aquifer -- all well images removed)
 * images (ie, aquifer with boundaries -- all well images intact)
@@ -137,7 +138,7 @@ bounds_behavior <- plot_bounds_behavior(wells,aquifer_unconfined)
 gridExtra::grid.arrange(bounds_behavior$p_h,bounds_behavior$p_f,nrow=1)
 ```
 
-And finally, to numerically check that the boundaries are working well, we can print `bounds_behavior$table`:
+Finally, the function `plot_bounds_behavior` also includes the raw data of head and flow used to create the above plots (`bounds_behavior$bounds_behavior`), as well as a summary of these values which includes mean head on each of the boundaries and mean flow as the mean of the absolute value of flow normal to each boundary (`bounds_behavior$table`). To numerically check that the boundaries are working as expected, we can print `bounds_behavior$table`:
 
 ```{r echo=FALSE}
 bounds_behavior$table %>% 
