@@ -87,4 +87,29 @@ test_that("get_flowdir returns no flow along diagonal line between two pumping w
                  dplyr::mutate(diff=dx-dy,sign=sign(dx),opp=-dx==dy) %>% dplyr::select(diff,sign,opp),
                data.frame(diff=c(0,0.03291868,0,-0.03291868,0),sign=c(-1,1,0,-1,1),opp=c(F,T,T,T,F)))
 })
-#' get_flowdir(wells,loc=c(5,5),h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
+
+
+# Create a grid of locations and define aquifer
+loc <- tidyr::crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
+aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0)
+
+# No flow boundary
+wells_no_flow <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(-1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+no_flow_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_no_flow,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
+test_that("get_stream_function accurately models no-flow boundary along boundary",{
+  expect_equal(no_flow_boundary %>% dplyr::filter(x==0) %>% purrr::pluck("streamfunction") %>% table() %>% length(),2)
+})
+test_that("get_stream_function accurately models no-flow boundary perpendicular to boundary and intersecting wells",{
+  expect_equal(no_flow_boundary %>% dplyr::filter(y==0) %>% purrr::pluck("streamfunction") %>% table() %>% length(),3)
+})
+
+# Constant head boundary
+wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0)
+constant_head_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer))
+test_that("get_stream_function accurately models constant-head boundary perpendicular to boundary and intersecting wells",{
+  expect_equal(constant_head_boundary %>% dplyr::filter(y==0) %>% purrr::pluck("streamfunction") %>% table() %>% length(),2)
+})

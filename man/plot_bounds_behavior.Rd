@@ -24,7 +24,7 @@ bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))
 aquifer1 <- define_aquifer("unconfined",Ksat=1,bounds=bounds_df1)
-well_images1 <- generate_image_wells(wells1,aquifer1,num_levels=20) \%>\%
+well_images1 <- generate_image_wells(wells1,aquifer1) \%>\%
   filter(max_mirror_dist<R)
 p_domain <- ggplot() +
   geom_point(data=well_images1,aes(x0,y0,fill=Q),color="black",size=2,shape=21,alpha=0.5) +
@@ -51,4 +51,6 @@ p_domain <- ggplot() +
 gg_list <- plot_bounds_behavior(wells2,well_images2,bounds=bounds2,
                                 h0=100,Ksat=0.00000005,aquifer_type="unconfined",length.out=20)
 gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
+gg_list$table
+gg_list$bounds_behavior
 }
