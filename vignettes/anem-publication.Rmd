@@ -29,52 +29,52 @@ Because R is a functional programming language, the outputs from this package ca
 Indeed, the linear behavior of groundwater flow and principle of superposition means that physically plausible groundwater dynamics can be incorporated into more complex models of hydrology and coupled human-natural systems.
 We validate the package and describe multiple scenarios in which this package might be used, emphasizing the potential benefits of incorporating drawdown relationships into more complex models.
 
-<!-- ## Outline -->
+## Outline
 
 
-<!-- **Introduction** -->
+**Introduction**
 
-<!-- Groundwater modeling background: -->
+Groundwater modeling background:
 
-<!-- 1. needs -->
-<!-- 1. existing tools -->
-<!--     * MODFLOW -->
-<!--     * gflow -->
-<!--     * Bakker python packages -->
-<!--     * other software packages -->
-<!-- 1. motivation for this package -->
-<!--     * ease of use -->
-<!--     * integration with R, data analytics -->
-<!--     * precursor to more complex groundwater models -->
-<!--     * component of more complex hydrological models or coupled models -->
+1. needs
+1. existing tools
+    * MODFLOW
+    * gflow
+    * Bakker python packages
+    * other software packages
+1. motivation for this package
+    * ease of use
+    * integration with R, data analytics
+    * precursor to more complex groundwater models
+    * component of more complex hydrological models or coupled models
 
 
-<!-- **Package description** -->
+**Package description**
 
-<!-- Basic functionality of the package -->
+Basic functionality of the package
 
-<!-- 1. groundwater theory -->
-<!--     * flow equations -->
-<!--     * principle of superposition -->
-<!--     * confined and unconfined flow -->
-<!-- 1. defining wells and aquifers in `anem` -->
-<!-- 1. generating drawdown relationships -->
+1. groundwater theory
+    * flow equations
+    * principle of superposition
+    * confined and unconfined flow
+1. defining wells and aquifers in `anem`
+1. generating drawdown relationships
 
-<!-- **Validation** -->
+**Validation**
 
-<!-- Validation of the package -->
+Validation of the package
 
-<!-- 1. hydraulic head in a confined aquifer -->
-<!-- 2. discharge potential in an unconfined aquifer -->
-<!-- 3. flow direction -->
-<!-- 4. behavior along boundaries -->
+1. hydraulic head in a confined aquifer
+2. discharge potential in an unconfined aquifer
+3. flow direction
+4. behavior along boundaries
 
-<!-- **Use cases** -->
+**Use cases**
 
-<!-- 1. Pumping tests? -->
-<!-- 1. Well placement? (ie., drawdown relationships for wells at the boundary vs center of the aquifer?) -->
-<!-- 1. Game theory? -->
-<!-- 1. Dynamical systems? -->
+1. Pumping tests?
+1. Well placement? (ie., drawdown relationships for wells at the boundary vs center of the aquifer?)
+1. Game theory?
+1. Dynamical systems?
 
 
 ## Introduction
