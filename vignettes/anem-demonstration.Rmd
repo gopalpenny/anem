@@ -1,0 +1,149 @@
+---
+title: "anem-demonstration"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{anem-demonstration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=4, 
+  fig.height=2.5
+)
+```
+
+```{r}
+library(anem)
+```
+
+
+### Abstract 
+
+Numerous tools exist for simulating groundwater flow via finite element models (e.g., MODFLOW) or analytic element models (e.g., gflow).
+These tools allows for analysis of complex groundwater behavior, functionality that may not be necessary projects that demand simple groundwater models and more advanced statistical or theoretical analysis.
+Tighter integration of groundwater models with analytical environments can provide numerous benefits for quickly analyzing groundwater hydrology problems.
+To this end, we develop an R package designed to simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
+The package, "anem", contains functions for defining aquifers and pumping wells, determining hydraulic head and lateral flow, and calculating drawdown relationships among groups of wells.
+These features make this package a useful tool for simulating groundwater behavior as a precursor to more complex groundwater modeling, or simulating synthetic scenarios as a way to explore variability and uncertainty.
+Because R is a functional programming language, the outputs from this package can be easily analyzed, mapped, and incorporated into more complex models in R.
+Indeed, the linear behavior of groundwater flow and principle of superposition means that physically plausible groundwater dynamics can be incorporated into more complex models of hydrology and coupled human-natural systems.
+We validate the package and describe multiple scenarios in which this package might be used, emphasizing the potential benefits of incorporating drawdown relationships into more complex models.
+
+### Method of images
+
+The package uses the method of images, where wells are mirrored across aquifer boundaries to reproduce the characterics of the boundary, no flow or constant head:
+
+```{r echo=FALSE, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(sf)
+# devtools::install_github("https://github.com/gopalpenny/anem")
+# devtools::load_all("~/Projects/R_packages/anem")
+library(anem)
+```
+
+```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
+# Create a grid of locations
+loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
+
+# Constant head boundary
+wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0)
+constant_head_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_constant_head,aquifer))
+
+# No flow boundary
+wells_no_flow <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(-1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+no_flow_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_no_flow,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
+
+thm <- theme(axis.text=element_blank(),axis.title=element_blank(),axis.ticks=element_blank(),
+             panel.background = element_rect(fill=NA,color="black"),
+             panel.border = element_rect(fill=NA,color="black"),
+             plot.title = element_text(size=10))
+
+p_CH <- ggplot() +
+  geom_contour(data=constant_head_boundary,aes(x,y,z=head),bins=50,linetype="dashed",color="black") +
+  geom_contour(data=constant_head_boundary,aes(x,y,z=streamfunction),bins=25,color="darkblue") +
+  geom_point(data=wells_constant_head,aes(x,y,fill=well_type),size=3,shape=21) +
+  theme(legend.position=c(0.8,0.15),legend.title=element_blank()) +
+  coord_equal() + thm + ggtitle("Constant head boundary at x = 0")
+p_NF <- ggplot() +
+  geom_contour(data=no_flow_boundary,aes(x,y,z=head),bins=25,linetype="dashed",color="black") +
+  geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50,color="darkblue") +
+  geom_point(data=wells_no_flow,aes(x,y,fill=well_type),size=3,shape=21) +
+  theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
+  coord_equal() + thm + ggtitle("No flow boundary at x = 0")
+gridExtra::grid.arrange(p_CH,p_NF,nrow=1)
+```
+
+
+### Drawdown relationships
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(sf)
+# devtools::install_github("https://github.com/gopalpenny/anem")
+# devtools::load_all("~/Projects/R_packages/anem")
+library(anem)
+```
+
+Use the `define_aquifer()` function to create a new aquifer, which has the class `aquifer`. This class is essentially a list with names parameters and a separate print method.
+
+```{r}
+# define aquifer
+aquifer <- define_aquifer("unconfined",1e-3,bounds=bounds_example,h0=100)
+```
+
+The `generate_image_wells()` function generates well images to recreate the bounderies defined by `aquifer`. The `wells_example` includes 8 wells, with 4 each associated with country "A" and "B", respectively.
+
+```{r set_simple_aquifer}
+# define wells and well images
+wells_actual <- define_wells(wells_example) 
+wells <- wells_actual %>% generate_image_wells(aquifer)
+```
+
+Plot the aquifer and wells.
+
+```{r set_simple_wells,echo=FALSE}
+ggplot() +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_abline(slope=0,intercept=500,linetype="dashed") +
+  geom_point(data=wells_actual,aes(x,y,fill=country),shape=21) +
+  coord_equal()
+```
+
+Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean. The results show $\Phi_{ii}$ and $\Phi_{ij}$.
+
+```{r drawdown_relationships,results='hide'}
+drawdown_relationships <- get_drawdown_relationships(wells, aquifer, country, weights)
+```
+
+```{r print_drawdown_kable,echo=FALSE}
+drawdown_relationships %>% 
+  knitr::kable("html") #%>% kableExtra::kable_styling()
+```
+
+### Plot the head and flow
+
+The hydrodynamics of the aquifer can be mapped by obtaining gridded heand flow using the `get_gridded_hydrodynamics()` function. The function takes as input the wells, aquifer, and grid dimensions for head and flow. It returns a `list` object with data.frames for head and flow, which can then be plotted.
+
+```{r}
+gridded <- get_gridded_hydrodynamics(wells,aquifer,c(20,20),c(8,8))
+```
+
+```{r echo=FALSE, warning=FALSE}
+ggplot() +
+  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+  geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
+               arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
+  coord_equal()
+```
+
