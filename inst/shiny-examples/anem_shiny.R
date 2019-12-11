@@ -20,11 +20,31 @@ ui <- shiny::fluidPage(
 
   # Main panel for displaying outputs ----
   h3("Aquifer plot"),
-  shiny::plotOutput("domain_plot"),
+
+  shiny::fluidRow(
+    column(width=6,
+           shiny::plotOutput("plot1", #height = 400,
+                             # Equivalent to: click = clickOpts(id = "plot_click")
+                             click = "plot1_click",
+                             brush = brushOpts(
+                               id = "plot1_brush")
+           )
+    )
+  ),
 
   h3("Wells"),
-  DT::dataTableOutput("x1")#,
-  # shiny::tableOutput("edited")
+  DT::dataTableOutput("wells_table"),
+
+  fluidRow(
+    column(width = 6,
+           h4("Points near click"),
+           verbatimTextOutput("click_info")
+    ),
+    column(width = 6,
+           h4("Brushed points"),
+           verbatimTextOutput("brush_info")
+    )
+  )
 
 )
 
@@ -35,39 +55,45 @@ server <- function(input, output, session) {
   aquifer <- define_aquifer("unconfined",Ksat=1e-4,h0=100,bounds=bounds)
 
   p_wells <- reactive({ggplot2::ggplot() +
-      ggplot2::geom_segment(data=bounds,ggplot2::aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+      # ggplot2::geom_segment(data=bounds,ggplot2::aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
       ggplot2::geom_point(data=wells,ggplot2::aes(x,y,fill=Group),shape=21,size=3) +
       # ggplot2::scale_shape_manual() +
       ggplot2::coord_equal()})
-  output$domain_plot <- shiny::renderPlot({p_wells()})
+  output$plot1 <- shiny::renderPlot({p_wells()})
 
-  proxy <- DT::dataTableProxy('x1')
+  proxy <- DT::dataTableProxy('wells_table')
 
-  observeEvent(input$x1_cell_edit, {
-    info = input$x1_cell_edit
+  observeEvent(input$wells_table_cell_edit, {
+    info = input$wells_table_cell_edit
     str(info)
     i = info$row
     j = info$col
     v = info$value
     wells[i, j] <<- DT::coerceValue(v, wells[i, j])
-    replaceData(proxy, wells, resetPaging = FALSE, rownames = T)
-    output$edited <- renderTable({wells})
+    replaceData(proxy, wells %in% c(brushedPoints(wells, input$plot1_brush)$wID),
+                resetPaging = FALSE, rownames = T)
+    # output$edited <- renderTable({wells})
     p_wells <- reactive({ggplot2::ggplot() +
-        ggplot2::geom_segment(data=bounds,ggplot2::aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+        # ggplot2::geom_segment(data=bounds,ggplot2::aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
         ggplot2::geom_point(data=wells,ggplot2::aes(x,y,fill=Group),shape=21,size=3) +
         # ggplot2::scale_shape_manual() +
         ggplot2::coord_equal()})
-    output$domain_plot <- shiny::renderPlot({p_wells()})
+    output$plot1 <- shiny::renderPlot({p_wells()})
   })
-
-
 
   # https://shiny.rstudio.com/gallery/basic-datatable.html
   # output$wells <-
-  output$x1 <- DT::renderDT(wells, selection = 'none',rownames = T,editable=TRUE)
+  output$wells_table <- DT::renderDT(wells, selection = 'none',rownames = T,editable=TRUE)
 
-  # output$edited <- shiny::renderTable({wells_output})
-  # output$edited <- shiny::renderPrint(cell_changes())
+  output$click_info <- renderPrint({
+    # Because it's a ggplot2, we don't need to supply xvar or yvar; if this
+    # were a base graphics plot, we'd need those.
+    nearPoints(wells, input$plot1_click, addDist = TRUE)$wID
+  })
+
+  output$brush_info <- renderPrint({
+    brushedPoints(wells, input$plot1_brush)$wID
+  })
 
 }
 
