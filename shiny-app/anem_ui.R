@@ -117,7 +117,7 @@ server <- function(input, output) {
       addProviderTiles("Esri.WorldImagery", group="Satellite") %>%
       addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
                        options = layersControlOptions(collapsed = FALSE)) %>%
-      setView(lng = -120, lat = 37, zoom=7)
+      setView(lng = -86.252, lat = 41.676, zoom=8)
   })
 
   # Map click (new well)
