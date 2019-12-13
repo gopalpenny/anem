@@ -9,7 +9,7 @@
 #'     which is the output from the leaflet map
 #' @param mapclicks A reactive object, which is a list containing text,
 #'     bound_vertices, and well_locations
-interpret_map_click <- function(clickedMarker, usermode, mapclicks) {
+interpret_map_click <- function(clickedMarker, usermode, mapclicks, well_input) {
   x <- clickedMarker$lng
   y <- clickedMarker$lat
   if (usermode == "aquifer") {
@@ -23,7 +23,8 @@ interpret_map_click <- function(clickedMarker, usermode, mapclicks) {
   } else if (usermode == "wells") {
     newid <- max(c(mapclicks$well_locations$id,0),na.rm=TRUE) + 1
     mapclicks$well_locations <- rbind(mapclicks$well_locations,
-                                      data.frame(x=x,y=y,id=newid))
+                                      data.frame(Q=well_input$Q,R=well_input$R,diam=well_input$diam,
+                                                 x=x,y=y,id=newid))
   }
   return(mapclicks)
 }

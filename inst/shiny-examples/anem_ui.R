@@ -1,9 +1,10 @@
 # anem_ui.R
 library(leaflet)
 library(anem)
+library(DT)
 
 ui <- fluidPage(
-  h4("Groundwater behavior"),
+  h4("anem ui"),
   tabsetPanel(
     type="pills",
     tabPanel(
@@ -32,11 +33,21 @@ ui <- fluidPage(
           conditionalPanel(
             condition = "input.usermode == 'bounds' | input.usermode == 'wells'",
             # h5("Instructions"),
-            textOutput("prepinstr")
+            textOutput("prepinstr"),
+            column(4,
+                   numericInput("Q","Q",0)
+            ),
+            column(4,
+                   numericInput("R","R",0)
+            ),
+            column(4,
+                   numericInput("diam","diam",0)
+            )
           )
         ),
         # Prepare map
         column(8,
+               h3(textOutput("maptitle")),
                leafletOutput("map",height=420)
         ),
       ),
@@ -68,7 +79,8 @@ server <- function(input, output) {
     text=NULL,
     clickedMarker=NULL,
     bound_vertices=data.frame(x=numeric(),y=numeric(),id=integer()),
-    well_locations=data.frame(x=numeric(),y=numeric(),id=integer())
+    well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),
+                              x=numeric(),y=numeric(),id=integer())
   )
 
   bound_edges <- reactiveValues(
@@ -88,6 +100,12 @@ server <- function(input, output) {
            "bounds" = "Click 4 vertices on the map to define the aquifer.",
            "wells" = "Click a well to edit, or click an empty space to add a well.")
   })
+  output$maptitle <- renderText({
+    # paste("usermode:",input$usermode)
+    switch(input$usermode,
+           "aquifer" = "Define aquifer",
+           "wells" = "Define wells")
+  })
 
   output$map <- renderLeaflet({
     leaflet() %>%
@@ -99,7 +117,8 @@ server <- function(input, output) {
   # store the click
   observeEvent(input$map_click,{
     clickedMarker <- input$map_click
-    mapclicks <- interpret_map_click(clickedMarker,input$usermode,mapclicks)
+    well_input <- list(Q=input$Q,R=input$R,diam=input$diam)
+    mapclicks <- interpret_map_click(clickedMarker,input$usermode,mapclicks,well_input)
     if (input$usermode == "aquifer") {
       bound_edges$edges <- get_edges_from_vertices(mapclicks$bound_vertices)
       leafletProxy("map",data=mapclicks$bound_vertices) %>%
@@ -118,7 +137,33 @@ server <- function(input, output) {
     {mapclicks$well_locations},
     options = list(searching=FALSE,
                    # formatNumber= function(x) format(x,nsmall=3),
-                   lengthChange=FALSE))
+                   lengthChange=FALSE,
+                   autoWidth = TRUE,
+                   columnDefs = list(list(width = '200px', targets = "_all"))),
+    editable=T,rownames=F)
+
+
+  # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)
+  #
+  proxy = dataTableProxy('welltable')
+
+  observeEvent(input$welltable_cell_edit, {
+    info = input$welltable_cell_edit
+    str(info)
+    i = info$row
+    j = info$col + 1  # column index offset by 1
+    v = info$value
+    mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    replaceData(proxy, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
+    str(mapclicks$well_locations)
+    output$edited <- renderTable({mapclicks$well_locations})
+  })
+
+  # store the click
+  observeEvent(input$map_marker_click,{
+    clickedMarker <- input$map_marker_click
+    output$current_well <- renderPrint({print(clickedMarker)})
+  })
 
   output$clickbounds <- renderPrint({print(bound_edges$edges)})
   output$clickwells <- renderPrint({print(mapclicks$well_locations)})
