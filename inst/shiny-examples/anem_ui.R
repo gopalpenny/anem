@@ -61,10 +61,10 @@ ui <- fluidPage(
         hr(),
         h4("Wells (double click to edit)"),
         dataTableOutput("welltable"),
-        hr(),
-        verbatimTextOutput("clickbounds"),
-        verbatimTextOutput("clickwells"),
-        verbatimTextOutput("aquifer")
+      #   hr(),
+      #   verbatimTextOutput("clickbounds"),
+      #   verbatimTextOutput("clickwells"),
+      #   verbatimTextOutput("aquifer")
       )
 
     ),
@@ -113,8 +113,10 @@ server <- function(input, output) {
 
   output$map <- renderLeaflet({
     leaflet() %>%
-      # addProviderTiles("Esri.WorldImagery", group="background 1") %>%
-      addTiles(options = providerTileOptions(noWrap = TRUE), group="background 2") %>%
+      addTiles(options = providerTileOptions(noWrap = TRUE), group="Map") %>%
+      addProviderTiles("Esri.WorldImagery", group="Satellite") %>%
+      addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
+                       options = layersControlOptions(collapsed = FALSE)) %>%
       setView(lng = -120, lat = 37, zoom=7)
   })
 
