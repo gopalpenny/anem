@@ -55,6 +55,7 @@ prep_bounds_sf <- function(bounds_sf) {
 #' quadrangle, which becomes the long axis of the rectangle, (4) calculating the slope of the long
 #' and short axes of the rectangle (at right angles), then generating lines with these slopes through
 #' the midpoints.
+#' @export
 #' @examples
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
@@ -485,4 +486,32 @@ in_range <- function(x,x1,x2) {
   x_high <- pmax(x1,x2)
   in_range <- x >= x_low & x <= x_high
   return(in_range)
+}
+
+#' Vertices to edges
+#'
+#' Convert vertices to edges. It prioritizes quadrangles -- it will close the polygon if
+#' there are 4 vertices.
+#' @param df
+#' @return
+#' This function returns bounds object from x, y vertices, with id 1:4
+#' @importFrom magrittr %>%
+#' @examples
+#' vertices <- data.frame(x=c(0,1),y=c(0,1),id=1:2)
+#' get_edges_from_vertices(vertices)
+#'
+#' vertices <- data.frame(x=c(0,1,1),y=c(0,1,0.5),id=1:3)
+#' get_edges_from_vertices(vertices)
+#'
+#' vertices <- data.frame(x=c(0,0,1,1),y=c(0,1,1,0),id=1:4)
+#' get_edges_from_vertices(vertices)
+get_edges_from_vertices <- function(vertices) {
+  edges <- vertices %>% dplyr::rename(x1=x,y1=y) %>%
+    dplyr::mutate(x2=dplyr::lead(x1,order_by = id),
+                  y2=dplyr::lead(y1,order_by = id))
+  if (dim(vertices)[1]==4) {
+    edges[edges$id==max(edges$id),]$x2 <- edges[edges$id==min(edges$id),]$x1
+    edges[edges$id==max(edges$id),]$y2 <- edges[edges$id==min(edges$id),]$y1
+  }
+  return(edges %>% dplyr::filter(!is.na(x2)))
 }

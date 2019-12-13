@@ -3,6 +3,8 @@ library(leaflet)
 library(anem)
 library(DT)
 
+source("app-functions/anem_shiny_helpers.R")
+
 wellPal <- colorFactor(palette = c("blue","darkgreen"), domain = c(FALSE, TRUE))
 
 ui <- fluidPage(
@@ -115,6 +117,7 @@ server <- function(input, output) {
     leaflet() %>%
       addTiles(options = providerTileOptions(noWrap = TRUE), group="Map") %>%
       addProviderTiles("Esri.WorldImagery", group="Satellite") %>%
+      addScaleBar(position = c("bottomright"), options = scaleBarOptions()) %>%
       addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
                        options = layersControlOptions(collapsed = FALSE)) %>%
       setView(lng = -86.252, lat = 41.676, zoom=8)
@@ -159,8 +162,8 @@ server <- function(input, output) {
       #                      (mapclicks$well_locations$lat - markerClick$lat)^2))
       # closest_marker <-
       # mapclicks$well_locations[closest_well,"selected"] <- TRUE
-      print("mapclicks$well_locations")
-      print(mapclicks$well_locations)
+      # print("mapclicks$well_locations")
+      # print(mapclicks$well_locations)
       leafletProxy("map") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
@@ -192,13 +195,16 @@ server <- function(input, output) {
   })
 
   output$welltable <- renderDataTable(
-    {mapclicks$well_locations},
-    options = list(searching=FALSE,
-                   # formatNumber= function(x) format(x,nsmall=3),
-                   lengthChange=FALSE,
-                   autoWidth = TRUE,
-                   columnDefs = list(list(width = '200px', targets = "_all"))),
-    editable=T,rownames=F)
+    datatable(mapclicks$well_locations,
+              editable=T,rownames=F,
+              options = list(searching=FALSE,
+                             # formatNumber= function(x) format(x,nsmall=3),
+                             lengthChange=FALSE,
+                             autoWidth = TRUE,
+                             columnDefs = list(list(width = '200px', targets = "_all")))
+              ) %>%
+      formatStyle('selected',target='row',
+                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen'))))
 
 
   # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)

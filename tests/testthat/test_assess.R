@@ -29,7 +29,7 @@ test_that("get_bounds_behavior works shows no normal flow for NF boundaries and 
 
 
 gg_list <- plot_bounds_behavior(wells,aquifer,length.out=20)
-gridExtra::grid.arrange(gg_list$p_h,gg_list$p_f,nrow=1)
+# gridExtra::grid.arrange(gg_list$p_h,gg_list$p_f,nrow=1)
 test_that("plot_bounds_behavior generates ggplots",{
   expect_equal(class(gg_list$p_h),c("gg","ggplot"))
   expect_equal(class(gg_list$p_f),c("gg","ggplot"))

@@ -29,30 +29,4 @@ interpret_map_click <- function(mapClick, clickOperation, mapclicks, well_input)
   return(mapclicks)
 }
 
-#' Vertices to edges
-#'
-#' Convert vertices to edges. It prioritizes quadrangles -- it will close the polygon if
-#' there are 4 vertices.
-#' @param df
-#' @return
-#' This function returns bounds object from x, y vertices, with id 1:4
-#' @importFrom magrittr %>%
-#' @examples
-#' vertices <- data.frame(x=c(0,1),y=c(0,1),id=1:2)
-#' get_edges_from_vertices(vertices)
-#'
-#' vertices <- data.frame(x=c(0,1,1),y=c(0,1,0.5),id=1:3)
-#' get_edges_from_vertices(vertices)
-#'
-#' vertices <- data.frame(x=c(0,0,1,1),y=c(0,1,1,0),id=1:4)
-#' get_edges_from_vertices(vertices)
-get_edges_from_vertices <- function(vertices) {
-  edges <- vertices %>% dplyr::rename(x1=x,y1=y) %>%
-    dplyr::mutate(x2=dplyr::lead(x1,order_by = id),
-                  y2=dplyr::lead(y1,order_by = id))
-  if (dim(vertices)[1]==4) {
-    edges[edges$id==max(edges$id),]$x2 <- edges[edges$id==min(edges$id),]$x1
-    edges[edges$id==max(edges$id),]$y2 <- edges[edges$id==min(edges$id),]$y1
-  }
-  return(edges %>% dplyr::filter(!is.na(x2)))
-}
+
