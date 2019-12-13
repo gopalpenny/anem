@@ -14,13 +14,13 @@ ui <- fluidPage(
         column(
           4,
           radioButtons("usermode","Entry mode",
-                       c("Define aquifer properties" = "aquifer",
-                         "Set aquifer bounds" = "bounds",
+                       c("Define aquifer" = "aquifer",
+                         # "Set aquifer bounds" = "bounds",
                          "Add or modify wells" = "wells")),
           conditionalPanel(
             condition = "input.usermode == 'aquifer'",
-            h5("Aquifer type"),
-            radioButtons("aquifer_type", NULL,
+            # h5("Aquifer type"),
+            radioButtons("aquifer_type", "Aquifer type",
                          c("Confined" = "confined","Unconfined" = "unconfined")),
             numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0),
             numericInput("h0", "Undisturbed hydraulic head, m",value = 0),
@@ -31,7 +31,7 @@ ui <- fluidPage(
           ),
           conditionalPanel(
             condition = "input.usermode == 'bounds' | input.usermode == 'wells'",
-            h5("Instructions"),
+            # h5("Instructions"),
             textOutput("prepinstr")
           )
         ),
@@ -42,6 +42,11 @@ ui <- fluidPage(
       ),
       fluidRow(
         hr(),
+        h4("Wells"),
+        dataTableOutput("welltable"),
+        hr(),
+        verbatimTextOutput("clickbounds"),
+        verbatimTextOutput("clickwells"),
         verbatimTextOutput("aquifer")
       )
 
@@ -59,9 +64,16 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-  bound_vertices <- reactiveValues(
+  mapclicks <- reactiveValues(
+    text=NULL,
     clickedMarker=NULL,
-    vert=data.frame(x=as.numeric(NA),y=as.numeric(NA)),id=as.integer(NA))
+    bound_vertices=data.frame(x=numeric(),y=numeric(),id=integer()),
+    well_locations=data.frame(x=numeric(),y=numeric(),id=integer())
+  )
+
+  bound_edges <- reactiveValues(
+    edges = NULL
+  )
 
   aquifer <- reactive({define_aquifer(
     aquifer_type=input$aquifer_type,
@@ -81,10 +93,35 @@ server <- function(input, output) {
     leaflet() %>%
       # addProviderTiles("Esri.WorldImagery", group="background 1") %>%
       addTiles(options = providerTileOptions(noWrap = TRUE), group="background 2") %>%
-      setView(lng=-120 , lat =35, zoom=7)
-
+      setView(lng = -120, lat = 37, zoom=7)
   })
 
+  # store the click
+  observeEvent(input$map_click,{
+    clickedMarker <- input$map_click
+    mapclicks <- interpret_map_click(clickedMarker,input$usermode,mapclicks)
+    if (input$usermode == "aquifer") {
+      bound_edges$edges <- get_edges_from_vertices(mapclicks$bound_vertices)
+      leafletProxy("map",data=mapclicks$bound_vertices) %>%
+        clearGroup("boundvertices") %>%
+        addCircleMarkers(~x, ~y, color = "black", group = "boundvertices") %>%
+        addPolygons(~x, ~y, color = "black", layerId = "boundedges",fillOpacity = 0)
+    } else if (input$usermode == "wells") {
+      leafletProxy("map") %>%
+        clearGroup("wells") %>%
+        addCircleMarkers(~x, ~y, color = "blue", group = "wells",
+                         data=mapclicks$well_locations)
+    }
+  })
+
+  output$welltable <- renderDataTable(
+    {mapclicks$well_locations},
+    options = list(searching=FALSE,
+                   # formatNumber= function(x) format(x,nsmall=3),
+                   lengthChange=FALSE))
+
+  output$clickbounds <- renderPrint({print(bound_edges$edges)})
+  output$clickwells <- renderPrint({print(mapclicks$well_locations)})
   output$aquifer <- renderPrint({print(aquifer())})
 }
 

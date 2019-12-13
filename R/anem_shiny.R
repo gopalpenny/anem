@@ -1,4 +1,4 @@
-# run_shiny.R
+# anem_shiny.R
 
 #' Run anem shiny app
 #'

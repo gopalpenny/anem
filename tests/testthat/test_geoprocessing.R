@@ -113,3 +113,4 @@ loc_rep <- data.frame(x=rep(0,4),y=rep(75,4))
 test_that("get_nearest_point_on_line works for single point and 4 lines",{
   expect_equal(get_nearest_point_on_line(loc_rep,m=bounds$m,b=bounds$b),data.frame(x=c(-30,30,10,22),y=c(60,15,80,31)))
 })
+

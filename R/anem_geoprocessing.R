@@ -406,20 +406,7 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
   return(list(m=m,b=b))
 }
 
-#' Print data frame for re-entry
-#' @examples
-#' df <- data.frame(a=1:4,b=11:14,c=c("a","b","c","q"))
-#' print_data_frame_for_entry(df)
-print_data_frame_for_entry <- function(df) {
-  df_names <- names(df)
-  N <- length(df_names)
-  cat("df <- data.frame(")
-  for (i in 1:N) {
-    char_end <- ifelse(i!=N,",",")")
-    cat(paste0(df_names[i],"=",paste(df[,i],collapse=","),"",char_end,"\n"))
-  }
 
-}
 
 
 #' Get distance from point to bounds
