@@ -208,4 +208,10 @@ get_gridded_hydrodynamics <- function(wells,aquifer,head_dim=c(20,20),flow_dim=c
   return(list(head=head_df,flow=flow_dir_df))
 }
 
-
+#' Use anem function
+#'
+#' Use anem function not exported from package
+#' @param function_name Name of function to use, as a string
+use_anem_function <- function(function_name,...) {
+  return(NULL)
+}

@@ -81,6 +81,13 @@ prep_bounds_sf <- function(bounds_sf) {
 get_rectangle <- function(bounds) {
   is_sf <- max(grepl("sf",class(bounds)))
 
+  ## GENERATE BOUNDS OF SF
+  if (is_sf & !any(all(c("m","b") %in% names(bounds)),
+           all(c("x1","x2","y1","y2") %in% names(bounds)))) {
+    # NOT YET WORKING
+    bounds <- prep_bounds_sf(bounds)
+  }
+
   if (is.null(bounds$bID)) {
     bounds <- bounds %>%
       dplyr::mutate(bID=dplyr::row_number())
@@ -134,7 +141,7 @@ get_rectangle <- function(bounds) {
       sf::st_cast("LINESTRING",union=TRUE) %>%
       sf::st_set_crs(sf::st_crs(bounds))
     bounds_rectangular <- quad_vertices_final_linestring %>%
-      left_join(bounds_rectangular,by="bID")
+      dplyr::left_join(bounds_rectangular,by="bID")
   }
 
   return(bounds_rectangular)
@@ -185,6 +192,13 @@ bounds_to_sf <- function(bounds,crs) {
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal() +
 #'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
 #'   scale_shape_manual(values=1:4)
+#'
+#' bounds <-data.frame(bID=c(5, 6, 7, 8),
+#'                     x1=c(468888, 572670, 483978, 468888),
+#'                     x2=c(572670, 588746, 588746, 483978),
+#'                     y1=c(4592114, 4630407, 4518117, 4592114),
+#'                     y2=c(4630407, 4556624, 4556624, 4518117))
+#' vertices <- get_quad_vertices(bounds)
 get_quad_vertices <- function(bounds) {
   if (max(grepl("sf",class(bounds)))) {
     bounds <- bounds %>% sf::st_set_geometry(NULL)
@@ -219,7 +233,10 @@ get_quad_vertices <- function(bounds) {
     tidyr::gather(orig,bID,dplyr::starts_with("bID")) %>%
     dplyr::bind_rows(vertices_of_quad_midpoints) %>%
     dplyr::select(-orig,-bID) %>% dplyr::distinct()# %>% mutate(keep=TRUE)
-  quad_vertices_full <- vertices %>% dplyr::inner_join(vertices_of_quad,by=c("x","y")) %>%
+  quad_vertices_full <- vertices %>% dplyr::mutate(x=signif(x,10),y=signif(y,10)) %>%
+    dplyr::inner_join(signif(vertices_of_quad,10),by=c("x","y")) %>% # select vertices in the quadrangle
+    dplyr::select(-x,-y) %>%
+    dplyr::left_join(vertices,by=c("bID","bID2")) %>%
     dplyr::rename(intersection_bID=bID2) %>%
     tidyr::complete(bID,intersection_bID) %>%
     dplyr::filter(bID!=intersection_bID)
@@ -488,30 +505,35 @@ in_range <- function(x,x1,x2) {
   return(in_range)
 }
 
+
+
+
 #' Vertices to edges
 #'
 #' Convert vertices to edges. It prioritizes quadrangles -- it will close the polygon if
 #' there are 4 vertices.
-#' @param df
+#' @param vertices A data.frame of x, y, and bID
 #' @return
-#' This function returns bounds object from x, y vertices, with id 1:4
+#' This function returns bounds object from x, y vertices, with bID 1:4
 #' @importFrom magrittr %>%
+#' @export
 #' @examples
-#' vertices <- data.frame(x=c(0,1),y=c(0,1),id=1:2)
+#' vertices <- data.frame(x=c(0,1),y=c(0,1),bID=1:2)
 #' get_edges_from_vertices(vertices)
 #'
-#' vertices <- data.frame(x=c(0,1,1),y=c(0,1,0.5),id=1:3)
+#' vertices <- data.frame(x=c(0,1,1),y=c(0,1,0.5),bID=1:3)
 #' get_edges_from_vertices(vertices)
 #'
-#' vertices <- data.frame(x=c(0,0,1,1),y=c(0,1,1,0),id=1:4)
+#' vertices <- data.frame(x=c(0,0,1,1),y=c(0,1,1,0),bID=1:4)
 #' get_edges_from_vertices(vertices)
 get_edges_from_vertices <- function(vertices) {
   edges <- vertices %>% dplyr::rename(x1=x,y1=y) %>%
-    dplyr::mutate(x2=dplyr::lead(x1,order_by = id),
-                  y2=dplyr::lead(y1,order_by = id))
+    dplyr::mutate(x2=dplyr::lead(x1,order_by = bID),
+                  y2=dplyr::lead(y1,order_by = bID))
   if (dim(vertices)[1]==4) {
-    edges[edges$id==max(edges$id),]$x2 <- edges[edges$id==min(edges$id),]$x1
-    edges[edges$id==max(edges$id),]$y2 <- edges[edges$id==min(edges$id),]$y1
+    edges[edges$bID==max(edges$bID),]$x2 <- edges[edges$bID==min(edges$bID),]$x1
+    edges[edges$bID==max(edges$bID),]$y2 <- edges[edges$bID==min(edges$bID),]$y1
   }
   return(edges %>% dplyr::filter(!is.na(x2)))
 }
+
