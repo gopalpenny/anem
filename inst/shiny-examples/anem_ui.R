@@ -3,6 +3,8 @@ library(leaflet)
 library(anem)
 library(DT)
 
+wellPal <- colorFactor(palette = c("blue","darkgreen"), domain = c(FALSE, TRUE))
+
 ui <- fluidPage(
   h4("anem ui"),
   tabsetPanel(
@@ -23,37 +25,41 @@ ui <- fluidPage(
             # h5("Aquifer type"),
             radioButtons("aquifer_type", "Aquifer type",
                          c("Confined" = "confined","Unconfined" = "unconfined")),
-            numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0),
-            numericInput("h0", "Undisturbed hydraulic head, m",value = 0),
+            numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0.001),
+            numericInput("h0", "Undisturbed hydraulic head, m",value = 50),
             conditionalPanel(
               condition = "input.aquifer_type == 'confined'",
-              numericInput("z0", "Aquifer thickness, m",0)
+              numericInput("z0", "Aquifer thickness, m",10)
             )
           ),
           conditionalPanel(
             condition = "input.usermode == 'bounds' | input.usermode == 'wells'",
             # h5("Instructions"),
             textOutput("prepinstr"),
-            column(4,
-                   numericInput("Q","Q",0)
+            h4("New well:"),
+            fluidRow(
+              column(4,numericInput("Q","Q",0.1)),
+              column(4,numericInput("R","R",1000)),
+              column(4,numericInput("diam","diam",1))
             ),
-            column(4,
-                   numericInput("R","R",0)
-            ),
-            column(4,
-                   numericInput("diam","diam",0)
+            h4("Edit well:"),
+            fluidRow(
+              column(6,actionButton("deleteWell","Delete well"),offset=3)
             )
           )
         ),
         # Prepare map
         column(8,
-               h3(textOutput("maptitle")),
+               fluidRow(
+                 column(4,h3(textOutput("maptitle"))),
+                 column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4)
+               ),
                leafletOutput("map",height=420)
         ),
       ),
       fluidRow(
         hr(),
-        h4("Wells"),
+        h4("Wells (double click to edit)"),
         dataTableOutput("welltable"),
         hr(),
         verbatimTextOutput("clickbounds"),
@@ -76,11 +82,9 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   mapclicks <- reactiveValues(
-    text=NULL,
-    clickedMarker=NULL,
     bound_vertices=data.frame(x=numeric(),y=numeric(),id=integer()),
     well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),
-                              x=numeric(),y=numeric(),id=integer())
+                              x=numeric(),y=numeric(),id=integer(),selected=logical())
   )
 
   bound_edges <- reactiveValues(
@@ -114,23 +118,75 @@ server <- function(input, output) {
       setView(lng = -120, lat = 37, zoom=7)
   })
 
-  # store the click
+  # Map click (new well)
   observeEvent(input$map_click,{
-    clickedMarker <- input$map_click
+    mapClick <- input$map_click
+    if (!is.null(input$map_marker_click)) {
+      markerClick <- input$map_marker_click
+    } else {
+      markerClick <- list(lat=Inf,lng=Inf)
+    }
+    map_marker_equal <- identical(mapClick[c("lng","lat")],markerClick[c("lng","lat")])
+    clickType <- dplyr::case_when(
+      map_marker_equal ~ "marker",
+      !map_marker_equal ~ "map")
+    clickOperation <- dplyr::case_when(
+      input$usermode=="aquifer" ~ "aquifer_vertex",
+      input$usermode=="wells" & clickType=="map" ~ "new_well",
+      input$usermode=="wells" & clickType=="marker" ~ "edit_well"
+    )
     well_input <- list(Q=input$Q,R=input$R,diam=input$diam)
-    mapclicks <- interpret_map_click(clickedMarker,input$usermode,mapclicks,well_input)
+    mapclicks <- interpret_map_click(mapClick,clickOperation,mapclicks,well_input)
     if (input$usermode == "aquifer") {
       bound_edges$edges <- get_edges_from_vertices(mapclicks$bound_vertices)
       leafletProxy("map",data=mapclicks$bound_vertices) %>%
         clearGroup("boundvertices") %>%
         addCircleMarkers(~x, ~y, color = "black", group = "boundvertices") %>%
         addPolygons(~x, ~y, color = "black", layerId = "boundedges",fillOpacity = 0)
-    } else if (input$usermode == "wells") {
+    } else if (clickOperation == "new_well") {
       leafletProxy("map") %>%
         clearGroup("wells") %>%
-        addCircleMarkers(~x, ~y, color = "blue", group = "wells",
+        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                         data=mapclicks$well_locations)
+    } else if (clickOperation == "edit_well") {
+      mapclicks$well_locations <- mapclicks$well_locations %>%
+        dplyr::mutate(dist=sqrt((x-markerClick$lng)^2 + (y - markerClick$lat)^2),
+                      selected=dist==min(dist)) %>%
+        dplyr::select(-dist)
+      # dist <- which.min(sqrt((mapclicks$well_locations$lng - markerClick$lng)^2 +
+      #                      (mapclicks$well_locations$lat - markerClick$lat)^2))
+      # closest_marker <-
+      # mapclicks$well_locations[closest_well,"selected"] <- TRUE
+      print("mapclicks$well_locations")
+      print(mapclicks$well_locations)
+      leafletProxy("map") %>%
+        clearGroup("wells") %>%
+        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
     }
+  })
+
+  # # Map marker click (select well)
+  # observeEvent(input$map_marker_click,{
+  #   markerClick <- input$map_marker_click
+  #   output$current_well <- renderPrint({print(markerClick)})
+  # })
+
+  observeEvent(input$deleteWell,{
+    mapclicks$well_locations <- mapclicks$well_locations %>%
+      dplyr::filter(!selected)
+    leafletProxy("map") %>%
+      clearGroup("wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                       data=mapclicks$well_locations)
+  })
+
+  observeEvent(input$resetMap,{
+    mapclicks$bound_vertices <- data.frame(x=numeric(),y=numeric(),id=integer())
+    mapclicks$well_locations <- data.frame(Q=numeric(),R=numeric(),diam=numeric(),
+                              x=numeric(),y=numeric(),id=integer(),selected=logical())
+    leafletProxy("map") %>%
+      clearShapes() %>% clearMarkers()
   })
 
   output$welltable <- renderDataTable(
@@ -155,15 +211,16 @@ server <- function(input, output) {
     v = info$value
     mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
     replaceData(proxy, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
-    str(mapclicks$well_locations)
-    output$edited <- renderTable({mapclicks$well_locations})
+    if (j %in% c(4,5)) {
+      leafletProxy("map") %>%
+        clearGroup("wells") %>%
+        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                         data=mapclicks$well_locations)
+    }
+    # str(mapclicks$well_locations)
+    # output$edited <- renderTable({mapclicks$well_locations})
   })
 
-  # store the click
-  observeEvent(input$map_marker_click,{
-    clickedMarker <- input$map_marker_click
-    output$current_well <- renderPrint({print(clickedMarker)})
-  })
 
   output$clickbounds <- renderPrint({print(bound_edges$edges)})
   output$clickwells <- renderPrint({print(mapclicks$well_locations)})
