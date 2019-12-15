@@ -215,17 +215,26 @@ get_gridded_hydrodynamics <- function(wells,aquifer,head_dim=c(20,20),flow_dim=c
 #' @param ... Named inputs to each function
 #' @export
 #' @examples
+#' # get_utm_rectangle()
 #' edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
 #'                          y1=c(41.44,41.83,41.15,40.85),
 #'                          bID=c(5,6,7,8),
 #'                          x2=c(-86.22,-85.85,-87.18,-87.38),
 #'                          y2=c(41.83,41.15,40.85,41.44))
 #' edges_rect <- use_anem_function("get_utm_rectangle",edges_user=edges_user)
+#'
+#' # bounds_to_sf()
+#' bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
+#' bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
 use_anem_function <- function(function_name,...) {
   params <- list(...)
   if (function_name == "get_utm_rectangle") {
-    edges_rect <- get_utm_rectangle(params$edges_user)
+    edges_rect <- get_utm_rectangle(...)
     return(edges_rect)
+  }
+  if (function_name == "bounds_to_sf") {
+    bounds_sf <- bounds_to_sf(...)
+    return(bounds_sf)
   }
   return(NULL)
 }

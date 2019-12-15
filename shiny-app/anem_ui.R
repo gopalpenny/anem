@@ -6,7 +6,7 @@ library(DT)
 source("app-functions/anem_shiny_helpers.R")
 
 wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE))
-boundPal <- colorFactor(palette = c("blue","black"), domain = c("CH", "NF"))
+boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
 
 ui <- fluidPage(
   h4("anem ui"),
@@ -28,23 +28,52 @@ ui <- fluidPage(
             selectInput("aquifer_input","Edit aquifer",
                         c("Aquifer properties"="properties",
                           "Aquifer boundaries"="boundaries")),
-            conditionalPanel(
-              condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
-              # h5("Aquifer type"),
-              radioButtons("aquifer_type", "Aquifer type",
-                           c("Confined" = "confined","Unconfined" = "unconfined")),
-              numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0.001),
-              numericInput("h0", "Undisturbed hydraulic head, m",value = 50),
-              conditionalPanel(
-                condition = "input.aquifer_type == 'confined'",
-                numericInput("z0", "Aquifer thickness, m",10)
+
+            tabsetPanel(
+              type="pills",
+              tabPanel(
+                "Properties",fluid=TRUE,
+                # conditionalPanel(
+                #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
+                # h5("Aquifer type"),
+                radioButtons("aquifer_type", NULL, #"Aquifer type",
+                             c("Confined" = "confined","Unconfined" = "unconfined")),
+                numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0.001),
+                numericInput("h0", "Undisturbed hydraulic head, m",value = 50),
+                conditionalPanel(
+                  condition = "input.aquifer_type == 'confined'",
+                  numericInput("z0", "Aquifer thickness, m",10)
+                )
+              ),
+              tabPanel(
+                "Boundaries",fluid=TRUE,
+                #     "Prepare scenario",fluid=TRUE,
+                # conditionalPanel(
+                #   condition="input.usermode == 'aquifer' & input.aquifer_input == 'boundaries'",
+                # h4("Aquifer "),
+                p("Click 4 points to add rectangular aquifer boundaries."), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
+                fluidRow(
+                  # column(6,dataTableOutput("edgetable")),
+                  column(5,h4("Bound 1:")),
+                  column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                ),
+                fluidRow(
+                  # column(6,dataTableOutput("edgetable")),
+                  column(5,h4("Bound 2:")),
+                  column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                ),
+                fluidRow(
+                  # column(6,dataTableOutput("edgetable")),
+                  column(5,h4("Bound 3:")),
+                  column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                ),
+                fluidRow(
+                  # column(6,dataTableOutput("edgetable")),
+                  column(5,h4("Bound 4:")),
+                  column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                )#,verbatimTextOutput("boundtypes")
               )
-            ),
-            conditionalPanel(
-              condition="input.usermode == 'aquifer' & input.aquifer_input == 'boundaries'",
-              h4("Aquifer boundaries"),
-              p("Click 4 points to add rectangular aquifer boundaries. bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
-              dataTableOutput("edgetable"))
+            )
           ),
           conditionalPanel(
             condition = "input.usermode == 'bounds' | input.usermode == 'wells'",
@@ -79,10 +108,9 @@ ui <- fluidPage(
           condition="input.usermode == 'wells'",
                     dataTableOutput("welltable")),
         #   hr(),
-        verbatimTextOutput("clickbounds"),
-        verbatimTextOutput("clickbounds_rect")
-      #   verbatimTextOutput("clickwells"),
-      #   verbatimTextOutput("aquifer")
+        verbatimTextOutput("aquifer"),
+        verbatimTextOutput("bounds"),
+        verbatimTextOutput("wells")
       )
 
     ),
@@ -106,10 +134,28 @@ server <- function(input, output) {
                               x=numeric(),y=numeric(),wID=integer(),selected=logical())
   )
 
-  bound_edges <- reactiveValues(
+  bounds <- reactiveValues(
     edges_user = NULL,
-    edges_rectangular = NULL
+    edges_rectangular = NULL,
+    bounds_sf = NULL
   )
+
+  bound_types <- reactive({
+    c(input$b1_type,input$b2_type,input$b3_type,input$b4_type)
+  })
+  observeEvent(bound_types(),{
+    # print(bounds$bounds_sf)
+    if (!is.null(bounds$bounds_sf)) {
+      bounds$bounds_sf <- bounds$bounds_sf %>% dplyr::mutate(bound_type=bound_types())
+      # print(bounds$bounds_sf)
+      leafletProxy("map") %>%
+        clearGroup("bounds_rectangular") %>%
+        addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
+                     fillOpacity = 0, opacity = 1, weight = 3,
+                     data=bounds$bounds_sf)
+    }
+  })
+  output$boundtypes <- renderPrint({print(bound_types())})
 
   aquifer <- reactive({define_aquifer(
     aquifer_type=input$aquifer_type,
@@ -170,23 +216,25 @@ server <- function(input, output) {
     well_input <- list(Q=input$Q,R=input$R,diam=input$diam)
     mapclicks <- interpret_map_click(mapClick,clickOperation,mapclicks,well_input=well_input)
     if (input$usermode == "aquifer") {
-      bound_edges$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
+      bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
       leafletProxy("map",data=mapclicks$bound_vertices) %>%
         clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
         addCircleMarkers(~x, ~y, color = "black", group = "boundvertices") %>%
         addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
                     layerId = "boundedges",fillOpacity = 0)
-      if (dim(bound_edges$edges_user)[1]==4) {
-        bound_edges$edges_rectangular <-
+      if (dim(bounds$edges_user)[1]==4) {
+        bounds$edges_rectangular <-
           use_anem_function("get_utm_rectangle",
-                            edges_user=bound_edges$edges_user) %>%
-          dplyr::mutate(bound_type="NF") %>%
+                            edges_user=bounds$edges_user) %>%
+          dplyr::mutate(bound_type=bound_types()) %>%
           dplyr::select(bID,bound_type,dplyr::everything())
+        bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular)
+        # print(bounds$bounds_sf)
         leafletProxy("map") %>%
           clearGroup("boundvertices") %>%
-          addPolygons(~x1, ~y1, color = ~boundPal(bound_type), group = "bounds_rectangular",
+          addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                       fillOpacity = 0, opacity = 1, weight = 3,
-                      data=bound_edges$edges_rectangular)
+                      data=bounds$bounds_sf)
       }
     } else if (clickOperation == "new_well") {
       leafletProxy("map") %>%
@@ -250,11 +298,11 @@ server <- function(input, output) {
   # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)
   #
   proxy_welltable <- dataTableProxy('welltable')
-  proxy_edgetable <- dataTableProxy('edgetable')
+  # proxy_edgetable <- dataTableProxy('edgetable')
 
   observeEvent(input$welltable_cell_edit, {
     info = input$welltable_cell_edit
-    str(info)
+    # str(info)
     i = info$row
     j = info$col + 1  # column index offset by 1
     v = info$value
@@ -271,48 +319,41 @@ server <- function(input, output) {
   })
 
 
+  # output$edgetable <- renderDataTable(
+  #   datatable(bounds$edges_rectangular[,1:2],
+  #             editable=T,rownames=F,
+  #             options = list(searching=FALSE,
+  #                            # formatNumber= function(x) format(x,nsmall=3),
+  #                            lengthChange=FALSE,
+  #                            autoWidth = TRUE,
+  #                            columnDefs = list(list(width = '200px', targets = "_all")),
+  #                            paging=FALSE,info=FALSE)
+  #   ))
 
-  ############################################################################################
-  ############################################################################################
-  ############################################################################################
-  # NEED TO FIX TABLE EDITING. CAN CHANGE BOUND_TYPE TO CH IN TABLE, BUT IT WON'T UPDATE
-  # IN THE ACTUAL DATA.FRAME USED FOR MAPPING.
-  ############################################################################################
-  ############################################################################################
-  ############################################################################################
-  ############################################################################################
-  output$edgetable <- renderDataTable(
-    datatable(bound_edges$edges_rectangular[,1:2],
-              editable=T,rownames=F,
-              options = list(searching=FALSE,
-                             # formatNumber= function(x) format(x,nsmall=3),
-                             lengthChange=FALSE,
-                             autoWidth = TRUE,
-                             columnDefs = list(list(width = '200px', targets = "_all")),
-                             paging=FALSE,info=FALSE)
-    ))
-
-  observeEvent(input$edgetable_cell_edit, {
-    info <- input$edgetable_cell_edit
-    str(info)
-    i <- info$row
-    j <- info$col + 1  # column index offset by 1
-    v <- info$value
-    bound_edges$edges_rectangular[i, j] <<- DT::coerceValue(v, bound_edges$edges_rectangular[i, j])
-    replaceData(proxy_edgetable, bound_edges$edges_rectangular[,1:2], resetPaging = FALSE, rownames = F)
-    # if (j %in% c(4,5)) { # update map if x or y change
-    #   leafletProxy("map") %>%
-    #     clearGroup("wells") %>%
-    #     addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
-    #                      data=mapclicks$well_locations)
-    # }
-    str(bound_edges$edges_rectangular)
-  })
+  # observeEvent(input$edgetable_cell_edit, {
+  #   info <- input$edgetable_cell_edit
+  #   str(info)
+  #   i <- info$row
+  #   j <- info$col + 1  # column index offset by 1
+  #   v <- info$value
+  #   bounds$edges_rectangular[i, j] <<- DT::coerceValue(v, bounds$edges_rectangular[i, j])
+  #   replaceData(proxy_edgetable, bounds$edges_rectangular[,1:2], resetPaging = FALSE, rownames = F)
+  #   bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular)
+  #   # if (j %in% c(4,5)) { # update map if x or y change
+  #   leafletProxy("map") %>%
+  #     clearGroup("bounds_rectangular") %>%
+  #     addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
+  #                  fillOpacity = 0, opacity = 1, weight = 3,
+  #                  data=bounds$bounds_sf)
+  #   # }
+  #   str(bounds$edges_rectangular)
+  # })
 
 
-  output$clickbounds <- renderPrint({print(bound_edges$edges_user) %>% ggp::print_data_frame_for_entry()})
-  output$clickbounds_rect <- renderPrint({print(bound_edges$edges_rectangular)})
-  output$clickwells <- renderPrint({print(mapclicks$well_locations)})
+  output$wells <- renderPrint({print(mapclicks$well_locations)})
+  output$bounds <- renderPrint({print(bounds$bounds_sf)})
+  # output$clickbounds_rect <- renderPrint({print(bounds$edges_rectangular)})
+  # output$clickwells <- renderPrint({print(mapclicks$well_locations)})
   output$aquifer <- renderPrint({print(aquifer())})
 }
 
