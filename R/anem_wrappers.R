@@ -210,8 +210,22 @@ get_gridded_hydrodynamics <- function(wells,aquifer,head_dim=c(20,20),flow_dim=c
 
 #' Use anem function
 #'
-#' Use anem function not exported from package
+#' Use select anem functions not exported from package
 #' @param function_name Name of function to use, as a string
+#' @param ... Named inputs to each function
+#' @export
+#' @examples
+#' edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
+#'                          y1=c(41.44,41.83,41.15,40.85),
+#'                          bID=c(5,6,7,8),
+#'                          x2=c(-86.22,-85.85,-87.18,-87.38),
+#'                          y2=c(41.83,41.15,40.85,41.44))
+#' edges_rect <- use_anem_function("get_utm_rectangle",edges_user=edges_user)
 use_anem_function <- function(function_name,...) {
+  params <- list(...)
+  if (function_name == "get_utm_rectangle") {
+    edges_rect <- get_utm_rectangle(params$edges_user)
+    return(edges_rect)
+  }
   return(NULL)
 }

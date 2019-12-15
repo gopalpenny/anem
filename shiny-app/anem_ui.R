@@ -177,10 +177,14 @@ server <- function(input, output) {
         addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
                     layerId = "boundedges",fillOpacity = 0)
       if (dim(bound_edges$edges_user)[1]==4) {
-        bound_edges$edges_rectangular <- get_utm_rectangle(bound_edges$edges_user)
+        bound_edges$edges_rectangular <-
+          use_anem_function("get_utm_rectangle",
+                            edges_user=bound_edges$edges_user) %>%
+          dplyr::mutate(bound_type="NF") %>%
+          dplyr::select(bID,bound_type,dplyr::everything())
         leafletProxy("map") %>%
           clearGroup("boundvertices") %>%
-          addPolygons(~x1, ~y1, color = "black", group = "bounds_rectangular",
+          addPolygons(~x1, ~y1, color = ~boundPal(bound_type), group = "bounds_rectangular",
                       fillOpacity = 0, opacity = 1, weight = 3,
                       data=bound_edges$edges_rectangular)
       }
@@ -245,7 +249,8 @@ server <- function(input, output) {
 
   # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)
   #
-  proxy = dataTableProxy('welltable')
+  proxy_welltable <- dataTableProxy('welltable')
+  proxy_edgetable <- dataTableProxy('edgetable')
 
   observeEvent(input$welltable_cell_edit, {
     info = input$welltable_cell_edit
@@ -254,8 +259,8 @@ server <- function(input, output) {
     j = info$col + 1  # column index offset by 1
     v = info$value
     mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
-    replaceData(proxy, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
-    if (j %in% c(4,5)) {
+    replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
+    if (j %in% c(4,5)) { # update map if x or y change
       leafletProxy("map") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
@@ -277,7 +282,7 @@ server <- function(input, output) {
   ############################################################################################
   ############################################################################################
   output$edgetable <- renderDataTable(
-    datatable(bound_edges$edges_rectangular[,c("bID","bound_type")],
+    datatable(bound_edges$edges_rectangular[,1:2],
               editable=T,rownames=F,
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
@@ -286,6 +291,23 @@ server <- function(input, output) {
                              columnDefs = list(list(width = '200px', targets = "_all")),
                              paging=FALSE,info=FALSE)
     ))
+
+  observeEvent(input$edgetable_cell_edit, {
+    info <- input$edgetable_cell_edit
+    str(info)
+    i <- info$row
+    j <- info$col + 1  # column index offset by 1
+    v <- info$value
+    bound_edges$edges_rectangular[i, j] <<- DT::coerceValue(v, bound_edges$edges_rectangular[i, j])
+    replaceData(proxy_edgetable, bound_edges$edges_rectangular[,1:2], resetPaging = FALSE, rownames = F)
+    # if (j %in% c(4,5)) { # update map if x or y change
+    #   leafletProxy("map") %>%
+    #     clearGroup("wells") %>%
+    #     addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+    #                      data=mapclicks$well_locations)
+    # }
+    str(bound_edges$edges_rectangular)
+  })
 
 
   output$clickbounds <- renderPrint({print(bound_edges$edges_user) %>% ggp::print_data_frame_for_entry()})

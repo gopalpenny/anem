@@ -35,4 +35,20 @@ test_that("get_gridded_hydrodynamics returns accurate dimensions for flow",{
 })
 
 
+edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
+                         y1=c(41.44,41.83,41.15,40.85),
+                         bID=c(5,6,7,8),
+                         x2=c(-86.22,-85.85,-87.18,-87.38),
+                         y2=c(41.83,41.15,40.85,41.44))
+edges_rect <- df <- data.frame(bID=c(5, 6, 7, 8),
+                               x1=c(-87.44, -86.19, -85.88, -87.12),
+                               y1=c(41.46, 41.81, 41.17, 40.83),
+                               x2=c(-86.19, -85.88, -87.12, -87.44),
+                               y2=c(41.81, 41.17, 40.83, 41.46))
+test_that("use_anem_function works for get_utm_rectangle",{
+  expect_equal(use_anem_function("get_utm_rectangle",edges_user=edges_user) %>%
+                 dplyr::mutate_if(is.numeric,function(x) round(x,2)),edges_rect)
+})
+
+
 
