@@ -290,6 +290,12 @@ check_bounds <- function(bounds) {
   return(warn)
 }
 
+#' Check rectangle
+#'
+#' Check rectangle -- ensure 4 edges connecting 3 vertices and rectilinear
+check_rectangle <- function(rect) {
+
+}
 
 #' Check wells
 #'

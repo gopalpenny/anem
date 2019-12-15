@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   fig.width=4, 
   fig.height=2.5
 )
-devtools::install()
+# devtools::install()
 ```
 
 This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.

@@ -123,12 +123,13 @@ get_rectangle <- function(bounds) {
 
   quad_vertices_final <- get_quad_vertices(bounds_rectangular) %>%
     dplyr::filter(!is.na(x)) %>% dplyr::select(x,y,bID) %>%
+    dplyr::distinct() %>%
     dplyr::group_by(bID)
   quad_vertices_final_wide <- quad_vertices_final %>%
     dplyr::mutate(pt_num=dplyr::row_number()) %>% dplyr::group_by() %>%
     tidyr::gather(var,val,x,y) %>%
     tidyr::unite("pt",var,pt_num,sep = "") %>%
-    tidyr::spread(pt,val)
+    tidyr::spread(pt,val) %>% dplyr::select(bID,x1,y1,x2,y2)
 
   bounds_rectangular <- bounds_rectangular %>% dplyr::left_join(quad_vertices_final_wide,by="bID")
 
@@ -162,7 +163,7 @@ bounds_to_sf <- function(bounds,crs) {
     dplyr::group_by(bID) %>%
     dplyr::summarize() %>% sf::st_cast("LINESTRING")
   bounds_with_sf <- bounds_geometry %>% dplyr::left_join(bounds,by="bID") %>%
-    dplyr::select(!! names(bounds),everything())
+    dplyr::select(!! names(bounds),dplyr::everything())
   return(bounds_with_sf)
 }
 
@@ -610,17 +611,56 @@ get_utm_rectangle <- function(edges_user) {
   return(edges_rect)
 }
 
-#' Bounds to SF
+#' #' Get UTM Rectangle (WGS coords)
+#' #'
+#' #' Transform quadrangle (in WGS coordinates) to UTM coordinates,
+#' #' then convert to a rectangle, then transform back to WGS.
+#' #' @param edges_user A data.frame with 4 rows and columns x1, y1, x2, y2, and bID
+#' #' @return
+#' #' Returns a data.frame with 4 rows representing a rectangle. Each row
+#' #' is a segment of the rectangle, and the segments are ordered so that
+#' #' the rectangle is specified as segment 1: p1 --> p2, segment 2: p2 --> p3, etc.
+#' #' @examples
+#' #' edges_user <- data.frame(x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749846,-87.1823783130922),
+#' #'                  y1=c(41.4427263776721,41.8327350621526,41.1455697310095,40.8512155742825),
+#' #'                  bID=c(5,6,7,8),
+#' #'                  x2=c(-86.2150051217412,-85.8522401749846,-87.1823783130922,-87.3802501022322),
+#' #'                  y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
+#' #' edges_rect <- get_utm_rectangle(edges_user)
+#' get_utm_rectangle <- function(edges_user) {
+#'
+#'   edges_sf_wgs <- edges_user %>% tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
+#'     tidyr::separate(coord,c("axis","point"),1) %>%
+#'     tidyr::spread(axis,val) %>%
+#'     dplyr::arrange(bID) %>%
+#'     sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
+#'     dplyr::group_by(bID) %>%
+#'     dplyr::summarize() %>% sf::st_cast("LINESTRING")
+#'
+#'   edges_center <- suppressWarnings(edges_sf_wgs %>% sf::st_centroid() %>%
+#'                                      sf::st_coordinates() %>% colMeans())
+#'   utm_zone <- longitude_to_utm_zone(edges_center[1])
+#'   edges_sf_utm <- edges_sf_wgs %>% sf::st_transform(utm_zone_to_proj4(utm_zone)) %>%
+#'     prep_bounds_sf() %>% get_rectangle()
+#'
+#'   return(edges_sf_utm)
+#' }
+
+
+#' Bounds to SF 2
 #'
 #' Get sf object from boundaries
+#'
 #' @param bounds A data.frame containing x1, y1, x2, y2, bID
 #' @param crs crs object for sf package
+#' @return
+#' returns object
 #' @importFrom magrittr %>%
 #' @examples
 #' bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
-#' bounds_sf <- bounds_to_sf(bounds)
-#' bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds_sf)
-bounds_to_sf <- function(bounds, crs=4326) {
+#' bounds_sf <- bounds_to_sf(bounds, crs=4326)
+#' bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
+bounds_to_sf2 <- function(bounds, crs) {
   bounds_linestring <- bounds %>% dplyr::select(-dplyr::matches("^[mb]$")) %>%
     tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
     tidyr::separate(coord,c("axis","point"),1) %>%
@@ -646,7 +686,7 @@ bounds_to_sf <- function(bounds, crs=4326) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' df <- tidyr::crossing(x=0:10,y=0:10) %>% dplyr::mutate(z=x^2)
+#' df <- tidyr::crossing(x=-10:10,y=0:10) %>% dplyr::mutate(z=x^2)
 #' cl <- get_contourlines(df,nlevels=5)
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
@@ -687,7 +727,10 @@ get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", 
   z_trimmed <- z_sorted[11:(length(z_sorted)-10)]
   levels=seq(min(z_trimmed),max(z_trimmed),length.out=nlevels)
   cl_list <- contourLines(x_seq,y_seq,zmat,levels=levels)
-  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level)))
+  for (i in 1:length(cl_list)) {
+    cl_list[[i]]$line <- i
+  }
+  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level, line=l$line)))
 
   if (type=="sf") {
     cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%

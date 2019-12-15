@@ -232,6 +232,10 @@ use_anem_function <- function(function_name,...) {
     edges_rect <- get_utm_rectangle(...)
     return(edges_rect)
   }
+  if (function_name == "get_utm_edges") {
+    edges_rect <- get_utm_edges(...)
+    return(edges_rect)
+  }
   if (function_name == "bounds_to_sf") {
     bounds_sf <- bounds_to_sf(...)
     return(bounds_sf)

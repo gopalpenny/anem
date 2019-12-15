@@ -2,6 +2,7 @@
 library(leaflet)
 library(anem)
 library(DT)
+library(ggplot2)
 
 source("app-functions/anem_shiny_helpers.R")
 
@@ -10,15 +11,16 @@ boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
 
 ui <- fluidPage(
   h4("anem ui"),
-  tabsetPanel(
+  tabsetPanel(id="maintabs",
     type="pills",
     tabPanel(
-      "Prepare scenario",fluid=TRUE,
+      "Prepare scenario",value="prepare",fluid=TRUE,
       fluidRow(
         # Prepare scenario
         hr(),
         column(
           4,
+          verbatimTextOutput("utm_zone"),
           radioButtons("usermode","Entry mode",
                        c("Define aquifer" = "aquifer",
                          # "Set aquifer bounds" = "bounds",
@@ -82,7 +84,7 @@ ui <- fluidPage(
             h4("New well:"),
             fluidRow(
               column(4,numericInput("Q","Q",0.1)),
-              column(4,numericInput("R","R",1000)),
+              column(4,numericInput("R","R",9000)),
               column(4,numericInput("diam","diam",1))
             ),
             h4("Edit well:"),
@@ -114,12 +116,22 @@ ui <- fluidPage(
       )
 
     ),
-    tabPanel("Output",fluid=TRUE,
-             column(6,
-             ),
-             column(6,
-                    #LEAFLETMAP
-             )
+    tabPanel(
+      "View results",value="results",fluid=TRUE,
+      fluidRow(
+        hr(),
+        column(4,
+               checkboxInput("linkmaps","Link maps",TRUE)
+        ),
+        column(8,
+               fluidRow(
+                 column(4,h3("Results")),
+                 column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
+               ),
+               leafletOutput("resultsmap",height=420),
+               plotOutput("results")
+        )
+      )
 
     )
   )
@@ -127,6 +139,8 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
+
+  # Initialize reactive values
   mapclicks <- reactiveValues(
     bound_vertices=data.frame(bID=integer(),#bound_type=factor(levels=c("NF","CH")),
                               x=numeric(),y=numeric()),
@@ -143,6 +157,30 @@ server <- function(input, output) {
   bound_types <- reactive({
     c(input$b1_type,input$b2_type,input$b3_type,input$b4_type)
   })
+
+  aquifer <- reactive({define_aquifer(
+    aquifer_type=input$aquifer_type,
+    h0=input$h0,
+    Ksat=input$Ksat,
+    z0=input$z0,
+    bounds=bounds$bounds_sf)})
+
+  utm_zone <- reactive({
+    if(is.null(bounds$bounds_sf)) {
+      zone <- NULL
+    } else if (nrow(bounds$bounds_sf) == 0) {
+      zone <- NULL
+    } else {
+      centroid <- bounds$bounds_sf %>% sf::st_coordinates() %>% colMeans()
+      zone <- anem::longitude_to_utm_zone(centroid[1])
+    }
+    zone
+  })
+
+  output$utm_zone <- renderPrint({
+    print(utm_zone())
+  })
+
   observeEvent(bound_types(),{
     # print(bounds$bounds_sf)
     if (!is.null(bounds$bounds_sf)) {
@@ -156,12 +194,6 @@ server <- function(input, output) {
     }
   })
   output$boundtypes <- renderPrint({print(bound_types())})
-
-  aquifer <- reactive({define_aquifer(
-    aquifer_type=input$aquifer_type,
-    h0=input$h0,
-    Ksat=input$Ksat,
-    z0=input$z0)})
 
   output$prepinstr <- renderText({
     # paste("usermode:",input$usermode)
@@ -193,10 +225,19 @@ server <- function(input, output) {
       addScaleBar(position = c("bottomright"), options = scaleBarOptions()) %>%
       addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
                        options = layersControlOptions(collapsed = FALSE)) %>%
-      setView(lng = -86.252, lat = 41.676, zoom=8)
+      setView(lng = -86.252, lat = 41.676, zoom=12)
+  })
+  output$resultsmap <- renderLeaflet({
+    leaflet() %>%
+      addTiles(options = providerTileOptions(noWrap = TRUE), group="Map") %>%
+      addProviderTiles("Esri.WorldImagery", group="Satellite") %>%
+      addScaleBar(position = c("bottomright"), options = scaleBarOptions()) %>%
+      addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
+                       options = layersControlOptions(collapsed = FALSE)) %>%
+      setView(lng = -86.252, lat = 41.676, zoom=12)
   })
 
-  # Map click (new well)
+  # Map click (new well or aquifer vertex)
   observeEvent(input$prepmap_click,{
     prepmapClick <- input$prepmap_click
     if (!is.null(input$prepmap_marker_click)) {
@@ -223,13 +264,16 @@ server <- function(input, output) {
         addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
                     layerId = "boundedges",fillOpacity = 0)
       if (dim(bounds$edges_user)[1]==4) {
+        print("1")
         bounds$edges_rectangular <-
           use_anem_function("get_utm_rectangle",
                             edges_user=bounds$edges_user) %>%
           dplyr::mutate(bound_type=bound_types()) %>%
           dplyr::select(bID,bound_type,dplyr::everything()) %>%
           dplyr::arrange(bID)
-        bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular)
+        print("2")
+        bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular,crs=4326)
+        print("3")
         # print(bounds$bounds_sf)
         leafletProxy("prepmap") %>%
           clearGroup("boundvertices") %>%
@@ -314,6 +358,84 @@ server <- function(input, output) {
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
+    }
+  })
+
+  observeEvent(input$maintabs,{
+    print(input$maintabs)
+    if (input$maintabs == "results") {
+      print("1")
+      # resultsmapdata <- leafletProxy("resultsmap") %>%
+      #   getMapData()
+      # resultsmapdata <- getMapData(leafletProxy("prepmap")) %>%
+      #   getMapData()
+
+      if (nrow(mapclicks$well_locations) > 0) {
+        wells_wgs <- mapclicks$well_locations %>%
+          sf::st_as_sf(coords=c("x","y"),crs=4326)
+      } else {
+        wells_wgs <- NULL
+      }
+      print("2")
+      bounds_utm <- NULL
+      if(!is.null(bounds$bounds_sf)) {
+        proj4string_scenario <- anem::utm_zone_to_proj4(utm_zone())
+        bounds_utm <- bounds$bounds_sf %>%
+          dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
+          sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
+        print("2.1")
+        aquifer_utm <- aquifer()
+        print("2.2")
+        saveRDS(bounds_utm,"app-data/bounds_utm.rds")
+        print("2.3")
+        aquifer_utm$bounds <- define_bounds(bounds_utm)
+        print("3")
+        if (!is.null(wells_wgs)) {
+          wells_utm <- wells_wgs %>%
+            sf::st_transform(crs=proj4string_scenario) %>%
+            define_wells() %>%
+            generate_image_wells(aquifer_utm)
+        }
+        print(bounds$bounds_sf)
+        leafletProxy("resultsmap") %>%
+          addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
+                       fillOpacity = 0, opacity = 1, weight = 3,
+                       data=bounds$bounds_sf)
+        print('4')
+      } else {
+        print('3')
+        if(!is.null(wells_wgs)) {
+          centroid <- wells_wgs %>% sf::st_coordinates() %>% colMeans()
+          zone <- anem::longitude_to_utm_zone(centroid[1])
+          proj4string_scenario <- anem::utm_zone_to_proj4(zone)
+          aquifer_utm <- aquifer()
+          wells_utm <- wells_wgs %>%
+            sf::st_transform(crs=proj4string_scenario) %>%
+            define_wells()
+          leafletProxy("resultsmap") %>%
+            clearGroup("wells") %>%
+            addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                             data=mapclicks$well_locations)
+        }
+      }
+      print("5")
+      # print(aquifer_utm)
+      print("6")
+      # saveRDS(wells_utm,"app-data/wells_utm.rds")
+      # saveRDS(aquifer_utm,"app-data/aquifer_utm.rds")
+      print("7")
+      # gridded <- anem::get_gridded_hydrodynamics(wells_utm,aquifer_utm,head_dim=c(50,50),flow_dim=c(5,5))
+      print("8")
+      # cl <- get_contourlines(gridded$head %>% dplyr::rename(z=head_m))
+      print(cl[1:10,])
+      # output$results <- renderPlot({
+      #   ggplot() +
+      #     geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+      #     geom_contour(data=gridded$head,aes(x,y,z=head_m),color="white") +
+      #     geom_path(data=cl,aes(x,y,group=line))
+      #   # geom_contour()
+      # })
+      print("9")
     }
   })
 

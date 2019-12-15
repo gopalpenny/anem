@@ -4,24 +4,12 @@
 \alias{bounds_to_sf}
 \title{Get bounds as sf object}
 \usage{
-bounds_to_sf(bounds, crs = 4326)
-
-bounds_to_sf(bounds, crs = 4326)
-}
-\arguments{
-\item{bounds}{A data.frame containing x1, y1, x2, y2, bID}
-
-\item{crs}{crs object for sf package}
+bounds_to_sf(bounds, crs)
 }
 \description{
 Convert bounds object with bID, x1, y1, x2, y2 to sf object
-
-Get sf object from boundaries
 }
 \examples{
 bounds <- data.frame(bID=1,x1=1,y1=1,x2=3,y2=3)
 bounds_to_sf(bounds,crs=4326)
-bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
-bounds_sf <- bounds_to_sf(bounds)
-bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds_sf)
 }
