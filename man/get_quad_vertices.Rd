@@ -35,4 +35,11 @@ quad_vertices <- get_quad_vertices(bounds)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal() +
   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
   scale_shape_manual(values=1:4)
+
+bounds <-data.frame(bID=c(5, 6, 7, 8),
+                    x1=c(468888, 572670, 483978, 468888),
+                    x2=c(572670, 588746, 588746, 483978),
+                    y1=c(4592114, 4630407, 4518117, 4592114),
+                    y2=c(4630407, 4556624, 4556624, 4518117))
+vertices <- get_quad_vertices(bounds)
 }

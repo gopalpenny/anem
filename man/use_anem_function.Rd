@@ -8,7 +8,22 @@ use_anem_function(function_name, ...)
 }
 \arguments{
 \item{function_name}{Name of function to use, as a string}
+
+\item{...}{Named inputs to each function}
 }
 \description{
-Use anem function not exported from package
+Use select anem functions not exported from package
+}
+\examples{
+# get_utm_rectangle()
+edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
+                         y1=c(41.44,41.83,41.15,40.85),
+                         bID=c(5,6,7,8),
+                         x2=c(-86.22,-85.85,-87.18,-87.38),
+                         y2=c(41.83,41.15,40.85,41.44))
+edges_rect <- use_anem_function("get_utm_rectangle",edges_user=edges_user)
+
+# bounds_to_sf()
+bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
+bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
 }

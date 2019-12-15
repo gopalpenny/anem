@@ -94,10 +94,10 @@ ui <- fluidPage(
         # Prepare map
         column(8,
                fluidRow(
-                 column(4,h3(textOutput("maptitle"))),
+                 column(4,h3(textOutput("prepmaptitle"))),
                  column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4)
                ),
-               leafletOutput("map",height=420)
+               leafletOutput("prepmap",height=420)
         ),
       ),
       fluidRow(
@@ -148,7 +148,7 @@ server <- function(input, output) {
     if (!is.null(bounds$bounds_sf)) {
       bounds$bounds_sf <- bounds$bounds_sf %>% dplyr::mutate(bound_type=bound_types())
       # print(bounds$bounds_sf)
-      leafletProxy("map") %>%
+      leafletProxy("prepmap") %>%
         clearGroup("bounds_rectangular") %>%
         addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                      fillOpacity = 0, opacity = 1, weight = 3,
@@ -179,14 +179,14 @@ server <- function(input, output) {
 
 
 
-  output$maptitle <- renderText({
+  output$prepmaptitle <- renderText({
     # paste("usermode:",input$usermode)
     switch(input$usermode,
            "aquifer" = "Define aquifer",
            "wells" = "Define wells")
   })
 
-  output$map <- renderLeaflet({
+  output$prepmap <- renderLeaflet({
     leaflet() %>%
       addTiles(options = providerTileOptions(noWrap = TRUE), group="Map") %>%
       addProviderTiles("Esri.WorldImagery", group="Satellite") %>%
@@ -197,27 +197,27 @@ server <- function(input, output) {
   })
 
   # Map click (new well)
-  observeEvent(input$map_click,{
-    mapClick <- input$map_click
-    if (!is.null(input$map_marker_click)) {
-      markerClick <- input$map_marker_click
+  observeEvent(input$prepmap_click,{
+    prepmapClick <- input$prepmap_click
+    if (!is.null(input$prepmap_marker_click)) {
+      markerClick <- input$prepmap_marker_click
     } else {
       markerClick <- list(lat=Inf,lng=Inf)
     }
-    map_marker_equal <- identical(mapClick[c("lng","lat")],markerClick[c("lng","lat")])
+    prepmap_marker_equal <- identical(prepmapClick[c("lng","lat")],markerClick[c("lng","lat")])
     clickType <- dplyr::case_when(
-      map_marker_equal ~ "marker",
-      !map_marker_equal ~ "map")
+      prepmap_marker_equal ~ "marker",
+      !prepmap_marker_equal ~ "map")
     clickOperation <- dplyr::case_when(
       input$usermode=="aquifer" ~ "aquifer_vertex",
       input$usermode=="wells" & clickType=="map" ~ "new_well",
       input$usermode=="wells" & clickType=="marker" ~ "edit_well"
     )
     well_input <- list(Q=input$Q,R=input$R,diam=input$diam)
-    mapclicks <- interpret_map_click(mapClick,clickOperation,mapclicks,well_input=well_input)
+    mapclicks <- interpret_map_click(prepmapClick,clickOperation,mapclicks,well_input=well_input)
     if (input$usermode == "aquifer") {
       bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
-      leafletProxy("map",data=mapclicks$bound_vertices) %>%
+      leafletProxy("prepmap",data=mapclicks$bound_vertices) %>%
         clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
         addCircleMarkers(~x, ~y, color = "black", group = "boundvertices") %>%
         addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
@@ -227,17 +227,18 @@ server <- function(input, output) {
           use_anem_function("get_utm_rectangle",
                             edges_user=bounds$edges_user) %>%
           dplyr::mutate(bound_type=bound_types()) %>%
-          dplyr::select(bID,bound_type,dplyr::everything())
+          dplyr::select(bID,bound_type,dplyr::everything()) %>%
+          dplyr::arrange(bID)
         bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular)
         # print(bounds$bounds_sf)
-        leafletProxy("map") %>%
+        leafletProxy("prepmap") %>%
           clearGroup("boundvertices") %>%
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                       fillOpacity = 0, opacity = 1, weight = 3,
                       data=bounds$bounds_sf)
       }
     } else if (clickOperation == "new_well") {
-      leafletProxy("map") %>%
+      leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
@@ -252,7 +253,7 @@ server <- function(input, output) {
       # mapclicks$well_locations[closest_well,"selected"] <- TRUE
       # print("mapclicks$well_locations")
       # print(mapclicks$well_locations)
-      leafletProxy("map") %>%
+      leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
@@ -268,7 +269,7 @@ server <- function(input, output) {
   observeEvent(input$deleteWell,{
     mapclicks$well_locations <- mapclicks$well_locations %>%
       dplyr::filter(!selected)
-    leafletProxy("map") %>%
+    leafletProxy("prepmap") %>%
       clearGroup("wells") %>%
       addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                        data=mapclicks$well_locations)
@@ -278,7 +279,7 @@ server <- function(input, output) {
     mapclicks$bound_vertices <- data.frame(x=numeric(),y=numeric(),bID=integer())
     mapclicks$well_locations <- data.frame(Q=numeric(),R=numeric(),diam=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical())
-    leafletProxy("map") %>%
+    leafletProxy("prepmap") %>%
       clearShapes() %>% clearMarkers()
   })
 
@@ -309,46 +310,12 @@ server <- function(input, output) {
     mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
     if (j %in% c(4,5)) { # update map if x or y change
-      leafletProxy("map") %>%
+      leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
     }
-    # str(mapclicks$well_locations)
-    # output$edited <- renderTable({mapclicks$well_locations})
   })
-
-
-  # output$edgetable <- renderDataTable(
-  #   datatable(bounds$edges_rectangular[,1:2],
-  #             editable=T,rownames=F,
-  #             options = list(searching=FALSE,
-  #                            # formatNumber= function(x) format(x,nsmall=3),
-  #                            lengthChange=FALSE,
-  #                            autoWidth = TRUE,
-  #                            columnDefs = list(list(width = '200px', targets = "_all")),
-  #                            paging=FALSE,info=FALSE)
-  #   ))
-
-  # observeEvent(input$edgetable_cell_edit, {
-  #   info <- input$edgetable_cell_edit
-  #   str(info)
-  #   i <- info$row
-  #   j <- info$col + 1  # column index offset by 1
-  #   v <- info$value
-  #   bounds$edges_rectangular[i, j] <<- DT::coerceValue(v, bounds$edges_rectangular[i, j])
-  #   replaceData(proxy_edgetable, bounds$edges_rectangular[,1:2], resetPaging = FALSE, rownames = F)
-  #   bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular)
-  #   # if (j %in% c(4,5)) { # update map if x or y change
-  #   leafletProxy("map") %>%
-  #     clearGroup("bounds_rectangular") %>%
-  #     addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-  #                  fillOpacity = 0, opacity = 1, weight = 3,
-  #                  data=bounds$bounds_sf)
-  #   # }
-  #   str(bounds$edges_rectangular)
-  # })
-
 
   output$wells <- renderPrint({print(mapclicks$well_locations)})
   output$bounds <- renderPrint({print(bounds$bounds_sf)})

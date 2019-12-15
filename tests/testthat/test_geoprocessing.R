@@ -143,3 +143,15 @@ test_that("get_utm_rectangle works",{
                  dplyr::mutate_if(is.numeric,function(x) round(x,2)),edges_rect)
 })
 
+df <- tidyr::crossing(x=seq(0,5,length.out=100),y=seq(0,5,length.out=100)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
+test_that("get_contour_lines doesn't fail",{
+  expect_silent(get_contourlines(df,levels=seq(1,120,by=10), type="sf"))
+})
+
+
+df <- tidyr::crossing(x=0:10,y=0:10) %>% dplyr::mutate(z=x^2)
+test_that("get_contour_lines doesn't fail",{
+  expect_equal(unique(get_contourlines(df,nlevels=5)$x) %>% length(), 4)
+})
+
+

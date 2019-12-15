@@ -633,3 +633,67 @@ bounds_to_sf <- function(bounds, crs=4326) {
     dplyr::left_join(bounds_linestring ,by=c("bID")) %>% sf::st_as_sf(crs=crs)
   return(bounds_sf)
 }
+
+#' Get contour lines
+#'
+#' Get contour lines, using a wrapper for contourLines
+#' @param df A data.frame containing x, y, and z columns. x and y must form a raster,
+#'     meaning every x must be represented for each y, and vice versa.
+#' @param levels A vector of values at which contours should be plotted
+#' @param nlevels An integer containing number of levels to return. Used IFF levels not supplied.
+#' @param ... Should contain x, y, and z, and then df will be ignored.
+#' @param type Should be either "data.frame" or "sf"
+#' @importFrom magrittr %>%
+#' @export
+#' @examples
+#' df <- tidyr::crossing(x=0:10,y=0:10) %>% dplyr::mutate(z=x^2)
+#' cl <- get_contourlines(df,nlevels=5)
+#' ggplot() +
+#'   geom_raster(data=df,aes(x,y,fill=z)) +
+#'   geom_path(data=cl,aes(x,y,group=level))
+#'
+#' df <- tidyr::crossing(x=seq(0,5,length.out=100),y=seq(0,5,length.out=100)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
+#' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
+#' ggplot() +
+#'   geom_raster(data=df,aes(x,y,fill=z)) +
+#'   geom_sf(data=cl,aes())
+get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", crs=4326) {
+  params <- list(...)
+  if (all(c("x","y","z") %in% names(params))) {
+    df$x <- x
+    df$y <- y
+    df$z <- z
+  } else if (!all(c("x","y","z") %in% names(df))) {
+    stop("df must contain columns for x, y, and z")
+  }
+  df_error <- df %>% tidyr::complete(x,y) %>% purrr::pluck("z") %>% is.na() %>% any()
+  if (df_error) {
+    stop("in df, every x, y combination must have a z value.")
+  }
+  nx <- length(unique(df$x))
+  ny <- length(unique(df$y))
+  if (nlevels > nx | nlevels > ny) {
+    stop("nlevels (",nlevels,") must be less than nx (",nx,") and ny (",ny,").")
+  }
+  df <- df %>%
+    dplyr::arrange(y,x)
+  xmat <- df %>% purrr::pluck("x") %>% matrix(ncol=ny)
+  ymat <- df %>% purrr::pluck("y") %>% matrix(ncol=ny)
+  zmat <- df %>% purrr::pluck("z") %>% matrix(ncol=ny)
+  x_seq <- xmat[,1]
+  y_seq <- ymat[1,]
+
+  z_sorted <- sort(df$z)
+  z_trimmed <- z_sorted[11:(length(z_sorted)-10)]
+  levels=seq(min(z_trimmed),max(z_trimmed),length.out=nlevels)
+  cl_list <- contourLines(x_seq,y_seq,zmat,levels=levels)
+  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level)))
+
+  if (type=="sf") {
+    cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%
+      dplyr::group_by(level) %>%
+      dplyr::summarize() %>%
+      sf::st_cast("LINESTRING")
+  }
+  return(cl)
+}
