@@ -369,7 +369,8 @@ server <- function(input, output) {
       #   getMapData()
       # resultsmapdata <- getMapData(leafletProxy("prepmap")) %>%
       #   getMapData()
-
+      print('nrow')
+      print(nrow(mapclicks$well_locations))
       if (nrow(mapclicks$well_locations) > 0) {
         wells_wgs <- mapclicks$well_locations %>%
           sf::st_as_sf(coords=c("x","y"),crs=4326)
@@ -378,6 +379,7 @@ server <- function(input, output) {
       }
       print("2")
       bounds_utm <- NULL
+      # if there are bounds, map them and get proj4string
       if(!is.null(bounds$bounds_sf)) {
         proj4string_scenario <- anem::utm_zone_to_proj4(utm_zone())
         bounds_utm <- bounds$bounds_sf %>%
@@ -390,52 +392,56 @@ server <- function(input, output) {
         print("2.3")
         aquifer_utm$bounds <- define_bounds(bounds_utm)
         print("3")
-        if (!is.null(wells_wgs)) {
-          wells_utm <- wells_wgs %>%
-            sf::st_transform(crs=proj4string_scenario) %>%
-            define_wells() %>%
-            generate_image_wells(aquifer_utm)
-        }
-        print(bounds$bounds_sf)
+        # print(bounds$bounds_sf)
         leafletProxy("resultsmap") %>%
+          clearGroup("bounds_rectangular") %>%
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                        fillOpacity = 0, opacity = 1, weight = 3,
                        data=bounds$bounds_sf)
         print('4')
+        # if no bounds, get proj4string from wells
       } else {
-        print('3')
+        print('3x')
         if(!is.null(wells_wgs)) {
+          aquifer_utm <- aquifer()
           centroid <- wells_wgs %>% sf::st_coordinates() %>% colMeans()
           zone <- anem::longitude_to_utm_zone(centroid[1])
           proj4string_scenario <- anem::utm_zone_to_proj4(zone)
-          aquifer_utm <- aquifer()
-          wells_utm <- wells_wgs %>%
-            sf::st_transform(crs=proj4string_scenario) %>%
-            define_wells()
-          leafletProxy("resultsmap") %>%
-            clearGroup("wells") %>%
-            addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
-                             data=mapclicks$well_locations)
         }
       }
-      print("5")
+      if(!is.null(wells_wgs)) {
+        wells_utm <- wells_wgs %>%
+          sf::st_transform(crs=proj4string_scenario) %>%
+          define_wells() %>%
+          generate_image_wells(aquifer_utm)
+        leafletProxy("resultsmap") %>%
+          clearGroup("wells") %>%
+          addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                           data=mapclicks$well_locations)
+      }
+      # print("5")
       # print(aquifer_utm)
-      print("6")
+      # print("6")
       # saveRDS(wells_utm,"app-data/wells_utm.rds")
       # saveRDS(aquifer_utm,"app-data/aquifer_utm.rds")
       print("7")
-      # gridded <- anem::get_gridded_hydrodynamics(wells_utm,aquifer_utm,head_dim=c(50,50),flow_dim=c(5,5))
-      print("8")
-      # cl <- get_contourlines(gridded$head %>% dplyr::rename(z=head_m))
-      print(cl[1:10,])
-      # output$results <- renderPlot({
-      #   ggplot() +
-      #     geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
-      #     geom_contour(data=gridded$head,aes(x,y,z=head_m),color="white") +
-      #     geom_path(data=cl,aes(x,y,group=line))
-      #   # geom_contour()
-      # })
-      print("9")
+      gridded <- anem::get_gridded_hydrodynamics(wells_utm,aquifer_utm,head_dim=c(50,50),flow_dim=c(5,5))
+      cl <- get_contourlines(gridded$head %>% dplyr::rename(z=head_m),
+                             type="sf",crs=proj4string_scenario)
+      saveRDS(cl,"app-data/cl.rds")
+      leafletProxy("resultsmap") %>%
+        clearGroup("head_cl") %>%
+        addPolylines(color="black",opacity=1,weight=1, group="head_cl",
+                     data=cl %>% sf::st_transform(crs=4326))
+      # print(cl[1:10,])
+      output$results <- renderPlot({
+        ggplot() +
+          geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+          # geom_contour(data=gridded$head,aes(x,y,z=head_m),color="white") +
+          geom_sf(data=cl,aes())
+        # geom_contour()
+      })
+      # print("9")
     }
   })
 

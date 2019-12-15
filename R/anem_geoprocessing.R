@@ -686,17 +686,18 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' df <- tidyr::crossing(x=-10:10,y=0:10) %>% dplyr::mutate(z=x^2)
+#' df <- tidyr::crossing(x=-10:10,y=-10:10) %>% dplyr::mutate(z=x^2)
 #' cl <- get_contourlines(df,nlevels=5)
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
-#'   geom_path(data=cl,aes(x,y,group=level))
+#'   geom_path(data=cl,aes(x,y,group=line))
 #'
-#' df <- tidyr::crossing(x=seq(0,5,length.out=100),y=seq(0,5,length.out=100)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
+#' df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
 #' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_sf(data=cl,aes())
+#'
 get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", crs=4326) {
   params <- list(...)
   if (all(c("x","y","z") %in% names(params))) {
@@ -730,12 +731,14 @@ get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", 
   for (i in 1:length(cl_list)) {
     cl_list[[i]]$line <- i
   }
-  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level, line=l$line)))
+  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level, line=l$line))) %>%
+    dplyr::mutate(i=dplyr::row_number())
 
   if (type=="sf") {
     cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%
-      dplyr::group_by(level) %>%
-      dplyr::summarize() %>%
+      dplyr::arrange(i) %>%
+      dplyr::group_by(level,line) %>%
+      dplyr::summarize(do_union=FALSE) %>%
       sf::st_cast("LINESTRING")
   }
   return(cl)
