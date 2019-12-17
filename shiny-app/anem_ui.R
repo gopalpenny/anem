@@ -20,16 +20,16 @@ ui <- fluidPage(
         hr(),
         column(
           4,
-          verbatimTextOutput("utm_zone"),
+          # verbatimTextOutput("utm_zone"),
           radioButtons("usermode","Entry mode",
                        c("Define aquifer" = "aquifer",
                          # "Set aquifer bounds" = "bounds",
                          "Add or modify wells" = "wells")),
           conditionalPanel(
             condition = "input.usermode == 'aquifer'",
-            selectInput("aquifer_input","Edit aquifer",
-                        c("Aquifer properties"="properties",
-                          "Aquifer boundaries"="boundaries")),
+            # selectInput("aquifer_input","Edit aquifer",
+            #             c("Aquifer properties"="properties",
+            #               "Aquifer boundaries"="boundaries")),
 
             tabsetPanel(
               type="pills",
@@ -38,7 +38,7 @@ ui <- fluidPage(
                 # conditionalPanel(
                 #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
                 # h5("Aquifer type"),
-                radioButtons("aquifer_type", NULL, #"Aquifer type",
+                radioButtons("aquifer_type", "Aquifer type", #"Aquifer type",
                              c("Confined" = "confined","Unconfined" = "unconfined")),
                 numericInput("Ksat", "Saturated hydraulic conductivity, m/s^2",value = 0.001),
                 numericInput("h0", "Undisturbed hydraulic head, m",value = 50),
@@ -189,7 +189,7 @@ server <- function(input, output) {
       leafletProxy("prepmap") %>%
         clearGroup("bounds_rectangular") %>%
         addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-                     fillOpacity = 0, opacity = 1, weight = 3,
+                     fillOpacity = 0, opacity = 1, weight = 4,
                      data=bounds$bounds_sf)
     }
   })
@@ -278,7 +278,7 @@ server <- function(input, output) {
         leafletProxy("prepmap") %>%
           clearGroup("boundvertices") %>%
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-                      fillOpacity = 0, opacity = 1, weight = 3,
+                      fillOpacity = 0, opacity = 1, weight = 4,
                       data=bounds$bounds_sf)
       }
     } else if (clickOperation == "new_well") {
@@ -361,12 +361,20 @@ server <- function(input, output) {
     }
   })
 
+  observeEvent(input$prepmap_bounds,{
+    if (input$linkmaps) {
+      print("prepmapbounds")
+      prepmapbounds <- input$prepmap_bounds
+      leafletProxy("resultsmap") %>%
+        fitBounds(prepmapbounds$west,prepmapbounds$south,
+                  prepmapbounds$east,prepmapbounds$north,
+                  options(animate=FALSE,duration=0))
+    }
+  })
+
   observeEvent(input$maintabs,{
     print(input$maintabs)
     if (input$maintabs == "results") {
-      print("1")
-      # resultsmapdata <- leafletProxy("resultsmap") %>%
-      #   getMapData()
       # resultsmapdata <- getMapData(leafletProxy("prepmap")) %>%
       #   getMapData()
       print('nrow')
@@ -388,15 +396,16 @@ server <- function(input, output) {
         print("2.1")
         aquifer_utm <- aquifer()
         print("2.2")
-        saveRDS(bounds_utm,"app-data/bounds_utm.rds")
+        # saveRDS(bounds_utm,"app-data/bounds_utm.rds")
         print("2.3")
         aquifer_utm$bounds <- define_bounds(bounds_utm)
         print("3")
         # print(bounds$bounds_sf)
         leafletProxy("resultsmap") %>%
           clearGroup("bounds_rectangular") %>%
+          clearControls() %>%
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-                       fillOpacity = 0, opacity = 1, weight = 3,
+                       fillOpacity = 0, opacity = 1, weight = 4,
                        data=bounds$bounds_sf)
         print('4')
         # if no bounds, get proj4string from wells
@@ -418,29 +427,37 @@ server <- function(input, output) {
           clearGroup("wells") %>%
           addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                            data=mapclicks$well_locations)
+        print("7")
+        gridded <- anem::get_gridded_hydrodynamics(wells_utm,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
+        cl <- get_contourlines(gridded$head %>% dplyr::rename(z=head_m),
+                               type="sf",crs=proj4string_scenario)
+        bounds_polygon <- bounds_sf_to_polygon(aquifer_utm$bounds)
+        cl <- cl %>% sf::st_intersection(bounds_polygon)
+
+        # head_range <- c(min(gridded$head_m),max(gridded$head_m))
+        print(cl[1:10,])
+        headPal <- colorNumeric(palette = "Blues",domain=cl$level)
+        headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level, reverse=TRUE)
+        leafletProxy("resultsmap") %>%
+          clearGroup("head_cl") %>%
+          addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl",
+                       data=cl %>% sf::st_transform(crs=4326)) %>%
+          addLegend("bottomright", pal = headPal_rev, values = ~level, group="head_cl",
+                    title = "Head, m", data=cl,
+                    labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
+                    opacity = 1 )
+        # output$results <- renderPlot({
+        #   ggplot() +
+        #     geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+        #     # geom_contour(data=gridded$head,aes(x,y,z=head_m),color="white") +
+        #     geom_sf(data=cl,aes())
+        # })
       }
       # print("5")
       # print(aquifer_utm)
       # print("6")
       # saveRDS(wells_utm,"app-data/wells_utm.rds")
       # saveRDS(aquifer_utm,"app-data/aquifer_utm.rds")
-      print("7")
-      gridded <- anem::get_gridded_hydrodynamics(wells_utm,aquifer_utm,head_dim=c(50,50),flow_dim=c(5,5))
-      cl <- get_contourlines(gridded$head %>% dplyr::rename(z=head_m),
-                             type="sf",crs=proj4string_scenario)
-      saveRDS(cl,"app-data/cl.rds")
-      leafletProxy("resultsmap") %>%
-        clearGroup("head_cl") %>%
-        addPolylines(color="black",opacity=1,weight=1, group="head_cl",
-                     data=cl %>% sf::st_transform(crs=4326))
-      # print(cl[1:10,])
-      output$results <- renderPlot({
-        ggplot() +
-          geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
-          # geom_contour(data=gridded$head,aes(x,y,z=head_m),color="white") +
-          geom_sf(data=cl,aes())
-        # geom_contour()
-      })
       # print("9")
     }
   })
