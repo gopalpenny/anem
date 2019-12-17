@@ -240,5 +240,9 @@ use_anem_function <- function(function_name,...) {
     bounds_sf <- bounds_to_sf(...)
     return(bounds_sf)
   }
+  if (function_name == "bounds_sf_to_polygon") {
+    bounds_polygon <- bounds_sf_to_polygon(...)
+    return(bounds_polygon)
+  }
   return(NULL)
 }
