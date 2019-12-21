@@ -679,8 +679,9 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' Get contour lines, using a wrapper for contourLines
 #' @param df A data.frame containing x, y, and z columns. x and y must form a raster,
 #'     meaning every x must be represented for each y, and vice versa.
-#' @param levels A vector of values at which contours should be plotted
 #' @param nlevels An integer containing number of levels to return. Used IFF levels not supplied.
+#' @param drop_outer If \code{TRUE}, \code{nlevels+2} will be calculated, dropping the outer 2 values. Used IFF levels not supplied.
+#' @param levels A vector of values at which contours should be plotted. If used, nlevels is ignored.
 #' @param ... Should contain x, y, and z, and then df will be ignored.
 #' @param type Should be either "data.frame" or "sf"
 #' @importFrom magrittr %>%
@@ -688,9 +689,13 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' @examples
 #' df <- tidyr::crossing(x=-10:10,y=-10:10) %>% dplyr::mutate(z=x^2)
 #' cl <- get_contourlines(df,nlevels=5)
+#' unique(cl$level)
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_path(data=cl,aes(x,y,group=line))
+#'
+#' cl <- get_contourlines(df,levels=c(15,20,60))
+#' unique(cl$level)
 #'
 #' df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
 #' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
@@ -698,7 +703,7 @@ bounds_to_sf2 <- function(bounds, crs) {
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_sf(data=cl,aes())
 #'
-get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", crs=4326) {
+get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels = NULL, ..., type = "data.frame", crs=4326) {
   params <- list(...)
   if (all(c("x","y","z") %in% names(params))) {
     df$x <- x
@@ -707,7 +712,8 @@ get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", 
   } else if (!all(c("x","y","z") %in% names(df))) {
     stop("df must contain columns for x, y, and z")
   }
-  df_error <- df %>% tidyr::complete(x,y) %>% purrr::pluck("z") %>% is.na() %>% any()
+  z_values_check <- df %>% tidyr::complete(x,y) %>% purrr::pluck("z")
+  df_error <-  any(is.na(z_values_check) & !is.nan(z_values_check))
   if (df_error) {
     stop("in df, every x, y combination must have a z value.")
   }
@@ -724,22 +730,71 @@ get_contourlines <- function(df = NULL, nlevels = 10, ..., type = "data.frame", 
   x_seq <- xmat[,1]
   y_seq <- ymat[1,]
 
-  z_sorted <- sort(df$z)
-  z_trimmed <- z_sorted[11:(length(z_sorted)-10)]
-  levels=seq(min(z_trimmed),max(z_trimmed),length.out=nlevels)
-  cl_list <- contourLines(x_seq,y_seq,zmat,levels=levels)
-  for (i in 1:length(cl_list)) {
-    cl_list[[i]]$line <- i
+  # determine levels
+  # z_sorted <- sort(df$z)
+  # z_trimmed <- z_sorted[11:(length(z_sorted)-10)]
+  if (is.null(levels)) {
+    if (drop_outer) {
+      levels <- seq(min(df$z,na.rm=TRUE),max(df$z,na.rm=TRUE),length.out=nlevels+2)[2:(nlevels+1)]
+    } else {
+      levels <- seq(min(df$z,na.rm=TRUE),max(df$z,na.rm=TRUE),length.out=nlevels)
+    }
+  } else {
+    levels <- levels
   }
-  cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level, line=l$line))) %>%
-    dplyr::mutate(i=dplyr::row_number())
 
-  if (type=="sf") {
-    cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%
-      dplyr::arrange(i) %>%
-      dplyr::group_by(level,line) %>%
-      dplyr::summarize(do_union=FALSE) %>%
-      sf::st_cast("LINESTRING")
+  # get contour lines
+  cl_list <- contourLines(x_seq,y_seq,zmat,levels=levels)
+  if (length(cl_list) > 0 ) {
+    for (i in 1:length(cl_list)) {
+      cl_list[[i]]$line <- i
+    }
+
+    # bind contour lines
+    cl <- do.call(rbind,lapply(cl_list,function(l) data.frame(x=l$x,y=l$y,level=l$level, line=l$line))) %>%
+      dplyr::mutate(i=dplyr::row_number())
+
+    # convert to sf, if requested
+    if (type=="sf") {
+      cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%
+        dplyr::arrange(i) %>%
+        dplyr::group_by(level,line) %>%
+        dplyr::summarize(do_union=FALSE) %>%
+        sf::st_cast("LINESTRING")
+    } else {
+      warning(paste0("No contours found. Level range: (",min(level),",",max(level),"). ",
+                     "z range: (",min(df$z,na.rm=TRUE),",",max(df$z,na.rm=TRUE),")"))
+      cl <- NULL
+    }
   }
   return(cl)
+}
+
+#' Bounds to polygon
+#'
+#' Convert bounds as sf object to polygon
+#' @param bounds_sf An sf object containing 4 line segments that meet at the ends to
+#'   form a polygon
+bounds_sf_to_polygon <- function(bounds_sf) {
+  bounds_sf %>% dplyr::mutate(L1=row_number())
+
+  bounds_crs <- bounds_sf %>% sf::st_crs()
+
+  bounds_pts <- bounds_sf %>% sf::st_coordinates() %>%
+    signif(10) %>% as.data.frame() %>%
+    dplyr::rename(x=X,y=Y)
+
+  p <- bounds_pts[1,]
+  for (i in 2:4) {
+    next_pt_coords <- bounds_pts %>% dplyr::filter(L1 %in% p$L1,!((x %in% p$x) & (y %in% p$y)))
+    next_pt <- bounds_pts %>% dplyr::filter(!(L1 %in% p$L1),x %in% next_pt_coords$x, y %in% next_pt_coords$y)
+    p[i,] <- next_pt
+  }
+
+  bound_polygon <- p %>% sf::st_as_sf(coords=c("x","y"),crs=bounds_crs) %>%
+    dplyr::group_by() %>%
+    dplyr::summarize(do_union=FALSE) %>%
+    sf::st_cast("POLYGON")
+
+  return(bound_polygon)
 }

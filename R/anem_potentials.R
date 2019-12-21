@@ -287,6 +287,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #'   \eqn{\Psi= Q/(2 \pi) \theta}, with \eqn{\theta} from \eqn{[-\pi,\pi]}. This means
 #'   The streamfunction will have multiple values for \eqn{\theta=\pi=-\pi} for each well. The
 #'   flow net at any location is then the sum of the stream functions for all wells.
+#' @export
 #' @examples
 #' # Create a grid of locations
 #' loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
@@ -310,6 +311,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #'   dplyr::bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
 #' ggplot() +
 #'   geom_contour(data=no_flow_boundary,aes(x,y,z=head),bins=20,linetype="dashed") +
+#'   geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50) +
 #'   geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50) +
 #'   geom_point(data=wells_no_flow,aes(x,y,fill=well_type),size=3,shape=21) +
 #'   theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
