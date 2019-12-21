@@ -32,7 +32,8 @@ interpret_map_click <- function(mapClick, clickOperation, mapclicks, ...) {
     newid <- max(c(mapclicks$well_locations$wID,0),na.rm=TRUE) + 1
     mapclicks$well_locations <- rbind(mapclicks$well_locations %>% dplyr::mutate(selected=FALSE),
                                       data.frame(Q=inputs$well_input$Q,R=inputs$well_input$R,diam=inputs$well_input$diam,
-                                                 x=x,y=y,wID=newid,selected=TRUE))
+                                                 Group=inputs$well_input$group,Weight=inputs$well_input$weight,
+                                                 x=x,y=y,wID=newid,selected=TRUE,stringsAsFactors = FALSE))
   }
   return(mapclicks)
 }
