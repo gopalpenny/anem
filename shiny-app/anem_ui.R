@@ -15,6 +15,18 @@ boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
 
 ui <- fluidPage(
   h4("anem ui"),
+  # tags$style(HTML("
+  #   .tabbable > .nav > li > a                  {background-color: white;  color:blue}
+  #   .tabbable > .nav > li[class=active] > a                  {background-color: blue;  color:white}
+  #   .tabbable > .nav > li > a[data-value='prepare'] {background-color: white;   color:#005A00}
+  #   .tabbable > .nav > li[class=active] > a[data-value='prepare'] {background-color: #005A00; color:white}
+  #   .tabbable > .nav > li > a[data-value='results'] {background-color: white;   color:#005A00}
+  #   .tabbable > .nav > li[class=active] > a[data-value='results'] {background-color: #005A00; color:white}
+  #   .tabbable > .nav > li > a[data-value='Properties'] {background-color: white;   color:#005A00}
+  #   .tabbable > .nav > li[class=active] > a[data-value='Properties'] {background-color: #005A00; color:white}
+  #   .tabbable > .nav > li > a[data-value='Boundaries'] {background-color: white;   color:#005A00}
+  #   .tabbable > .nav > li[class=active] > a[data-value='Boundaries'] {background-color: #005A00; color:white}
+  # ")),
   tabsetPanel(id="maintabs",
     type="pills",
     tabPanel(
@@ -96,11 +108,11 @@ ui <- fluidPage(
             ),
             column(6,
                    numericInput("well_weight","Weight",value = 1)
+            ),
+            h4("Edit well:"),
+            fluidRow(
+              column(6,actionButton("deleteWell","Delete well"),offset=3)
             )
-          ),
-          h4("Edit well:"),
-          fluidRow(
-            column(6,actionButton("deleteWell","Delete well"),offset=3)
           )
         ),
         # Prepare map
@@ -112,18 +124,20 @@ ui <- fluidPage(
                leafletOutput("prepmap",height=420)
         ),
       ),
+      hr(),
+      # h4(textOutput("usermode_elements")),
+      h4("Wells (double click to edit)"),
       fluidRow(
-        hr(),
-        # h4(textOutput("usermode_elements")),
-        h4("Wells (double click to edit)"),
-        conditionalPanel(
-          condition="input.usermode == 'wells'",
-                    dataTableOutput("welltable")),
-          hr(),
-        verbatimTextOutput("aquifer"),
-        verbatimTextOutput("bounds"),
-        verbatimTextOutput("wells")
-      )
+        column(12,
+               conditionalPanel(
+                 condition="input.usermode == 'wells'",
+                 dataTableOutput("welltable"))
+        )
+      ),
+      hr(),
+      verbatimTextOutput("aquifer"),
+      verbatimTextOutput("bounds"),
+      verbatimTextOutput("wells")
 
     ),
     tabPanel(
@@ -142,8 +156,19 @@ ui <- fluidPage(
                  column(4,h3("Results")),
                  column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
                ),
-               leafletOutput("resultsmap",height=420) %>% withSpinner(),
-               plotOutput("results")
+               leafletOutput("resultsmap",height=420) %>% withSpinner()#,
+               # plotOutput("results")
+        )
+      ),
+      hr(),
+      # h4(textOutput("usermode_elements")),
+      h4("Wells (double click to edit)"),
+      fluidRow(
+        column(4,
+               dataTableOutput("welltable2")
+        ),
+        column(4,
+               dataTableOutput("welltable_head")
         )
       ),
       tableOutput("drawdown")
@@ -157,7 +182,8 @@ server <- function(input, output) {
   # Check when to update results
   updateResults <- reactiveValues(
     next_view=TRUE,
-    update_now=TRUE
+    generate_well_images_now=TRUE,
+    update_results_now=FALSE
   )
 
   # Initialize reactive values
@@ -186,7 +212,8 @@ server <- function(input, output) {
     bounds=bounds$bounds_sf)})
 
   wells <- reactiveValues(
-    utm = NULL
+    utm = NULL,
+    head_m=data.frame(head_m=0)
   )
 
   utm_zone <- reactive({
@@ -199,6 +226,15 @@ server <- function(input, output) {
       zone <- anem::longitude_to_utm_zone(centroid[1])
     }
     zone
+  })
+
+  proj4string_scenario <- reactive({
+    if (is.null(utm_zone())) {
+      p4s <- NULL
+    } else {
+      p4s <- anem::utm_zone_to_proj4(utm_zone())
+    }
+    p4s
   })
 
   gridded <- reactiveValues(
@@ -239,12 +275,12 @@ server <- function(input, output) {
            "bounds" = "Click 4 vertices on the map to define the aquifer.",
            "wells" = "Click a well to edit, or click an empty space to add a well.")
   })
-  output$usermode_elements <- renderText({
-    # paste("usermode:",input$usermode)
-    switch(input$usermode,
-           "aquifer" = "Aquifer boundaries (double click to edit)",
-           "wells" = "Wells (double click to edit)")
-  })
+  # output$usermode_elements <- renderText({
+  #   # paste("usermode:",input$usermode)
+  #   switch(input$usermode,
+  #          "aquifer" = "Aquifer boundaries (double click to edit)",
+  #          "wells" = "Wells (double click to edit)")
+  # })
 
   output$prepmaptitle <- renderText({
     # paste("usermode:",input$usermode)
@@ -377,10 +413,34 @@ server <- function(input, output) {
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen'))))
 
+  output$welltable2 <- renderDataTable(
+    datatable(mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected),
+              editable=T,rownames=F,
+              options = list(searching=FALSE,
+                             # formatNumber= function(x) format(x,nsmall=3),
+                             lengthChange=FALSE,
+                             autoWidth = TRUE,
+                             columnDefs = list(list(width = '200px', targets = "_all")))
+    ) %>%
+      formatStyle('selected',target='row',
+                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen'))))
+
+  output$welltable_head <- renderDataTable(
+    datatable(wells$head_m,
+              editable=T,rownames=F,
+              options = list(searching=FALSE,
+                             # formatNumber= function(x) format(x,nsmall=3),
+                             lengthChange=FALSE,
+                             autoWidth = TRUE,
+                             columnDefs = list(list(width = '200px', targets = "_all")))
+    )
+  )
+
 
   # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)
   #
   proxy_welltable <- dataTableProxy('welltable')
+  proxy_welltable2 <- dataTableProxy('welltable2')
   # proxy_edgetable <- dataTableProxy('edgetable')
 
   observeEvent(input$welltable_cell_edit, {
@@ -391,12 +451,38 @@ server <- function(input, output) {
     v = info$value
     mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
-    if (j %in% c(4,5)) { # update map if x or y change
+    replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
+    if (j %in% c(6,7)) { # update map if x or y change
       leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
     }
+  })
+
+  observeEvent(input$welltable2_cell_edit, {
+    info = input$welltable2_cell_edit
+    # str(info)
+    i = info$row
+    print("info$col")
+    print(info$col)
+    j_click = info$col + 1  # column index offset by 1
+    v = info$value
+    j <- switch(j_click,1,3,4)
+    mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
+    replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
+
+    # Update all image wells
+    wID <- mapclicks$well_locations$wID[i]
+    print("wells$utm_with_images")
+    print(wells$utm_with_images)
+    wells$utm_with_images$Q[wells$utm_with_images$wID==wID] <- mapclicks$well_locations[i, j]
+    wells$utm_with_images <- anem::reconstruct_image_pumping(wells$utm_with_images)
+    print(wells$utm_with_images)
+
+    # update results
+    updateResults$update_results_now <- TRUE
   })
 
   observeEvent(input$prepmap_bounds,{
@@ -422,14 +508,14 @@ server <- function(input, output) {
   observeEvent(input$maintabs,{
     # print(input$maintabs)
     if (input$maintabs == "results" & updateResults$next_view) {
-      updateResults$update_now <- TRUE
+      updateResults$generate_well_images_now <- TRUE
     }
   })
 
-  observeEvent(updateResults$update_now,{
-    print('updating now')
-    print('updateResults$update_now')
-    print('nrow')
+  observeEvent(updateResults$generate_well_images_now,{
+    # print('updating now')
+    print('updateResults$generate_well_images_now')
+    print('nrow mapclicks$well_locations')
     print(nrow(mapclicks$well_locations))
     if (nrow(mapclicks$well_locations) > 0) {
       wells_wgs <- mapclicks$well_locations %>%
@@ -437,21 +523,20 @@ server <- function(input, output) {
     } else {
       wells_wgs <- NULL
     }
-    print("2")
+    # print("2")
     bounds_utm <- NULL
     # if there are bounds, map them and get proj4string
     if(!is.null(bounds$bounds_sf)) {
-      proj4string_scenario <- anem::utm_zone_to_proj4(utm_zone())
       bounds_utm <- bounds$bounds_sf %>%
         dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
         sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
-      print("2.1")
+      # print("2.1")
       aquifer_utm <- aquifer()
-      print("2.2")
+      # print("2.2")
       # saveRDS(bounds_utm,"app-data/bounds_utm.rds")
-      print("2.3")
+      # print("2.3")
       aquifer_utm$bounds <- define_bounds(bounds_utm)
-      print("3")
+      # print("3")
       # print(bounds$bounds_sf)
       leafletProxy("resultsmap") %>%
         clearGroup("bounds_rectangular") %>%
@@ -459,38 +544,54 @@ server <- function(input, output) {
         addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                      fillOpacity = 0, opacity = 1, weight = 4,
                      data=bounds$bounds_sf)
-      print('4')
+      # print('4')
       # if no bounds, get proj4string from wells
     } else {
-      print('3x')
+      # print('3x')
       if(!is.null(wells_wgs)) {
         aquifer_utm <- aquifer()
-        centroid <- wells_wgs %>% sf::st_coordinates() %>% colMeans()
-        zone <- anem::longitude_to_utm_zone(centroid[1])
-        proj4string_scenario <- anem::utm_zone_to_proj4(zone)
       }
     }
     if (!is.null(wells_wgs)) {
-      wells$utm <- wells_wgs %>%
-        sf::st_transform(crs=proj4string_scenario) %>%
+      wells$utm_with_images <- wells_wgs %>%
+        sf::st_transform(crs=proj4string_scenario()) %>%
         define_wells() %>%
         generate_image_wells(aquifer_utm)
-      print("n wells")
-      print(wells$utm)
+      # print("n wells")
+      print(wells$utm_with_images)
       leafletProxy("resultsmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
                          data=mapclicks$well_locations)
-      print("7")
-      gridded$h <- anem::get_gridded_hydrodynamics(wells$utm,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
-      gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario)
+      # print("7")
+    }
+    updateResults$update_results_now <- TRUE
+    updateResults$next_view <- FALSE
+    updateResults$generate_well_images_now <- FALSE
+  })
+
+  observeEvent(updateResults$update_results_now,{
+    print("observeEvent(updateResults$update_results_now)")
+    aquifer_utm <- aquifer()
+    bounds_utm <- NULL
+    if(!is.null(bounds$bounds_sf)) {
+      bounds_utm <- bounds$bounds_sf %>%
+        dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
+        sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
+      aquifer_utm$bounds <- define_bounds(bounds_utm)
+    }
+    if (!is.null(wells$utm_with_images)) {
+      print('1')
+      print('aquifer_utm')
+      print(aquifer_utm)
+      gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
+      gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
       gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+      print('gridded')
       cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
-                             type="sf",crs=proj4string_scenario)
+                             type="sf",crs=proj4string_scenario())
       bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
       cl <- cl %>% sf::st_intersection(bounds_polygon)
-
-
 
       # head_range <- c(min(gridded$h$head_m),max(gridded$h$head_m))
       print(cl[1:10,])
@@ -498,16 +599,16 @@ server <- function(input, output) {
       headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
       leafletProxy("resultsmap") %>%
         clearGroup("head_cl") %>%
-        addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl",
-                     data=cl %>% sf::st_transform(crs=4326)) %>%
+        clearControls() %>%
+        addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl", label=~as.character(head_label),
+                     data=cl %>% sf::st_transform(crs=4326) %>% dplyr::mutate(head_label=paste0("Head: ",round(level,2)," m"))) %>%
         addLegend("bottomright", pal = headPal_rev, values = ~level, group="head_cl",
                   title = "Head, m", data=cl,
                   labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                   opacity = 1 )
 
     }
-    updateResults$next_view <- FALSE
-    updateResults$update_now <- FALSE
+    updateResults$update_results_now <- FALSE
   })
 
   observe({
@@ -530,7 +631,7 @@ server <- function(input, output) {
   output$aquifer <- renderPrint({print(aquifer())})
 
   output$drawdown <- renderTable({
-    get_drawdown_relationships(wells$utm,aquifer(),group_column = Group, weights_column = Weight)
+    get_drawdown_relationships(wells$utm_with_images,aquifer(),group_column = Group, weights_column = Weight)
   })
 }
 
