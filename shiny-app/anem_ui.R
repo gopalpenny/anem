@@ -11,6 +11,7 @@ library(mapview)
 source("app-functions/anem_shiny_helpers.R")
 
 wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE))
+# opacityFun <- function(x) switch(x+1,0.4,0.8)
 boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
 
 ui <- fluidPage(
@@ -28,90 +29,99 @@ ui <- fluidPage(
   #   .tabbable > .nav > li[class=active] > a[data-value='Boundaries'] {background-color: #005A00; color:white}
   # ")),
   tabsetPanel(id="maintabs",
-    type="pills",
+    type="tabs",
     tabPanel(
       "Prepare scenario",value="prepare",fluid=TRUE,
       fluidRow(
         # Prepare scenario
-        hr(),
+        # hr(),
         column(
           4,
+          hr(),
           # verbatimTextOutput("utm_zone"),
-          radioButtons("usermode","Entry mode",
-                       c("Define aquifer" = "aquifer",
-                         # "Set aquifer bounds" = "bounds",
-                         "Add or modify wells" = "wells")),
-          conditionalPanel(
-            condition = "input.usermode == 'aquifer'",
-            # selectInput("aquifer_input","Edit aquifer",
-            #             c("Aquifer properties"="properties",
-            #               "Aquifer boundaries"="boundaries")),
 
-            tabsetPanel(
-              type="pills",
-              tabPanel(
-                "Properties",fluid=TRUE,
-                # conditionalPanel(
-                #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
-                # h5("Aquifer type"),
-                radioButtons("aquifer_type", "Aquifer type", #"Aquifer type",
-                             c("Confined" = "confined","Unconfined" = "unconfined")),
-                numericInput("Ksat", "Ksat, m/s^2",value = 0.001),
-                numericInput("h0", "Undisturbed head, m",value = 50),
-                conditionalPanel(
-                  condition = "input.aquifer_type == 'confined'",
-                  numericInput("z0", "Aquifer thickness, m",10)
+          tabsetPanel(
+            id="usermode",
+            type="pills",
+            tabPanel(
+              "Define aquifer",value="aquifer",
+              # radioButtons("usermode","Entry mode",
+              #              c("Define aquifer" = "aquifer",
+              #                # "Set aquifer bounds" = "bounds",
+              #                "Add or modify wells" = "wells")),
+              # conditionalPanel(
+
+              hr(),
+              tabsetPanel(
+                type="tabs",
+                tabPanel(
+                  "Boundaries",fluid=TRUE,
+                  HTML("<p style=font-size:45%><br></p>"),
+                  #     "Prepare scenario",fluid=TRUE,
+                  # conditionalPanel(
+                  #   condition="input.usermode == 'aquifer' & input.aquifer_input == 'boundaries'",
+                  # h4("Aquifer "),
+                  p("Click 4 points to add rectangular aquifer boundaries."), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
+                  fluidRow(
+                    # column(6,dataTableOutput("edgetable")),
+                    column(5,h5("Bound 1:"),align='right'),
+                    column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                  ),
+                  fluidRow(
+                    # column(6,dataTableOutput("edgetable")),
+                    column(5,h5("Bound 2:"),align='right'),
+                    column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                  ),
+                  fluidRow(
+                    # column(6,dataTableOutput("edgetable")),
+                    column(5,h5("Bound 3:"),align='right'),
+                    column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                  ),
+                  fluidRow(
+                    # column(6,dataTableOutput("edgetable")),
+                    column(5,h5("Bound 4:"),align='right'),
+                    column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                  )#,verbatimTextOutput("boundtypes")
+                ),
+                tabPanel(
+                  "Aquifer properties",fluid=TRUE,
+                  HTML("<p style=font-size:25%><br></p>"),
+                  # conditionalPanel(
+                  #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
+                  # h5("Aquifer type"),
+                  radioButtons("aquifer_type", "Aquifer type", #"Aquifer type",
+                               c("Confined" = "confined","Unconfined" = "unconfined")),
+                  numericInput("Ksat", "Ksat, m/s^2",value = 0.001),
+                  numericInput("h0", "Undisturbed head, m",value = 50),
+                  conditionalPanel(
+                    condition = "input.aquifer_type == 'confined'",
+                    numericInput("z0", "Aquifer thickness, m",10)
+                  )
                 )
-              ),
-              tabPanel(
-                "Boundaries",fluid=TRUE,
-                #     "Prepare scenario",fluid=TRUE,
-                # conditionalPanel(
-                #   condition="input.usermode == 'aquifer' & input.aquifer_input == 'boundaries'",
-                # h4("Aquifer "),
-                p("Click 4 points to add rectangular aquifer boundaries."), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
-                fluidRow(
-                  # column(6,dataTableOutput("edgetable")),
-                  column(5,h4("Bound 1:")),
-                  column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                ),
-                fluidRow(
-                  # column(6,dataTableOutput("edgetable")),
-                  column(5,h4("Bound 2:")),
-                  column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                ),
-                fluidRow(
-                  # column(6,dataTableOutput("edgetable")),
-                  column(5,h4("Bound 3:")),
-                  column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                ),
-                fluidRow(
-                  # column(6,dataTableOutput("edgetable")),
-                  column(5,h4("Bound 4:")),
-                  column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                )#,verbatimTextOutput("boundtypes")
               )
-            )
-          ),
-          conditionalPanel(
-            condition = "input.usermode == 'bounds' | input.usermode == 'wells'",
-            # h5("Instructions"),
-            textOutput("prepinstr"),
-            h4("New well:"),
-            fluidRow(
-              column(4,numericInput("Q","Q",-0.1)),
-              column(4,numericInput("R","R",9000)),
-              column(4,numericInput("diam","diam",1))
             ),
-            column(6,
-                   textInput("well_group", "Group",value = "A")
-            ),
-            column(6,
-                   numericInput("well_weight","Weight",value = 1)
-            ),
-            h4("Edit well:"),
-            fluidRow(
-              column(6,actionButton("deleteWell","Delete well"),offset=3)
+
+            tabPanel(
+              "Edit wells",value="wells",
+              hr(),
+              # h5("Instructions"),
+              textOutput("prepinstr"),
+              h4("New well:"),
+              fluidRow(
+                column(4,numericInput("Q","Q",-0.1)),
+                column(4,numericInput("R","R",9000)),
+                column(4,numericInput("diam","diam",1))
+              ),
+              column(6,
+                     textInput("well_group", "Group",value = "A")
+              ),
+              column(6,
+                     numericInput("well_weight","Weight",value = 1)
+              ),
+              h4("Edit well:"),
+              fluidRow(
+                column(6,actionButton("deleteWell","Delete selected well"),offset=3)
+              )
             )
           )
         ),
@@ -119,7 +129,10 @@ ui <- fluidPage(
         column(8,
                fluidRow(
                  column(4,h3(textOutput("prepmaptitle"))),
-                 column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4)
+                 # column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4),
+                 column(4,
+                        HTML("<p style=font-size:45%><br><br></p>"),
+                        actionLink("resetMap","Reset map",style='padding:50px; font-size:80%'),offset=4,align='right')
                ),
                leafletOutput("prepmap",height=420)
         ),
@@ -143,18 +156,18 @@ ui <- fluidPage(
     tabPanel(
       "View results",value="results",fluid=TRUE,
       fluidRow(
-        hr(),
+        # hr(),
         column(4,
-               checkboxInput("linkmaps","Link maps",TRUE),
-               checkboxInput("include_gridded_head","Gridded head, m",FALSE),
-               conditionalPanel(condition= 'input.include_gridded_head',
-                                sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
-               )
+               checkboxInput("linkmaps","Link maps",TRUE)#,
+               # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
+               # conditionalPanel(condition= 'input.include_gridded_head',
+               #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
+               # )
         ),
         column(8,
                fluidRow(
-                 column(4,h3("Results")),
-                 column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
+                 column(4,h3("Results"))#,
+                 # column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
                ),
                leafletOutput("resultsmap",height=420) %>% withSpinner()#,
                # plotOutput("results")
@@ -213,7 +226,7 @@ server <- function(input, output) {
 
   wells <- reactiveValues(
     utm = NULL,
-    head_m=data.frame(head_m=0)
+    head=data.frame(head_m=0)
   )
 
   utm_zone <- reactive({
@@ -334,7 +347,7 @@ server <- function(input, output) {
       bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
       leafletProxy("prepmap",data=mapclicks$bound_vertices) %>%
         clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
-        addCircleMarkers(~x, ~y, color = "black", group = "boundvertices") %>%
+        addCircleMarkers(~x, ~y, color = "black", group = "boundvertices", opacity = 0.5) %>%
         addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
                     layerId = "boundedges",fillOpacity = 0)
       if (dim(bounds$edges_user)[1]==4) {
@@ -358,7 +371,7 @@ server <- function(input, output) {
     } else if (clickOperation == "new_well") {
       leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
-        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
                          data=mapclicks$well_locations)
     } else if (clickOperation == "edit_well") {
       mapclicks$well_locations <- mapclicks$well_locations %>%
@@ -373,7 +386,7 @@ server <- function(input, output) {
       # print(mapclicks$well_locations)
       leafletProxy("prepmap") %>%
         clearGroup("wells") %>%
-        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
                          data=mapclicks$well_locations)
     }
   })
@@ -426,7 +439,7 @@ server <- function(input, output) {
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen'))))
 
   output$welltable_head <- renderDataTable(
-    datatable(wells$head_m,
+    datatable(wells$head,
               editable=T,rownames=F,
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
@@ -441,6 +454,7 @@ server <- function(input, output) {
   #
   proxy_welltable <- dataTableProxy('welltable')
   proxy_welltable2 <- dataTableProxy('welltable2')
+  proxy_welltable_head <- dataTableProxy('welltable_head')
   # proxy_edgetable <- dataTableProxy('edgetable')
 
   observeEvent(input$welltable_cell_edit, {
@@ -553,12 +567,26 @@ server <- function(input, output) {
       }
     }
     if (!is.null(wells_wgs)) {
-      wells$utm_with_images <- wells_wgs %>%
-        sf::st_transform(crs=proj4string_scenario()) %>%
+      wells_utm <- wells_wgs %>%
+        sf::st_transform(crs=proj4string_scenario())
+
+      # filter for only wells inside the aquifer
+      if (!is.null(aquifer_utm$bounds)) {
+        bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
+        wells_utm_orig <- wells_utm
+        wells_utm <- sf::st_intersection(wells_utm,bounds_polygon)
+        if (!identical(wells_utm,wells_utm_orig)) {
+          warning(dim(wells_utm_orig)[1]-dim(wells_utm)[1]," wells were outside the aquifer boundary. They have been removed.")
+          mapclicks$well_locations <- mapclicks$well_locations %>% dplyr::filter(wID %in% wells_utm$wID)
+        }
+      }
+
+      # generate well images
+      wells$utm_with_images <- wells_utm %>%
         define_wells() %>%
         generate_image_wells(aquifer_utm)
       # print("n wells")
-      print(wells$utm_with_images)
+      # print(wells$utm_with_images)
       leafletProxy("resultsmap") %>%
         clearGroup("wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
@@ -584,10 +612,23 @@ server <- function(input, output) {
       print('1')
       print('aquifer_utm')
       print(aquifer_utm)
+
+      # get head at wells
+      head_wells <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
+        anem::get_hydraulic_head(wells$utm_with_images,aquifer_utm)
+      print(head_wells)
+      wells$head <- data.frame(head_m=head_wells)
+      print("wells$head")
+      print(wells$head)
+      replaceData(proxy_welltable_head, wells$head, resetPaging = FALSE, rownames = F)
+
+      # get gridded head
       gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
       gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
       gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
       print('gridded')
+
+      # get contour lines of head
       cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
                              type="sf",crs=proj4string_scenario())
       bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
@@ -611,18 +652,18 @@ server <- function(input, output) {
     updateResults$update_results_now <- FALSE
   })
 
-  observe({
-    if (input$include_gridded_head) {
-      leafletProxy("resultsmap") %>%
-        clearGroup("gridded_head") %>%
-        addRasterImage(gridded$raster_utm,layerId="griddedhead",group = "gridded_head",opacity=input$head_opacity/100) # %>%
-      # leafem::addImageQuery(head_raster_utm, type="mousemove", project=TRUE,
-      #                       layerId = "griddedhead",position="bottomleft")
-    } else {
-      leafletProxy("resultsmap") %>%
-        clearGroup("gridded_head")
-    }
-  })
+  # observe({
+  #   if (input$include_gridded_head) {
+  #     leafletProxy("resultsmap") %>%
+  #       clearGroup("gridded_head") %>%
+  #       addRasterImage(gridded$raster_utm,layerId="griddedhead",group = "gridded_head",opacity=input$head_opacity/100) # %>%
+  #     # leafem::addImageQuery(head_raster_utm, type="mousemove", project=TRUE,
+  #     #                       layerId = "griddedhead",position="bottomleft")
+  #   } else {
+  #     leafletProxy("resultsmap") %>%
+  #       clearGroup("gridded_head")
+  #   }
+  # })
 
   output$wells <- renderPrint({print(mapclicks$well_locations) %>% tibble::as_tibble()})
   output$bounds <- renderPrint({print(bounds$bounds_sf)})
