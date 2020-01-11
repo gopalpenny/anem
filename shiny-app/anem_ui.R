@@ -106,19 +106,32 @@ ui <- fluidPage(
               hr(),
               # h5("Instructions"),
               textOutput("prepinstr"),
-              h4("New well:"),
-              fluidRow(
-                column(4,numericInput("Q","Q",-0.1)),
-                column(4,numericInput("R","R",9000)),
-                column(4,numericInput("diam","diam",1))
+              HTML("<p style=font-size:45%><br></p>"),
+              tabsetPanel(
+                id="welltab",
+                type="tabs",
+                tabPanel(
+                  "New well",value="newwell",
+                  HTML("<p style=font-size:45%><br></p>"),
+                  fluidRow(
+                    column(4,numericInput("Q","Q (cumec)",-0.1)),
+                    # column(4,numericInput("R","R (m)",9000)),
+                    column(4,numericInput("diam","diam (m)",1))
+                  ),
+                  fluidRow(
+                    column(6,textInput("well_group", "Group",value = "A")),
+                    column(6,numericInput("well_weight","Weight",value = 1))
+                  )
+                ),
+                tabPanel(
+                  "Radius of Influence",value="wellROI",
+                  HTML("<p style=font-size:45%><br></p>"),
+                  p(paste("The radius of influence determines the radius at which there is 0 drawdown for a given well.",
+                          "This can be approximated using for xx aquifers.")),
+                  fluidRow()
+                )
               ),
-              column(6,
-                     textInput("well_group", "Group",value = "A")
-              ),
-              column(6,
-                     numericInput("well_weight","Weight",value = 1)
-              ),
-              h4("Edit well:"),
+              hr(),
               fluidRow(
                 column(6,actionButton("deleteWell","Delete selected well"),offset=3)
               )
@@ -130,9 +143,9 @@ ui <- fluidPage(
                fluidRow(
                  column(4,h3(textOutput("prepmaptitle"))),
                  # column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4),
-                 column(4,
+                 column(4,align='right',
                         HTML("<p style=font-size:45%><br><br></p>"),
-                        actionLink("resetMap","Reset map",style='padding:50px; font-size:80%'),offset=4,align='right')
+                        actionLink("resetMap","Reset map",style='font-size:80%'),offset=4)
                ),
                leafletOutput("prepmap",height=420)
         ),
@@ -203,7 +216,7 @@ server <- function(input, output) {
   mapclicks <- reactiveValues(
     bound_vertices=data.frame(bID=integer(),#bound_type=factor(levels=c("NF","CH")),
                               x=numeric(),y=numeric()),
-    well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),group=character(),weight=numeric(),
+    well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),Group=character(),Weight=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical(),stringsAsFactors = FALSE)
   )
 
@@ -402,7 +415,7 @@ server <- function(input, output) {
       dplyr::filter(!selected)
     leafletProxy("prepmap") %>%
       clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations)
   })
 
@@ -440,7 +453,7 @@ server <- function(input, output) {
 
   output$welltable_head <- renderDataTable(
     datatable(wells$head,
-              editable=T,rownames=F,
+              rownames=F,
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
@@ -617,7 +630,8 @@ server <- function(input, output) {
       head_wells <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
         anem::get_hydraulic_head(wells$utm_with_images,aquifer_utm)
       print(head_wells)
-      wells$head <- data.frame(head_m=head_wells)
+      wells$head <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
+        dplyr::select(wID) %>% sf::st_set_geometry(NULL) %>% dplyr::mutate(head_m=round(head_wells,3))
       print("wells$head")
       print(wells$head)
       replaceData(proxy_welltable_head, wells$head, resetPaging = FALSE, rownames = F)
