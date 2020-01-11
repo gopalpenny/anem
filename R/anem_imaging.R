@@ -464,6 +464,7 @@ mirror_well_parallel_bounds <- function(wells,bounds,num_levels=NULL,first_mirro
 #' "Actual", "Image (+Q)", or "Image (-Q)" text.
 #' @return A tibble containing wells where Image wells contain pumping rates similar to
 #' generate_image_wells.
+#' @export
 #' @examples
 #' well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)

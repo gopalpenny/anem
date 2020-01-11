@@ -97,7 +97,8 @@ get_rectangle <- function(bounds) {
   quad_vertices_full <- get_quad_vertices(bounds)
 
   # get midpoints of bounds
-  midpoints <- quad_vertices_full %>% dplyr::group_by(bID) %>%
+  midpoints <- quad_vertices_full %>% #dplyr::select(-intersection_bID) %>%
+    dplyr::distinct() %>% dplyr::group_by(bID) %>%
     dplyr::summarize(x_mid=mean(x,na.rm=TRUE),
               y_mid=mean(y,na.rm=TRUE),
               opposite_bID=intersection_bID[is.na(x)])
@@ -761,11 +762,11 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
         dplyr::group_by(level,line) %>%
         dplyr::summarize(do_union=FALSE) %>%
         sf::st_cast("LINESTRING")
-    } else {
-      warning(paste0("No contours found. Level range: (",min(level),",",max(level),"). ",
-                     "z range: (",min(df$z,na.rm=TRUE),",",max(df$z,na.rm=TRUE),")"))
-      cl <- NULL
     }
+  } else {
+    warning(paste0("No contours found. Level range: (",min(level),",",max(level),"). ",
+                   "z range: (",min(df$z,na.rm=TRUE),",",max(df$z,na.rm=TRUE),")"))
+    cl <- NULL
   }
   return(cl)
 }

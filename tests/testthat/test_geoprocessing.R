@@ -151,7 +151,7 @@ test_that("get_contour_lines doesn't fail",{
 
 df <- tidyr::crossing(x=0:10,y=0:10) %>% dplyr::mutate(z=x^2)
 test_that("get_contour_lines doesn't fail",{
-  expect_equal(unique(get_contourlines(df,nlevels=5)$x) %>% length(), 4)
+  expect_equal(unique(get_contourlines(df,nlevels=5)$x) %>% length(), 5)
 })
 
 
