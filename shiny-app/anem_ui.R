@@ -128,7 +128,15 @@ ui <- fluidPage(
                   HTML("<p style=font-size:45%><br></p>"),
                   p(paste("The radius of influence determines the radius at which there is 0 drawdown for a given well.",
                           "This can be approximated using for xx aquifers.")),
-                  fluidRow()
+                  conditionalPanel(
+                    condition="input.aquifer_type == 'confined'",
+                    p("roi for confined aquifer"),
+                    withMathJax("$$R=1$$")
+                  ),
+                  conditionalPanel(
+                    condition="input.aquifer_type == 'unconfined'",
+                    p("roi for UNCONFINED aquifer")
+                  )
                 )
               ),
               hr(),
