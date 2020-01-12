@@ -31,13 +31,18 @@ ui <- fluidPage(
   tabsetPanel(id="maintabs",
     type="tabs",
     tabPanel(
+      "Instructions",value="instructions",fluid=TRUE,
+      includeMarkdown("app-instructions.Rmd")
+    ),
+    tabPanel(
       "Prepare scenario",value="prepare",fluid=TRUE,
       fluidRow(
         # Prepare scenario
         # hr(),
         column(
           4,
-          hr(),
+          # hr(),
+          HTML("<p style=font-size:45%><br></p>"),
           # verbatimTextOutput("utm_zone"),
 
           tabsetPanel(
@@ -113,35 +118,54 @@ ui <- fluidPage(
                 tabPanel(
                   "New well",value="newwell",
                   HTML("<p style=font-size:45%><br></p>"),
+                  HTML("<p>Set Q (-) for abstraction, (+) for injection.</p>"),
                   fluidRow(
-                    column(4,numericInput("Q","Q (cumec)",-0.1)),
+                    column(6,numericInput("Q","Q (cumec)",-0.1)),
                     # column(4,numericInput("R","R (m)",9000)),
-                    column(4,numericInput("diam","diam (m)",1))
+                    column(6,numericInput("diam","diam (m)",1))
                   ),
                   fluidRow(
                     column(6,textInput("well_group", "Group",value = "A")),
                     column(6,numericInput("well_weight","Weight",value = 1))
+                  ),
+                  hr(),
+                  fluidRow(
+                    column(6,actionButton("deleteWell","Delete selected well"),offset=3)
                   )
                 ),
                 tabPanel(
                   "Radius of Influence",value="wellROI",
                   HTML("<p style=font-size:45%><br></p>"),
-                  p(paste("The radius of influence determines the radius at which there is 0 drawdown for a given well.",
-                          "This can be approximated using for xx aquifers.")),
+                  HTML(paste("<p>A well contributes to drawdown only within its radius of influence.",
+                             "See <a href=http://www.doi.org/10.7343/AS-117-15-0144>Fileccia, 2015</a>.</p>")),
                   conditionalPanel(
                     condition="input.aquifer_type == 'confined'",
-                    p("roi for confined aquifer"),
-                    withMathJax("$$R=1$$")
+                    HTML("<p>For <b>confined</b> aquifers (current selection), this can be approximated as</p>"),
+                    uiOutput("roi_confined"),
+                    HTML(paste0("<p><font face='consolas'>", # courier
+                                "t: Elapsed time of pumping<br>",
+                                "S: Aquifer storativity</font></p>"))
                   ),
                   conditionalPanel(
                     condition="input.aquifer_type == 'unconfined'",
-                    p("roi for UNCONFINED aquifer")
+                    HTML("<p>For <b>unconfined</b> aquifers (current selection), this can be approximated as</p>"),
+                    uiOutput("roi_unconfined"),
+                    HTML(paste0("<p><font face='consolas'>", # courier
+                                "t: Elapsed time of pumping<br>",
+                                "n: Aquifer porosity</font></p>"))
+                  ),
+                  fluidRow(
+                    column(6,numericInput("pumpingtime","t, months",12,0,12*100)),
+                    conditionalPanel(
+                      condition="input.aquifer_type == 'confined'",
+                      column(6,numericInput("storativity","S, unitless",0.35,0,1,0.01))
+                    ),
+                    conditionalPanel(
+                      condition="input.aquifer_type == 'unconfined'",
+                      column(6,numericInput("porosity","Aquifer porosity, n",0.35,0,1,0.01))
+                    )
                   )
                 )
-              ),
-              hr(),
-              fluidRow(
-                column(6,actionButton("deleteWell","Delete selected well"),offset=3)
               )
             )
           )
@@ -316,6 +340,24 @@ server <- function(input, output) {
   #          "wells" = "Wells (double click to edit)")
   # })
 
+  newwellROI <- reactive({
+    current_aquifer <- aquifer()
+    Ksat <- current_aquifer$Ksat
+    h0 <- current_aquifer$h0
+    switch(input$aquifer_type,
+           "confined"=round(sqrt(Ksat*h0*input$pumpingtime*30*24*3600/input$storativity)),
+           "unconfined"=round(sqrt(Ksat*h0*input$pumpingtime*30*24*3600/input$porosity)))
+  })
+
+  output$roi_confined <- renderUI({
+    withMathJax(paste0("$$","R = \\sqrt{2.25 K_{sat} h_0 t / S}=",
+                       round(newwellROI()),"\\text{ m}$$")) # convert months to seconds as 30*24*3600
+  })
+  output$roi_unconfined <- renderUI({
+    withMathJax(paste0("$$","R = \\sqrt{1.9 K_{sat} h_0 t / n}=",
+                       round(newwellROI()),"\\text{ m}$$")) # convert months to seconds as 30*24*3600
+  })
+
   output$prepmaptitle <- renderText({
     # paste("usermode:",input$usermode)
     switch(input$usermode,
@@ -361,7 +403,7 @@ server <- function(input, output) {
       input$usermode=="wells" & clickType=="map" ~ "new_well",
       input$usermode=="wells" & clickType=="marker" ~ "edit_well"
     )
-    well_input <- list(Q=input$Q,R=input$R,diam=input$diam,group=input$well_group,weight=input$well_weight)
+    well_input <- list(Q=input$Q,R=newwellROI(),diam=input$diam,group=input$well_group,weight=input$well_weight)
     mapclicks <- interpret_map_click(prepmapClick,clickOperation,mapclicks,well_input=well_input)
     # print(mapclicks$well_locations %>% tibble::as_tibble())
     if (input$usermode == "aquifer") {
@@ -499,8 +541,8 @@ server <- function(input, output) {
     info = input$welltable2_cell_edit
     # str(info)
     i = info$row
-    print("info$col")
-    print(info$col)
+    # print("info$col")
+    # print(info$col)
     j_click = info$col + 1  # column index offset by 1
     v = info$value
     j <- switch(j_click,1,3,4)
@@ -510,11 +552,11 @@ server <- function(input, output) {
 
     # Update all image wells
     wID <- mapclicks$well_locations$wID[i]
-    print("wells$utm_with_images")
-    print(wells$utm_with_images)
+    # print("wells$utm_with_images")
+    # print(wells$utm_with_images)
     wells$utm_with_images$Q[wells$utm_with_images$wID==wID] <- mapclicks$well_locations[i, j]
     wells$utm_with_images <- anem::reconstruct_image_pumping(wells$utm_with_images)
-    print(wells$utm_with_images)
+    # print(wells$utm_with_images)
 
     # update results
     updateResults$update_results_now <- TRUE
@@ -548,8 +590,7 @@ server <- function(input, output) {
   })
 
   observeEvent(updateResults$generate_well_images_now,{
-    # print('updating now')
-    print('updateResults$generate_well_images_now')
+    print("observeEvent(updateResults$generate_well_images_now)")
     print('nrow mapclicks$well_locations')
     print(nrow(mapclicks$well_locations))
     if (nrow(mapclicks$well_locations) > 0) {
@@ -630,25 +671,26 @@ server <- function(input, output) {
       aquifer_utm$bounds <- define_bounds(bounds_utm)
     }
     if (!is.null(wells$utm_with_images)) {
-      print('1')
-      print('aquifer_utm')
-      print(aquifer_utm)
+      # print('1')
+      # print('aquifer_utm')
+      # print(aquifer_utm)
 
       # get head at wells
       head_wells <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
         anem::get_hydraulic_head(wells$utm_with_images,aquifer_utm)
-      print(head_wells)
+      # print(head_wells)
       wells$head <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
         dplyr::select(wID) %>% sf::st_set_geometry(NULL) %>% dplyr::mutate(head_m=round(head_wells,3))
-      print("wells$head")
-      print(wells$head)
+      # print("wells$head")
+      # print(wells$head)
       replaceData(proxy_welltable_head, wells$head, resetPaging = FALSE, rownames = F)
 
       # get gridded head
       gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
       gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
       gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-      print('gridded')
+
+      gridded$head_wgs_shp <- raster::rasterToPolygons(gridded$raster_wgs,dissolve = TRUE)
 
       # get contour lines of head
       cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
@@ -657,7 +699,6 @@ server <- function(input, output) {
       cl <- cl %>% sf::st_intersection(bounds_polygon)
 
       # head_range <- c(min(gridded$h$head_m),max(gridded$h$head_m))
-      print(cl[1:10,])
       headPal <- colorNumeric(palette = "Blues",domain=cl$level, reverse=TRUE)
       headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
       leafletProxy("resultsmap") %>%

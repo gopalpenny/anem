@@ -4,8 +4,8 @@
 \alias{get_contourlines}
 \title{Get contour lines}
 \usage{
-get_contourlines(df = NULL, nlevels = 10, ..., type = "data.frame",
-  crs = 4326)
+get_contourlines(df = NULL, nlevels = 10, drop_outer = TRUE,
+  levels = NULL, ..., type = "data.frame", crs = 4326)
 }
 \arguments{
 \item{df}{A data.frame containing x, y, and z columns. x and y must form a raster,
@@ -13,25 +13,32 @@ meaning every x must be represented for each y, and vice versa.}
 
 \item{nlevels}{An integer containing number of levels to return. Used IFF levels not supplied.}
 
+\item{drop_outer}{If \code{TRUE}, \code{nlevels+2} will be calculated, dropping the outer 2 values. Used IFF levels not supplied.}
+
+\item{levels}{A vector of values at which contours should be plotted. If used, nlevels is ignored.}
+
 \item{...}{Should contain x, y, and z, and then df will be ignored.}
 
 \item{type}{Should be either "data.frame" or "sf"}
-
-\item{levels}{A vector of values at which contours should be plotted}
 }
 \description{
 Get contour lines, using a wrapper for contourLines
 }
 \examples{
-df <- tidyr::crossing(x=0:10,y=0:10) \%>\% dplyr::mutate(z=x^2)
+df <- tidyr::crossing(x=-10:10,y=-10:10) \%>\% dplyr::mutate(z=x^2)
 cl <- get_contourlines(df,nlevels=5)
+unique(cl$level)
 ggplot() +
   geom_raster(data=df,aes(x,y,fill=z)) +
-  geom_path(data=cl,aes(x,y,group=level))
+  geom_path(data=cl,aes(x,y,group=line))
 
-df <- tidyr::crossing(x=seq(0,5,length.out=100),y=seq(0,5,length.out=100)) \%>\% dplyr::mutate(z=sqrt(x^2+y^2))
+cl <- get_contourlines(df,levels=c(15,20,60))
+unique(cl$level)
+
+df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) \%>\% dplyr::mutate(z=sqrt(x^2+y^2))
 cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
 ggplot() +
   geom_raster(data=df,aes(x,y,fill=z)) +
   geom_sf(data=cl,aes())
+
 }

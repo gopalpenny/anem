@@ -20,7 +20,8 @@ Estimate the radius of influence of a well
 }
 \section{Methods}{
  The methods below are taken from Fileccia (2015). Acque
-  Sotterranee - Italian Journal of Groundwater. DOI 10.7343/AS-117-15-0144.
+  Sotterranee - Italian Journal of Groundwater
+  (\url{http://www.doi.org/10.7343/AS-117-15-0144}).
   The following strings can be input for the \code{method} variable, and must be accompanied
   by the corresponding variables as part of the \code{...} input:
 

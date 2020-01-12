@@ -1,0 +1,25 @@
+---
+# title: "App instructions"
+# author: "Gopal Penny"
+# date: "1/12/2020"
+output: html_document
+---
+
+## anem Web app -- Beta version
+
+This shiny application is currently in development. It functions when used according to the following instructions.
+
+1. Define aquifer
+    + *Define boundaries*. The aquifer boundary serves as the domain boundary. With the approach used in this app, the aquifer **must** be rectangular. Define boundaries by clicking 4 points on the map, and the app will "rectangularize" the boundaries.
+    + *Define properties*. 
+1. Define wells
+    + *Set properties of new wells*:
+        + Pumping rate, Q: specified as cubic meters per second. It should be negative for pumping (abstraction), and positive for injection.
+        + Well diameter, diam (m): Diameter of the well.
+        + Group and Weight are not currently used.
+        + The radius of influence should be calculated.
+    + *Add wells.* Click within the aquifer to add wells.
+    + *Edit wells.* Any well property can be edited in the table.
+        + Clicking a well highlights that well within the table, and allows that well to be deleted.
+1. View results
+    + *Edit pumping.* You can edit the pumping rates of each well to see how head within the aquifer and at each well changes.

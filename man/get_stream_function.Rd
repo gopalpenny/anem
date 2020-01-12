@@ -49,6 +49,7 @@ no_flow_boundary <- loc \%>\%
 ggplot() +
   geom_contour(data=no_flow_boundary,aes(x,y,z=head),bins=20,linetype="dashed") +
   geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50) +
+  geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50) +
   geom_point(data=wells_no_flow,aes(x,y,fill=well_type),size=3,shape=21) +
   theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
   coord_equal()
