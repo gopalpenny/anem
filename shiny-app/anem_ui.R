@@ -32,7 +32,7 @@ ui <- fluidPage(
     type="tabs",
     tabPanel(
       "Instructions",value="instructions",fluid=TRUE,
-      includeMarkdown("app-instructions.Rmd")
+      includeMarkdown("app-instructions/app-instructions.Rmd")
     ),
     tabPanel(
       "Prepare scenario",value="prepare",fluid=TRUE,
@@ -609,7 +609,7 @@ server <- function(input, output) {
       # print("2.1")
       aquifer_utm <- aquifer()
       # print("2.2")
-      # saveRDS(bounds_utm,"app-data/bounds_utm.rds")
+      # saveRDS(bounds_utm,"app-debug/bounds_utm.rds")
       # print("2.3")
       aquifer_utm$bounds <- define_bounds(bounds_utm)
       # print("3")
