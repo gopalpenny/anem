@@ -5,9 +5,19 @@
 output: html_document
 ---
 
-## anem Web app -- Beta version
+## A simple model for groundwater behavior
 
-This shiny application is currently in development. It functions when used according to the following instructions.
+### What anem-app does
+
+This shiny application is currently in development. It functions when used according to the instructions provided below.
+
+This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, and any number of pumping wells. Boundaries can be "no flow" (e.g., due to an impervious layer) or "constant head (e.g., a river).
+
+The tool is based on the [analytical element method](https://en.wikipedia.org/wiki/Analytic_element_method) for groundwater models. More specifically, it utilizes the method of images, in which boundary behavior reproduced by mirroring wells across the boundaries. This approach is documented in a number of sources (e.g., Strack, 2017). The code underlying the model is contained within the `anem` R package, currently in development and accessible via [github](https://github.com/gopalpenny/anem). Please submit feedback or feature requests to the [github issues](https://github.com/gopalpenny/anem/issues) tab.
+
+Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press, 2017.
+
+### Instructions
 
 1. Define aquifer
     + *Define boundaries*. The aquifer boundary serves as the domain boundary. With the approach used in this app, the aquifer **must** be rectangular. Define boundaries by clicking 4 points on the map, and the app will "rectangularize" the boundaries.

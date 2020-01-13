@@ -15,7 +15,7 @@ wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE)
 boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
 
 ui <- fluidPage(
-  h4("anem ui"),
+  h4("anem-app (Beta version)"),
   # tags$style(HTML("
   #   .tabbable > .nav > li > a                  {background-color: white;  color:blue}
   #   .tabbable > .nav > li[class=active] > a                  {background-color: blue;  color:white}
@@ -140,7 +140,7 @@ ui <- fluidPage(
                              "See <a href=http://www.doi.org/10.7343/AS-117-15-0144>Fileccia, 2015</a>.</p>")),
                   conditionalPanel(
                     condition="input.aquifer_type == 'confined'",
-                    HTML("<p>For <b>confined</b> aquifers (current selection), this can be approximated as</p>"),
+                    HTML(paste0("For <b>confined</b> aquifers (current selection), this can be approximated as</p>")),
                     uiOutput("roi_confined"),
                     HTML(paste0("<p><font face='consolas'>", # courier
                                 "t: Elapsed time of pumping<br>",
@@ -155,7 +155,7 @@ ui <- fluidPage(
                                 "n: Aquifer porosity</font></p>"))
                   ),
                   fluidRow(
-                    column(6,numericInput("pumpingtime","t, months",12,0,12*100)),
+                    column(6,numericInput("pumpingtime","t, months",64,0,12*100)),
                     conditionalPanel(
                       condition="input.aquifer_type == 'confined'",
                       column(6,numericInput("storativity","S, unitless",0.35,0,1,0.01))
@@ -179,7 +179,7 @@ ui <- fluidPage(
                         HTML("<p style=font-size:45%><br><br></p>"),
                         actionLink("resetMap","Reset map",style='font-size:80%'),offset=4)
                ),
-               leafletOutput("prepmap",height=420)
+               leafletOutput("prepmap",height=430)
         ),
       ),
       hr(),
@@ -211,10 +211,10 @@ ui <- fluidPage(
         ),
         column(8,
                fluidRow(
-                 column(4,h3("Results"))#,
+                 column(12,h3(textOutput("resultsmaptitle")))#,
                  # column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
                ),
-               leafletOutput("resultsmap",height=420) %>% withSpinner()#,
+               leafletOutput("resultsmap",height=430) %>% withSpinner()#,
                # plotOutput("results")
         )
       ),
@@ -222,10 +222,10 @@ ui <- fluidPage(
       # h4(textOutput("usermode_elements")),
       h4("Wells (double click to edit)"),
       fluidRow(
-        column(4,
+        column(6,
                dataTableOutput("welltable2")
         ),
-        column(4,
+        column(6,
                dataTableOutput("welltable_head")
         )
       ),
@@ -250,6 +250,7 @@ server <- function(input, output) {
                               x=numeric(),y=numeric()),
     well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),Group=character(),Weight=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical(),stringsAsFactors = FALSE)
+    # well_ROIs=
   )
 
   bounds <- reactiveValues(
@@ -271,8 +272,36 @@ server <- function(input, output) {
 
   wells <- reactiveValues(
     utm = NULL,
-    head=data.frame(head_m=0)
+    head=data.frame(head_m=Inf)
   )
+
+  wells_utm <- reactive({
+    if (nrow(mapclicks$well_locations) > 0 & !is.null(proj4string_scenario())) {
+      x <- mapclicks$well_locations %>%
+        sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
+        sf::st_transform(crs=proj4string_scenario())
+    } else {
+      x <- NULL
+    }
+    x
+  })
+
+  wells_roi <- reactive({
+    if (!is.null(wells_utm()) & !is.null(proj4string_scenario())) {
+      coords <- tibble::as_tibble(wells_utm() %>% sf::st_coordinates())
+      roi <- wells_utm() %>%
+        dplyr::bind_cols(coords) %>%
+        dplyr::rename(x=X,y=Y,r=R) %>%
+        gen_circles() %>%
+        sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+        dplyr::group_by(id) %>% dplyr::summarize(do_union=FALSE) %>%
+        sf::st_cast("MULTILINESTRING") %>%
+        sf::st_cast("MULTIPOLYGON")
+    } else {
+      roi <- NULL
+    }
+    roi
+  })
 
   utm_zone <- reactive({
     if(is.null(bounds$bounds_sf)) {
@@ -365,6 +394,12 @@ server <- function(input, output) {
            "wells" = "Define wells")
   })
 
+  output$resultsmaptitle <- renderText({
+    switch(as.character(input$aquifer_type == "confined" | min(wells$head$head_m) > 0 | nrow(mapclicks$well_locations) == 0),
+           "TRUE" = "Results",
+           "FALSE" = "Warning: results invalid, fully depleted aquifer")
+  })
+
   output$prepmap <- renderLeaflet({
     leaflet() %>%
       addTiles(options = providerTileOptions(noWrap = TRUE), group="Map") %>%
@@ -432,10 +467,10 @@ server <- function(input, output) {
                       data=bounds$bounds_sf)
       }
     } else if (clickOperation == "new_well") {
-      leafletProxy("prepmap") %>%
-        clearGroup("wells") %>%
-        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-                         data=mapclicks$well_locations)
+      # leafletProxy("prepmap") %>%
+      #   clearGroup("wells") %>%
+      #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+      #                    data=mapclicks$well_locations)
     } else if (clickOperation == "edit_well") {
       mapclicks$well_locations <- mapclicks$well_locations %>%
         dplyr::mutate(dist=sqrt((x-markerClick$lng)^2 + (y - markerClick$lat)^2),
@@ -460,13 +495,19 @@ server <- function(input, output) {
   #   output$current_well <- renderPrint({print(markerClick)})
   # })
 
+  observeEvent(wells_utm(),{
+    print('hello')
+    print(wells_roi())
+    leafletProxy("prepmap") %>%
+      clearGroup("wells") %>%
+      addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",stroke=FALSE, group = "wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+                       data=mapclicks$well_locations)
+  })
+
   observeEvent(input$deleteWell,{
     mapclicks$well_locations <- mapclicks$well_locations %>%
       dplyr::filter(!selected)
-    leafletProxy("prepmap") %>%
-      clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-                       data=mapclicks$well_locations)
   })
 
   observeEvent(input$resetMap,{
@@ -529,12 +570,12 @@ server <- function(input, output) {
     mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
     replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
-    if (j %in% c(6,7)) { # update map if x or y change
-      leafletProxy("prepmap") %>%
-        clearGroup("wells") %>%
-        addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
-                         data=mapclicks$well_locations)
-    }
+    # if (j %in% c(6,7)) { # update map if x or y change
+    #   leafletProxy("prepmap") %>%
+    #     clearGroup("wells") %>%
+    #     addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+    #                      data=mapclicks$well_locations)
+    # }
   })
 
   observeEvent(input$welltable2_cell_edit, {
@@ -562,9 +603,26 @@ server <- function(input, output) {
     updateResults$update_results_now <- TRUE
   })
 
+  view_results <- reactiveValues(
+    first_time = TRUE
+  )
+
+  observeEvent(input$maintabs,{
+    if (input$maintabs == "results" & updateResults$next_view) {
+      updateResults$generate_well_images_now <- TRUE
+    }
+
+    if (input$maintabs == "results" & view_results$first_time) {
+        prepmapbounds <- input$prepmap_bounds
+        leafletProxy("resultsmap") %>%
+          fitBounds(prepmapbounds$west,prepmapbounds$south,
+                    prepmapbounds$east,prepmapbounds$north,
+                    options(animate=FALSE,duration=0))
+        view_results$first_time <- FALSE
+    }
+  })
   observeEvent(input$prepmap_bounds,{
-    if (input$linkmaps) {
-      # print("prepmapbounds")
+    if (input$linkmaps & input$maintabs == "prepare") { # only update when on prepare tab -- this prevents weird map jiggles
       prepmapbounds <- input$prepmap_bounds
       leafletProxy("resultsmap") %>%
         fitBounds(prepmapbounds$west,prepmapbounds$south,
@@ -573,7 +631,7 @@ server <- function(input, output) {
     }
   })
   observeEvent(input$resultsmap_bounds,{
-    if (input$linkmaps) {
+    if (input$linkmaps & input$maintabs == "results") { # only update when on prepare tab -- this prevents weird map jiggles
       resultsmap_bounds <- input$resultsmap_bounds
       leafletProxy("prepmap") %>%
         fitBounds(resultsmap_bounds$west,resultsmap_bounds$south,
@@ -582,23 +640,11 @@ server <- function(input, output) {
     }
   })
 
-  observeEvent(input$maintabs,{
-    # print(input$maintabs)
-    if (input$maintabs == "results" & updateResults$next_view) {
-      updateResults$generate_well_images_now <- TRUE
-    }
-  })
-
   observeEvent(updateResults$generate_well_images_now,{
     print("observeEvent(updateResults$generate_well_images_now)")
     print('nrow mapclicks$well_locations')
     print(nrow(mapclicks$well_locations))
-    if (nrow(mapclicks$well_locations) > 0) {
-      wells_wgs <- mapclicks$well_locations %>%
-        sf::st_as_sf(coords=c("x","y"),crs=4326)
-    } else {
-      wells_wgs <- NULL
-    }
+
     # print("2")
     bounds_utm <- NULL
     # if there are bounds, map them and get proj4string
@@ -624,27 +670,25 @@ server <- function(input, output) {
       # if no bounds, get proj4string from wells
     } else {
       # print('3x')
-      if(!is.null(wells_wgs)) {
+      if(!is.null(wells_utm())) {
         aquifer_utm <- aquifer()
       }
     }
-    if (!is.null(wells_wgs)) {
-      wells_utm <- wells_wgs %>%
-        sf::st_transform(crs=proj4string_scenario())
+    if (!is.null(wells_utm())) {
 
       # filter for only wells inside the aquifer
       if (!is.null(aquifer_utm$bounds)) {
         bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
-        wells_utm_orig <- wells_utm
-        wells_utm <- sf::st_intersection(wells_utm,bounds_polygon)
-        if (!identical(wells_utm,wells_utm_orig)) {
-          warning(dim(wells_utm_orig)[1]-dim(wells_utm)[1]," wells were outside the aquifer boundary. They have been removed.")
-          mapclicks$well_locations <- mapclicks$well_locations %>% dplyr::filter(wID %in% wells_utm$wID)
+        wells_utm_orig <- wells_utm()
+        wells_utm_clipped <- sf::st_intersection(wells_utm(),bounds_polygon)
+        if (!identical(wells_utm_clipped,wells_utm_orig)) {
+          warning(dim(wells_utm_orig)[1]-dim(wells_utm_clipped)[1]," wells were outside the aquifer boundary. They have been removed.")
+          mapclicks$well_locations <- mapclicks$well_locations %>% dplyr::filter(wID %in% wells_utm_clipped$wID)
         }
       }
 
       # generate well images
-      wells$utm_with_images <- wells_utm %>%
+      wells$utm_with_images <- wells_utm_clipped %>%
         define_wells() %>%
         generate_image_wells(aquifer_utm)
       # print("n wells")
@@ -687,15 +731,20 @@ server <- function(input, output) {
 
       # get gridded head
       gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
-      gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
-      gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+      # gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
+      # gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
-      gridded$head_wgs_shp <- raster::rasterToPolygons(gridded$raster_wgs,dissolve = TRUE)
+      bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
+
+      # get gridded head as polygons
+      # head_sf_wgs <- raster::rasterToPolygons(gridded$raster_wgs,dissolve = TRUE) %>%
+      #   sf::st_as_sf() %>% sf::st_intersection(bounds_polygon %>% sf::st_transform(4326)) %>%
+      #   dplyr::rename(head_m=z) %>% dplyr::mutate(head_label=paste0("Head: ",round(head_m,2)," m"))
+      # print(head_sf_wgs)
 
       # get contour lines of head
       cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
                              type="sf",crs=proj4string_scenario())
-      bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
       cl <- cl %>% sf::st_intersection(bounds_polygon)
 
       # head_range <- c(min(gridded$h$head_m),max(gridded$h$head_m))
@@ -704,8 +753,9 @@ server <- function(input, output) {
       leafletProxy("resultsmap") %>%
         clearGroup("head_cl") %>%
         clearControls() %>%
-        addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl", label=~as.character(head_label),
-                     data=cl %>% sf::st_transform(crs=4326) %>% dplyr::mutate(head_label=paste0("Head: ",round(level,2)," m"))) %>%
+        addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl",# label=~as.character(head_label),
+                     data=cl %>% sf::st_transform(crs=4326)) %>% # %>%
+        # addPolygons(data=head_sf_wgs,stroke=FALSE,fillOpacity = 0,label=~as.character(head_label)) %>%
         addLegend("bottomright", pal = headPal_rev, values = ~level, group="head_cl",
                   title = "Head, m", data=cl,
                   labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
