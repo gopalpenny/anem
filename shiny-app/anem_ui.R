@@ -1029,7 +1029,7 @@ server <- function(input, output, session) {
     notification_id <<- NULL
 
     if (input$aquifer_type == "unconfined" & min(wells$head$`Head, m`) <= 0 & nrow(mapclicks$well_locations) > 0) {
-      notification_id <<- showNotification("Warning: results invalid, fully depleted aquifer",duration=20,type="error")
+      notification_id <<- showNotification("Warning: results invalid, fully depleted aquifer",duration=NULL,type="error")
     }
   })
 
