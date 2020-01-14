@@ -209,18 +209,17 @@ ui <- fluidPage(
       ),
       hr(),
       # h4(textOutput("usermode_elements")),
-      h4("Wells (double click to edit)"),
       fluidRow(
         column(12,
                conditionalPanel(
                  condition="input.usermode == 'wells'",
+                 h4("Wells (double click to edit)"),
                  dataTableOutput("welltable"))
         )
-      ),
-      hr(),
-      verbatimTextOutput("aquifer"),
-      verbatimTextOutput("bounds"),
-      verbatimTextOutput("wells")
+      )#,
+      # verbatimTextOutput("aquifer"),
+      # verbatimTextOutput("bounds"),
+      # verbatimTextOutput("wells")
 
     ),
     tabPanel(
@@ -311,7 +310,7 @@ server <- function(input, output, session) {
 
   wells <- reactiveValues(
     utm_with_images = NULL,
-    head=data.frame(wID=NA,
+    head=tibble::tibble(wID=NA,
                     `Head, m`=Inf,
                     `Drawdown, m`=0),
     drawdown_relationships=data.frame(var=character(),pot=numeric(),description=character())
@@ -330,7 +329,7 @@ server <- function(input, output, session) {
 
   particles <- reactiveValues(
     paths_wgs = NULL,
-    tracking = data.frame(pID=integer(),time_years=numeric(),status=character(),x_end=numeric(),y_end=numeric())
+    tracking = tibble::tibble(pID=integer(),time_years=numeric(),status=character(),x_end=numeric(),y_end=numeric())
   )
 
   particles_utm <- reactive({
