@@ -4,34 +4,61 @@
 \alias{track_particle}
 \title{Track particle in aquifer}
 \usage{
-track_particle(loc, wells, aquifer)
+track_particle(loc, wells, aquifer, t_max = 365 * 10)
 }
 \arguments{
 \item{loc}{Coordinate vector as \code{c(x, y)}}
 
-\item{wells}{Wells \code{data.frame} containing well images}
+\item{wells}{Wells \code{data.frame} object, containing well images.}
 
 \item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}}
+
+\item{t_max}{Maximum time, in days, for which to calculate travel time}
 }
 \value{
 Returns a data.frame containing the time and locations
 }
 \description{
 Track a particle in the aquifer from an original location to a pumping well,
-aquifer boundary, or outside of the wells ROI
+aquifer boundary, or outside of the wells ROI. Coordinates must be in meters.
+}
+\details{
+This function uses numerical integration to track a particle along its path. The particle continues tracking,
+provided that:
+\itemize{
+\item The particle has not encountered a well or boundary
+\item The particle velocity is greater than 0
+\item The total time is less than \code{t_max}
+}
 }
 \examples{
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
-wells <- data.frame(x=c(500,100),y=c(300,600),Q=c(-1e-1,-1e-1),diam=c(1,1),R=c(1000,100)) \%>\%
+wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
   define_wells() \%>\% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
-system.time(particle_path <- track_particle(c(750,200), wells, aquifer))
-particle_path <- track_particle(c(500,250), wells, aquifer)
+particle_path <- track_particle(c(600,500), wells, aquifer)
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
   geom_path(data=particle_path,aes(x,y),color="red") +
   coord_equal()
+
+particle_path[nrow(particle_path),]
+
+system.time(particle_path <- track_particle(c(725,825), wells, aquifer))
+ggplot() +
+  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
+  geom_path(data=particle_path,aes(x,y),color="red") +
+  coord_equal()
+particle_path[nrow(particle_path),]
+
+particle_path <- track_particle(c(725,825), wells, aquifer, t_max=100)
+particle_path[nrow(particle_path),]
+
+system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
+particle_path[nrow(particle_path),]
 }

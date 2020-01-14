@@ -2,10 +2,20 @@
 % Please edit documentation in R/anem_particle_tracking.R
 \name{particle_velocity_m_day}
 \alias{particle_velocity_m_day}
-\title{Particle velocity}
+\title{Get particle velocity}
 \usage{
 particle_velocity_m_day(t, loc, params)
 }
+\arguments{
+\item{t}{time -- necessary for deSolve radau}
+
+\item{loc}{loc as c(x,y)}
+
+\item{params}{params for radau -- must included $wells, $aquifer$Ksat, $n}
+}
+\value{
+Returns the velocity of the particle in m/day
+}
 \description{
-Particle velocity
+Get particle velocity, in m/day
 }
