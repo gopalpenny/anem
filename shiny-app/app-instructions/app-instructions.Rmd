@@ -11,7 +11,7 @@ output: html_document
 
 This shiny application is currently in development. It functions when used according to the instructions provided below.
 
-This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, and any number of pumping wells. Boundaries can be "no flow" (e.g., due to an impervious layer) or "constant head (e.g., a river).
+This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer) or "constant head (e.g., a river).
 
 The tool is based on the [analytical element method](https://en.wikipedia.org/wiki/Analytic_element_method) for groundwater models. More specifically, it utilizes the method of images, in which boundary behavior reproduced by mirroring wells across the boundaries. This approach is documented in a number of sources (e.g., Strack, 2017). The code underlying the model is contained within the `anem` R package, currently in development and accessible via [github](https://github.com/gopalpenny/anem). Please submit feedback or feature requests to the [github issues](https://github.com/gopalpenny/anem/issues) tab.
 
@@ -19,17 +19,35 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
 
 ### Instructions
 
+#### Prepare scenario
+
 1. Define aquifer
-    + *Define boundaries*. The aquifer boundary serves as the domain boundary. With the approach used in this app, the aquifer **must** be rectangular. Define boundaries by clicking 4 points on the map, and the app will "rectangularize" the boundaries.
-    + *Define properties*. 
+    + *Define boundaries*. The aquifer boundary serves as the domain boundary. With the approach used in this app, the aquifer **must** be rectangular. 
+        + Boundary vertices. Define boundaries by clicking 4 points on the map. The points must be clicked sequentially, following the boundaries of the rectangle. The app will "rectangularize" the boundaries to ensure normal angles at the corners.
+        + Boundary types. Boundaries can be set as "no flow" or "constant head".
+    + *Define properties*.
+        + Porosity, n
+        + Saturated hydraulic conductivity, Ksat
+        + Undisturbed head (for unconfined aquifers, this is the thickness of the water table without pumping)
+        + Aquifer thickness (confined aquifers only)
 1. Define wells
     + *Set properties of new wells*:
         + Pumping rate, Q: specified as cubic meters per second. It should be negative for pumping (abstraction), and positive for injection.
         + Well diameter, diam (m): Diameter of the well.
         + Group and Weight are not currently used.
-        + The radius of influence should be calculated.
+        + Radius of influence can be calculated for confined or unconfined aquifers, as defined in the *Radius of influence* tab. For confined aquifers using the Cooper and Jacobs (1946) approximation, "Storativity" is required. For unconfined aquifers using the Aravin and Numerov (1953) approximation, porosity is required. See [Fileccia, 2015](http://www.doi.org/10.7343/AS-117-15-0144) for further details.
     + *Add wells.* Click within the aquifer to add wells.
-    + *Edit wells.* Any well property can be edited in the table.
+    + *Edit wells.* Any well property can be edited in the table below the map.
         + Clicking a well highlights that well within the table, and allows that well to be deleted.
-1. View results
-    + *Edit pumping.* You can edit the pumping rates of each well to see how head within the aquifer and at each well changes.
+1. Define particles
+    + *Add particles.* Click the map to set initial locations for particle tracking.
+    + *Max transit time.* Set the maximum time for determining particle trajectories.
+        
+#### View results
+
+1. Explore the results 
+    + You can by pan, zoom, or change the base map.
+    + By default, the "Prepare" map and the "Results" map are linked, but can be unlinked with the checkbox.
+1. Update the results
+    + *Edit pumping.* You can edit the pumping rates of each well in the table to see how head within the aquifer and at each well changes.
+    + *Update specific results.* You can update the results by clicking any of the checkboxes along the bottom. These are hierarchical: "Particle tracking" updates only itself, "Hyraulic head" updates the head and simulates "Particle tracking", and "Well images" updates all three.

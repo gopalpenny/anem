@@ -142,7 +142,7 @@ ui <- fluidPage(
                   "Radius of Influence",value="wellROI",
                   HTML("<p style=font-size:45%><br></p>"),
                   HTML(paste("<p>A well contributes to drawdown only within its radius of influence.",
-                             "See <a href=http://www.doi.org/10.7343/AS-117-15-0144>Fileccia, 2015</a>.</p>")),
+                             "See <a href=http://www.doi.org/10.7343/AS-117-15-0144 target=\"_blank\">Fileccia, 2015</a>.</p>")),
                   conditionalPanel(
                     condition="input.aquifer_type == 'confined'",
                     HTML(paste0("For <b>confined</b> aquifers (current selection), this can be approximated as</p>")),
