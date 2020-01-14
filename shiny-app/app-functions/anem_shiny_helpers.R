@@ -38,7 +38,6 @@ interpret_map_click <- function(mapClick, clickOperation, mapclicks, ...) {
     newpid <- max(c(mapclicks$particle_locations$pID,0),na.rm=TRUE) + 1
     mapclicks$particle_locations <- rbind(mapclicks$particle_locations %>% dplyr::mutate(selected=FALSE),
                                       data.frame(pID=newpid,x=x,y=y,
-                                                 x_end=NA,y_end=NA,time_days=NA,
                                                  selected=TRUE,stringsAsFactors = FALSE))
   }
   return(mapclicks)

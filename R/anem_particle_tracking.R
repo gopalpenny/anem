@@ -82,7 +82,7 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10) {
   wells_no_diam <- wells %>% dplyr::mutate(diam=0)
   params <- list(wells=wells_no_diam, orig_wells=orig_wells, aquifer=aquifer, n=aquifer$n)
 
-  d_bounds <- get_distance_to_bounds(loc, params$aquifer$bounds)
+  d_bounds <- get_distance_to_bounds(as.numeric(loc), params$aquifer$bounds)
   d_wells <- sqrt((params$orig_wells$x - loc[1])^2 + (params$orig_wells$y - loc[2])^2)
 
   particle <- cbind(time=0,x=loc[1],y=loc[2]) # columns have to be in this order -- it's what is returned by deSolve
@@ -197,12 +197,12 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=20, flow_dim=c(1
                     d2_flag = d2_change > 10*lag(d2_change))
     ggplot(a) + geom_line(aes(i,d2,color=as.factor(line)))
     ggplot(a) + geom_point(aes(x,y,group=as.factor(line))) +
-      geom_point(data=a %>% filter(d2_flag),aes(x,y,color=d2_change))
+      geom_point(data=a %>% dplyr::filter(d2_flag),aes(x,y,color=d2_change))
     ggplot(a) + geom_path(aes(i,d2_change,color=as.factor(line)))
     l_axis <- cl0 %>% dplyr::filter(abs(y-well_i$y) < y_diff,x < well_i$x)
   }
   cl <- cl0 %>% mutate(dist=sapply(y,function(a) min(abs(a-wells_constant_head$y)))) # %>% filter(dist>y_diff*2)
-  cl <- cl %>% group_by(line,level) %>% mutate(min_dist = min(dist),max_y=max(y)) %>% filter(min_dist < 2, max_y > 150)
+  cl <- cl %>% group_by(line,level) %>% mutate(min_dist = min(dist),max_y=max(y)) %>% dplyr::filter(min_dist < 2, max_y > 150)
 
   cl1 <- get_contourlines(df,levels = unique(cl$level)+1e-2)
   # ggplot() +

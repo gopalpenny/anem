@@ -95,8 +95,11 @@ ui <- fluidPage(
                   # conditionalPanel(
                   #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
                   # h5("Aquifer type"),
-                  radioButtons("aquifer_type", "Aquifer type", #"Aquifer type",
-                               c("Confined" = "confined","Unconfined" = "unconfined")),
+                  fluidRow(
+                    column(6,selectInput("aquifer_type", "Aquifer type", #"Aquifer type",
+                                          c("Confined" = "confined","Unconfined" = "unconfined"))),
+                    column(6,numericInput("porosity","Aquifer porosity, n",0.35,0,1,0.01))
+                  ),
                   numericInput("Ksat", "Ksat, m/s^2",value = 0.001),
                   numericInput("h0", "Undisturbed head, m",value = 50),
                   conditionalPanel(
@@ -163,7 +166,7 @@ ui <- fluidPage(
                     ),
                     conditionalPanel(
                       condition="input.aquifer_type == 'unconfined'",
-                      column(6,numericInput("porosity","Aquifer porosity, n",0.35,0,1,0.01))
+                      column(6,numericInput("porosity_roi","Aquifer porosity, n",0.35,0,1,0.01))
                     )
                   )
                 )
@@ -175,10 +178,13 @@ ui <- fluidPage(
               p("Click map to set initial locations for particle tracking."),
               hr(),
               fluidRow(
-                column(6,actionButton("deleteParticle","Delete selected particle"),offset=2)
+                column(6,numericInput("max_tracking_time_years","Max time, years",value=10,min=0)),
+                column(6,
+                       HTML("<p style=font-size:45%><br></p>"),
+                       actionButton("deleteParticle","Delete particle"))
               ),
               dataTableOutput("particletable"),
-              HTML("<p style=font-size:45%><br></p>"),
+              HTML("<p style=font-size:100%><br></p>"),
             )
           )
         ),
@@ -215,11 +221,14 @@ ui <- fluidPage(
       fluidRow(
         # hr(),
         column(4,
-               checkboxInput("linkmaps","Link maps",TRUE)#,
+               checkboxInput("linkmaps","Link maps",TRUE),
                # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
                # conditionalPanel(condition= 'input.include_gridded_head',
                #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
                # )
+               h4("Particle tracking"),
+               p("click table to scroll"),
+               dataTableOutput("particletable_output")
         ),
         column(8,
                fluidRow(
@@ -251,9 +260,12 @@ server <- function(input, output, session) {
 
   # Check when to update results
   updateResults <- reactiveValues(
-    next_view=TRUE,
+    wells_next_view=TRUE,
+    particles_next_view=TRUE,
     generate_well_images_now = 0,
-    update_results_now = 0
+    update_results_now = 0,
+    # update_particle_tracking
+    update_particle_tracking_now = 0
   )
 
   # Initialize reactive values
@@ -263,7 +275,6 @@ server <- function(input, output, session) {
     well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),Group=character(),Weight=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical(),stringsAsFactors = FALSE),
     particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
-                                  x_end=numeric(),y_end=numeric(),time_days=numeric(),
                                   selected=logical(),stringsAsFactors = FALSE)
     # well_ROIs=
   )
@@ -283,6 +294,7 @@ server <- function(input, output, session) {
     h0=input$h0,
     Ksat=input$Ksat,
     z0=input$z0,
+    n=input$porosity,
     bounds=bounds$bounds_sf)})
 
   wells <- reactiveValues(
@@ -303,11 +315,19 @@ server <- function(input, output, session) {
     x
   })
 
+  particles <- reactiveValues(
+    paths_wgs = NULL,
+    tracking = data.frame(pID=integer(),time_years=numeric(),status=character(),x_end=numeric(),y_end=numeric())
+  )
+
   particles_utm <- reactive({
     if (nrow(mapclicks$particle_locations) > 0 & !is.null(proj4string_scenario())) {
       x <- mapclicks$particle_locations %>%
         sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
         sf::st_transform(crs=proj4string_scenario())
+      coords_tbl <- sf::st_coordinates(x) %>% tibble::as_tibble() %>% dplyr::rename(x=X,y=Y)
+      x <- x %>% dplyr::bind_cols(coords_tbl) %>%
+        dplyr::select(pID,x,y,dplyr::everything()) ## FIX -- select only columns that appear in prep scenario tab
     } else {
       x <- NULL
     }
@@ -372,10 +392,14 @@ server <- function(input, output, session) {
   })
 
   observeEvent(bounds$bounds_sf,{
-    updateResults$next_view <- TRUE
+    updateResults$wells_next_view <- TRUE
+    updateResults$particles_next_view <- TRUE
   })
   observeEvent(mapclicks$well_locations,{
-    updateResults$next_view <- TRUE
+    updateResults$wells_next_view <- TRUE
+  })
+  observeEvent(mapclicks$particle_locations,{
+    updateResults$particles_next_view <- TRUE
   })
 
   observeEvent(bound_types(),{
@@ -458,6 +482,13 @@ server <- function(input, output, session) {
       addLayersControl(baseGroups = c("Map","Satellite"),#overlayGroups = c("Red","Blue") ,
                        options = layersControlOptions(collapsed = FALSE)) %>%
       setView(lng = -86.252, lat = 41.676, zoom=10)
+  })
+
+  observeEvent(input$porosity,{
+    updateNumericInput(session,"porosity_roi",value=input$porosity)
+  })
+  observeEvent(input$porosity_roi,{
+    updateNumericInput(session,"porosity",value=input$porosity_roi)
   })
 
   # Map click (new well or aquifer vertex)
@@ -587,6 +618,10 @@ server <- function(input, output, session) {
   observeEvent(input$deleteParticle,{
     mapclicks$particle_locations <- mapclicks$particle_locations %>%
       dplyr::filter(!selected)
+    leafletProxy("prepmap") %>%
+      clearGroup("particles") %>%
+      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+                       data=mapclicks$particle_locations)
   })
 
   observeEvent(input$resetMap,{
@@ -594,7 +629,6 @@ server <- function(input, output, session) {
     mapclicks$well_locations <- data.frame(Q=numeric(),R=numeric(),diam=numeric(),group=character(),weight=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical())
     mapclicks$particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
-                                  x_end=numeric(),y_end=numeric(),time_days=numeric(),
                                   selected=logical(),stringsAsFactors = FALSE)
     leafletProxy("prepmap") %>%
       clearShapes() %>% clearMarkers()
@@ -638,6 +672,20 @@ server <- function(input, output, session) {
     ) %>%
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','pink')))
+  )
+
+  output$particletable_output <- renderDataTable(
+    datatable(particles$tracking %>%
+                dplyr::mutate(x_end=round(x_end,4),y_end=round(y_end,4),time_years=round(time_years,3)),
+              rownames=F,
+              options = list(searching=FALSE,
+                             # formatNumber= function(x) format(x,nsmall=3),
+                             lengthChange=FALSE,
+                             autoWidth = TRUE,
+                             # columnDefs = list(list(width = '200px', targets = "_all")),
+                             scrollX = TRUE
+              )
+    )
   )
 
   output$welltable_head <- renderDataTable(
@@ -707,10 +755,13 @@ server <- function(input, output, session) {
 
   observeEvent(input$maintabs,{
     print(input$usermode)
-    if (input$maintabs == "results" & updateResults$next_view) {
+    if (input$maintabs == "results" & updateResults$wells_next_view) {
       updateResults$generate_well_images_now <- updateResults$generate_well_images_now + 1
+    } else if (input$maintabs == "results" & updateResults$particles_next_view) {
+      updateResults$update_particle_tracking_now <- updateResults$update_particle_tracking_now + 1
     }
 
+    # this is needed to set the map extents equal
     if (input$maintabs == "results" & view_results$first_time) {
         prepmapbounds <- input$prepmap_bounds
         leafletProxy("resultsmap") %>%
@@ -720,6 +771,7 @@ server <- function(input, output, session) {
         view_results$first_time <- FALSE
     }
   })
+
   observeEvent(input$prepmap_bounds,{
     if (input$linkmaps & input$maintabs == "prepare") { # only update when on prepare tab -- this prevents weird map jiggles
       prepmapbounds <- input$prepmap_bounds
@@ -729,6 +781,7 @@ server <- function(input, output, session) {
                   options(animate=FALSE,duration=0))
     }
   })
+
   observeEvent(input$resultsmap_bounds,{
     if (input$linkmaps & input$maintabs == "results") { # only update when on prepare tab -- this prevents weird map jiggles
       resultsmap_bounds <- input$resultsmap_bounds
@@ -812,7 +865,7 @@ server <- function(input, output, session) {
       }
     })
     updateResults$update_results_now <- updateResults$update_results_now + 1
-    updateResults$next_view <- FALSE
+    updateResults$wells_next_view <- FALSE
   })
 
   observeEvent(updateResults$update_results_now,{
@@ -883,8 +936,77 @@ server <- function(input, output, session) {
                     labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                     opacity = 1 )
 
+        updateResults$update_particle_tracking_now <- updateResults$update_particle_tracking_now + 1
       }
     })
+  })
+
+  observeEvent(updateResults$update_particle_tracking_now,{
+    print("particles 1")
+    if (!is.null(particles_utm()) & !is.null(bounds$bounds_sf) & !is.null(wells_utm())) {
+      # prep for particle tracking
+      print("particles 2")
+      particle_pIDs <- particles_utm() %>% dplyr::pull(pID)
+      particles_matrix <- particles_utm() %>% sf::st_set_geometry(NULL) %>%
+        dplyr::select(x,y) %>% as.matrix()
+      n_progress <- nrow(particles_matrix) + 2
+
+      shiny::withProgress(message="Particle tracking",value=0,{
+        incProgress(1/n_progress,detail="Getting aquifer properties")
+        # get aquifer boundaries
+        bounds_utm <- bounds$bounds_sf %>%
+          dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
+          sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
+        aquifer_utm <- aquifer()
+        aquifer_utm$bounds <- define_bounds(bounds_utm)
+        print("particles 3")
+
+        print(aquifer_utm)
+
+        for (i in 1:nrow(particles_utm())) {
+          print("particles 4")
+          incProgress(1/n_progress,detail=paste0("pID = ",particle_pIDs[i]))
+          loc <- particles_matrix[i,c("x","y")]
+          print("particles 5")
+          particle <- track_particle(loc,wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)  %>%
+            dplyr::mutate(pID=particle_pIDs[i])
+          print("particles 6")
+          if (i == 1) {
+            particle_path_df <- particle
+            particle_endpoint <- particle[nrow(particle),]
+          } else {
+            particle_path_df <- particle_path_df %>% dplyr::bind_rows(particle)
+            particle_endpoint <- particle_endpoint %>% dplyr::bind_rows(particle[nrow(particle),])
+          }
+        }
+
+        incProgress(1/n_progress,detail="Generating polylines")
+        particles$paths_wgs <- particle_path_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+          dplyr::group_by(pID) %>% dplyr::summarize(do_union=FALSE) %>%
+          sf::st_cast("MULTILINESTRING") %>%
+          sf::st_transform(crs=4326)
+
+        print(particles$paths_wgs)
+
+        leafletProxy("resultsmap") %>%
+          clearGroup("particles") %>%
+          addPolylines(data=particles$paths_wgs,color = "red",group = "particles") %>%
+            addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+                             data=mapclicks$particle_locations)
+
+        particle_sf <- particle_endpoint %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+          sf::st_transform(crs=4326)
+        particle_coords_wgs <- particle_sf %>% sf::st_coordinates() %>% tibble::as_tibble()
+        particle_wgs <- particle_sf %>% sf::st_set_geometry(NULL) %>% dplyr::bind_cols(particle_coords_wgs)
+
+        particles$tracking <- data.frame(pID=particle_pIDs) %>%
+          dplyr::mutate(time_years=particle_wgs$time_days/365,
+                        status=particle_wgs$status,x_end=particle_wgs$X,
+                        y_end=particle_wgs$Y)
+      })
+    }
+
+    particles_next_view <- FALSE
   })
 
   # observe({

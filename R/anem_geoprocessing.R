@@ -448,7 +448,7 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
 #'   geom_point(data=loc,aes(x,y)) +
 #'   coord_equal()
 get_distance_to_bounds <- function(loc,bounds,return_locations=FALSE) {
-  if (max(grepl("data.frame",class(loc)))) {
+  if (any(grepl("data.frame",class(loc)))) {
     x_loc <- loc$x
     y_loc <- loc$y
   } else {
