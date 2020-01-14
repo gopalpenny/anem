@@ -1,4 +1,4 @@
-context("test_potentials")
+# context("test_potentials")
 
 test_that("get_ROI gives proper return for \"cooper-jacob\"",{
   expect_equal(round(get_ROI(Tr=0.01,t=3600*12,S=1,method="cooper-jacob"),4), 31.1769)
