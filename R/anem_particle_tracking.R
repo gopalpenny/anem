@@ -38,7 +38,9 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) %>%
 #'   define_wells() %>% generate_image_wells(aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
-#' particle_path <- track_particle(c(600,500), wells, aquifer)
+#'
+#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
+#' particle_path[nrow(particle_path),]
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
@@ -46,16 +48,15 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   geom_path(data=particle_path,aes(x,y),color="red") +
 #'   coord_equal()
 #'
-#' particle_path[nrow(particle_path),]
 #'
 #' system.time(particle_path <- track_particle(c(725,825), wells, aquifer))
+#' particle_path[nrow(particle_path),]
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y),color="red") +
 #'   coord_equal()
-#' particle_path[nrow(particle_path),]
 #'
 #' particle_path <- track_particle(c(725,825), wells, aquifer, t_max=100)
 #' particle_path[nrow(particle_path),]
@@ -103,7 +104,7 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10) {
   while (all(d_wells > params$orig_wells$diam) & d_bounds > 1 & sum(abs(v)) > 0 & particle_status == "On path" & i < 100) {
     # print(i)
 
-    # get new travel time guess
+    # get new travel time guess -- this is two times the shortest-path time to nearest object at current speed
     min_dist <- min(d_wells,d_bounds)
     travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2)
 
@@ -113,8 +114,15 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10) {
     # ptm <- proc.time()
     start_loc <- as.numeric(last[c("x","y")])
     new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50)
+    # radau chosen to allow a root function which stops integration when the particle reaches a well or boundary
+    # if the time guess is multiplied by 2, the particle can apparently skip over boundaries -- e.g.,
+    # particle_path <- track_particle(loc=c(600,500), wells, aquifer) with the examples in the documentation
+    # -- jumps boundary
     new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
                           parms=params, rootfunc = rootfun)
+    # can try testing other numerical integration methods...
+    # new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day,
+    #                                parms=params, rootfunc = rootfun)
     # proc.time() - ptm
     ########################################################
     ########################################################
