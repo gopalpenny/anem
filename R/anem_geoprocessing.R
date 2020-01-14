@@ -1,7 +1,6 @@
 # aem_geoprocessing.R
 # This file contains code for prepping and geoprocessing spatial features for the anelem package.
 
-
 #' Get UTM zone from coordinates
 #'
 #' @param lon longitude in [-180,180]
@@ -612,46 +611,10 @@ get_utm_rectangle <- function(edges_user) {
   return(edges_rect)
 }
 
-#' #' Get UTM Rectangle (WGS coords)
-#' #'
-#' #' Transform quadrangle (in WGS coordinates) to UTM coordinates,
-#' #' then convert to a rectangle, then transform back to WGS.
-#' #' @param edges_user A data.frame with 4 rows and columns x1, y1, x2, y2, and bID
-#' #' @return
-#' #' Returns a data.frame with 4 rows representing a rectangle. Each row
-#' #' is a segment of the rectangle, and the segments are ordered so that
-#' #' the rectangle is specified as segment 1: p1 --> p2, segment 2: p2 --> p3, etc.
-#' #' @examples
-#' #' edges_user <- data.frame(x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749846,-87.1823783130922),
-#' #'                  y1=c(41.4427263776721,41.8327350621526,41.1455697310095,40.8512155742825),
-#' #'                  bID=c(5,6,7,8),
-#' #'                  x2=c(-86.2150051217412,-85.8522401749846,-87.1823783130922,-87.3802501022322),
-#' #'                  y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
-#' #' edges_rect <- get_utm_rectangle(edges_user)
-#' get_utm_rectangle <- function(edges_user) {
-#'
-#'   edges_sf_wgs <- edges_user %>% tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
-#'     tidyr::separate(coord,c("axis","point"),1) %>%
-#'     tidyr::spread(axis,val) %>%
-#'     dplyr::arrange(bID) %>%
-#'     sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
-#'     dplyr::group_by(bID) %>%
-#'     dplyr::summarize() %>% sf::st_cast("LINESTRING")
-#'
-#'   edges_center <- suppressWarnings(edges_sf_wgs %>% sf::st_centroid() %>%
-#'                                      sf::st_coordinates() %>% colMeans())
-#'   utm_zone <- longitude_to_utm_zone(edges_center[1])
-#'   edges_sf_utm <- edges_sf_wgs %>% sf::st_transform(utm_zone_to_proj4(utm_zone)) %>%
-#'     prep_bounds_sf() %>% get_rectangle()
-#'
-#'   return(edges_sf_utm)
-#' }
-
 
 #' Bounds to SF 2
 #'
 #' Get sf object from boundaries
-#'
 #' @param bounds A data.frame containing x1, y1, x2, y2, bID
 #' @param crs crs object for sf package
 #' @return

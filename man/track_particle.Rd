@@ -11,8 +11,10 @@ track_particle(loc, wells, aquifer)
 
 \item{wells}{Wells \code{data.frame} containing well images}
 
-\item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}
-Returns a data.frame containing the time and locations}
+\item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}}
+}
+\value{
+Returns a data.frame containing the time and locations
 }
 \description{
 Track a particle in the aquifer from an original location to a pumping well,
@@ -29,7 +31,7 @@ particle_path <- track_particle(c(500,250), wells, aquifer)
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
-  geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y),shape=21) +
+  geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
   geom_path(data=particle_path,aes(x,y),color="red") +
   coord_equal()
 }

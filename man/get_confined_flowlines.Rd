@@ -7,6 +7,13 @@
 get_confined_flowlines(wells, aquifer, nominal_levels = 20,
   flow_dim = c(100, 100))
 }
+\arguments{
+\item{wells}{Wells object}
+
+\item{aquifer}{Aquifer object}
+
+\item{flow_dim}{Dimensions for generating raster for generating flowlines}
+}
 \description{
 Get flowlines in confined aquifer
 }
@@ -17,7 +24,7 @@ aquifer <- define_aquifer("confined",1e-3,bounds=bounds_df,h0=100)
 
 # define wells and well images
 wells_df <- data.frame(x=c(300,700),y=c(200,600),diam=1) \%>\%
-  mutate(R=1000,Q=-1/n())
+  dplyr::mutate(R=1000,Q=-1/dplyr::n())
 wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer)
 
 ggplot() +

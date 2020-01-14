@@ -9,10 +9,11 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' Track particle in aquifer
 #'
 #' Track a particle in the aquifer from an original location to a pumping well,
-#' aquifer boundary, or outside of the wells ROI
+#' aquifer boundary, or outside of the wells ROI. Coordinates must be in meters.
 #' @param loc Coordinate vector as \code{c(x, y)}
-#' @param wells Wells \code{data.frame} containing well images
+#' @param wells Wells \code{data.frame} object, containing well images.
 #' @param aquifer Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}
+#' @return
 #' Returns a data.frame containing the time and locations
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -25,7 +26,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
-#'   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
+#'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y),color="red") +
 #'   coord_equal()
 track_particle <- function(loc, wells, aquifer) {
@@ -49,7 +50,7 @@ track_particle <- function(loc, wells, aquifer) {
   wells_no_diam <- wells %>% dplyr::mutate(diam=0)
   params <- list(wells=wells_no_diam, orig_wells=orig_wells, aquifer=aquifer, n=aquifer$n)
 
-  d_bounds <- get_distance_to_bounds(x, params$aquifer$bounds)
+  d_bounds <- get_distance_to_bounds(loc, params$aquifer$bounds)
   d_wells <- sqrt((params$orig_wells$x - loc[1])^2 + (params$orig_wells$y - loc[2])^2)
 
   particle <- cbind(time=0,x=loc[1],y=loc[2])
@@ -69,7 +70,7 @@ track_particle <- function(loc, wells, aquifer) {
     # ptm <- proc.time()
     start_loc <- as.numeric(last[c("x","y")])
     new_times <- seq(last["time"],last["time"] + travel_time_guess,length.out = 50)
-    new_particle <- radau(start_loc, new_times, particle_velocity_m_day,
+    new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
                           parms=params, rootfunc = rootfun)
     # proc.time() - ptm
     ########################################################
@@ -79,23 +80,23 @@ track_particle <- function(loc, wells, aquifer) {
     last <- particle[dim(particle)[1],]
 
     # get distance to objects
-    d_bounds <- get_distance_to_bounds(x, params$aquifer$bounds)
+    d_bounds <- get_distance_to_bounds(as.vector(last[c("x","y")]), params$aquifer$bounds)
     d_wells <- sqrt((params$orig_wells$x - last["x"])^2 + (params$orig_wells$y - last["y"])^2)
 
     i <- i + 1
   }
 
   particle_path <- particle %>% tibble::as_tibble() %>% setNames(c("time","x","y"))
-  return(particle_path)
+  return(particle_path %>% dplyr::rename(time_days=time))
 }
 
 
 #' Get flowlines in confined aquifer
 #'
 #' Get flowlines in confined aquifer
-#' @param wells
-#' @param aquifer
-#' @param flow_dim
+#' @param wells Wells object
+#' @param aquifer Aquifer object
+#' @param flow_dim Dimensions for generating raster for generating flowlines
 #' @examples
 #' # define aquifer
 #' bounds_df <- data.frame(bound_type=c("NF","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -103,7 +104,7 @@ track_particle <- function(loc, wells, aquifer) {
 #'
 #' # define wells and well images
 #' wells_df <- data.frame(x=c(300,700),y=c(200,600),diam=1) %>%
-#'   mutate(R=1000,Q=-1/n())
+#'   dplyr::mutate(R=1000,Q=-1/dplyr::n())
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer)
 #'
 #' ggplot() +
