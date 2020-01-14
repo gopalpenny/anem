@@ -6,6 +6,7 @@ library(ggplot2)
 library(shinycssloaders)
 library(raster)
 library(mapview)
+library(deSolve)
 # library(tibble)
 
 source("app-functions/anem_shiny_helpers.R")
@@ -197,7 +198,13 @@ ui <- fluidPage(
                         HTML("<p style=font-size:45%><br><br></p>"),
                         actionLink("resetMap","Reset map",style='font-size:80%'))
                ),
-               leafletOutput("prepmap",height=430)
+               leafletOutput("prepmap",height=430),
+               fluidRow(
+                 column(3,checkboxInput("update_images","Well images",FALSE)),
+                 column(3,checkboxInput("update_head","Hydraulic head",FALSE)),
+                 column(3,checkboxInput("update_particles","Particle tracking",FALSE)),
+                 column(3,checkboxInput("linkmaps","Link maps",TRUE))
+               )
         ),
       ),
       hr(),
@@ -221,13 +228,12 @@ ui <- fluidPage(
       fluidRow(
         # hr(),
         column(4,
-               checkboxInput("linkmaps","Link maps",TRUE),
                # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
                # conditionalPanel(condition= 'input.include_gridded_head',
                #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
                # )
+               hr(),
                h4("Particle tracking"),
-               p("click table to scroll"),
                dataTableOutput("particletable_output")
         ),
         column(8,
@@ -235,8 +241,13 @@ ui <- fluidPage(
                  column(12,h3(textOutput("resultsmaptitle")))#,
                  # column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
                ),
-               leafletOutput("resultsmap",height=430) %>% withSpinner()#,
-               # plotOutput("results")
+               leafletOutput("resultsmap",height=430) %>% withSpinner(),
+               fluidRow(
+                 column(3,checkboxInput("update_images_results","Well images",FALSE)),
+                 column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),
+                 column(3,checkboxInput("update_particles_results","Particle tracking",FALSE)),
+                 column(3,checkboxInput("linkmaps_results","Link maps",TRUE))
+               )
         )
       ),
       hr(),
@@ -250,22 +261,23 @@ ui <- fluidPage(
                dataTableOutput("welltable_head")
         )
       ),
-      tableOutput("drawdown")
+      tableOutput("drawdowntable")
     )
   )
 
 )
 
 server <- function(input, output, session) {
+  notification_id <- NULL
 
   # Check when to update results
   updateResults <- reactiveValues(
     wells_next_view=TRUE,
     particles_next_view=TRUE,
-    generate_well_images_now = 0,
-    update_results_now = 0,
+    update_images_now = 0,
+    update_head_now = 0,
     # update_particle_tracking
-    update_particle_tracking_now = 0
+    update_particles_now = 0
   )
 
   # Initialize reactive values
@@ -298,10 +310,11 @@ server <- function(input, output, session) {
     bounds=bounds$bounds_sf)})
 
   wells <- reactiveValues(
-    utm = NULL,
+    utm_with_images = NULL,
     head=data.frame(wID=NA,
                     `Head, m`=Inf,
-                    `Drawdown, m`=0)
+                    `Drawdown, m`=0),
+    drawdown_relationships=data.frame(var=character(),pot=numeric(),description=character())
   )
 
   wells_utm <- reactive({
@@ -392,14 +405,74 @@ server <- function(input, output, session) {
   })
 
   observeEvent(bounds$bounds_sf,{
-    updateResults$wells_next_view <- TRUE
-    updateResults$particles_next_view <- TRUE
+    if (!is.null(wells_utm())) {
+      updateCheckboxInput(session,"update_images",value=TRUE)
+      updateCheckboxInput(session,"update_head",value=TRUE)
+    }
+    if (!is.null(particles_utm())) {
+      updateCheckboxInput(session,"update_particles",value=TRUE)
+    }
   })
   observeEvent(mapclicks$well_locations,{
-    updateResults$wells_next_view <- TRUE
+    if (input$maintabs=="prepare") {
+      updateCheckboxInput(session,"update_images",value=TRUE)
+    }
+    updateCheckboxInput(session,"update_head",value=TRUE)
   })
   observeEvent(mapclicks$particle_locations,{
-    updateResults$particles_next_view <- TRUE
+    updateCheckboxInput(session,"update_particles",value=TRUE)
+  })
+
+  observeEvent(input$max_tracking_time_years,{
+    if (!is.null(particles_utm())) {
+      updateCheckboxInput(session,"update_particles",value=TRUE)
+    }
+  })
+
+  observeEvent(aquifer(),{
+    if (!is.null(wells_utm())) {
+      # don't update images -- unless bounds_sf is changed
+      updateCheckboxInput(session,"update_head",value=TRUE)
+    }
+    if (!is.null(particles_utm())) {
+      updateCheckboxInput(session,"update_particles",value=TRUE)
+    }
+  })
+
+  # update checkboxes on results tab if changes on prepare tab
+  observeEvent(input$update_images,{
+    updateCheckboxInput(session,"update_images_results",value=input$update_images)
+  })
+  observeEvent(input$update_head,{
+    updateCheckboxInput(session,"update_head_results",value=input$update_head)
+  })
+  observeEvent(input$update_particles,{
+    updateCheckboxInput(session,"update_particles_results",value=input$update_particles)
+  })
+
+  # if checkbox clicked on results tab, re-run code
+  observeEvent(input$update_images_results,{
+    if (input$update_images_results & input$maintabs == "results") {
+      updateResults$update_images_now = updateResults$update_images_now + 1
+    }
+  })
+  observeEvent(input$update_head_results,{
+    if (input$update_head_results & input$maintabs == "results") {
+      updateResults$update_head_now = updateResults$update_head_now + 1
+    }
+  })
+  observeEvent(input$update_particles_results,{
+    if (input$update_particles_results & input$maintabs == "results") {
+      updateResults$update_particles_now = updateResults$update_particles_now + 1
+    }
+  })
+
+  # map linking
+  observeEvent(input$linkmaps,{
+    updateCheckboxInput(session,"linkmaps_results",value=input$linkmaps)
+  })
+  observeEvent(input$linkmaps_results,{
+    updateCheckboxInput(session,"linkmaps",value=input$linkmaps_results)
   })
 
   observeEvent(bound_types(),{
@@ -458,9 +531,7 @@ server <- function(input, output, session) {
   })
 
   output$resultsmaptitle <- renderText({
-    switch(as.character(input$aquifer_type == "confined" | min(wells$head$head_m) > 0 | nrow(mapclicks$well_locations) == 0),
-           "TRUE" = "Results",
-           "FALSE" = "Warning: results invalid, fully depleted aquifer")
+    "Results"
   })
 
   output$prepmap <- renderLeaflet({
@@ -613,6 +684,10 @@ server <- function(input, output, session) {
   observeEvent(input$deleteWell,{
     mapclicks$well_locations <- mapclicks$well_locations %>%
       dplyr::filter(!selected)
+    leafletProxy("prepmap") %>%
+      clearGroup("wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+                       data=mapclicks$well_locations)
   })
 
   observeEvent(input$deleteParticle,{
@@ -663,7 +738,7 @@ server <- function(input, output, session) {
   output$particletable <- renderDataTable(
     datatable(mapclicks$particle_locations %>% dplyr::select(pID,x,y,selected) %>%
                 dplyr::mutate(x=round(x,4),y=round(y,4)),
-              editable=T,rownames=F,
+              rownames=F,#editable=T,
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
@@ -746,7 +821,9 @@ server <- function(input, output, session) {
     # print(wells$utm_with_images)
 
     # update results
-    updateResults$update_results_now <- updateResults$update_results_now + 1
+    updateResults$update_head_now <- updateResults$update_head_now + 1
+    updateCheckboxInput(session,"update_head",value=FALSE)
+    updateCheckboxInput(session,"update_head_results",value=FALSE)
   })
 
   view_results <- reactiveValues(
@@ -755,10 +832,12 @@ server <- function(input, output, session) {
 
   observeEvent(input$maintabs,{
     print(input$usermode)
-    if (input$maintabs == "results" & updateResults$wells_next_view) {
-      updateResults$generate_well_images_now <- updateResults$generate_well_images_now + 1
-    } else if (input$maintabs == "results" & updateResults$particles_next_view) {
-      updateResults$update_particle_tracking_now <- updateResults$update_particle_tracking_now + 1
+    if (input$maintabs == "results" & input$update_images) {
+      updateResults$update_images_now <- updateResults$update_images_now + 1
+    } else if (input$maintabs == "results" & input$update_head) {
+      updateResults$update_head_now <- updateResults$update_head_now + 1
+    } else if (input$maintabs == "results" & input$update_particles) {
+      updateResults$update_particles_now <- updateResults$update_particles_now + 1
     }
 
     # this is needed to set the map extents equal
@@ -792,8 +871,8 @@ server <- function(input, output, session) {
     }
   })
 
-  observeEvent(updateResults$generate_well_images_now,{
-    print("observeEvent(updateResults$generate_well_images_now)")
+  observeEvent(updateResults$update_images_now,{
+    print("observeEvent(updateResults$update_images_now)")
     print('nrow mapclicks$well_locations')
     print(nrow(mapclicks$well_locations))
 
@@ -864,13 +943,14 @@ server <- function(input, output, session) {
         # print("7")
       }
     })
-    updateResults$update_results_now <- updateResults$update_results_now + 1
-    updateResults$wells_next_view <- FALSE
+    updateResults$update_head_now <- updateResults$update_head_now + 1
+    updateCheckboxInput(session,"update_images",value=FALSE)
+    updateCheckboxInput(session,"update_images_results",value=FALSE)
   })
 
-  observeEvent(updateResults$update_results_now,{
+  observeEvent(updateResults$update_head_now,{
     n_progress <- 5
-    print("observeEvent(updateResults$update_results_now)")
+    print("observeEvent(updateResults$update_head_now)")
     withProgress(message="Generating head",value=0 , {
       aquifer_utm <- aquifer()
       bounds_utm <- NULL
@@ -936,12 +1016,24 @@ server <- function(input, output, session) {
                     labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                     opacity = 1 )
 
-        updateResults$update_particle_tracking_now <- updateResults$update_particle_tracking_now + 1
+        wells$drawdown_relationships <- get_drawdown_relationships(wells$utm_with_images,aquifer(),group_column = Group, weights_column = Weight)
+
+        updateResults$update_particles_now <- updateResults$update_particles_now + 1
       }
     })
+    updateCheckboxInput(session,"update_head",value=FALSE)
+    updateCheckboxInput(session,"update_head_results",value=FALSE)
+    if (!is.null(notification_id)) {
+      removeNotification(notification_id)
+    }
+    notification_id <<- NULL
+
+    if (input$aquifer_type == "unconfined" & min(wells$head$`Head, m`) <= 0 & nrow(mapclicks$well_locations) > 0) {
+      notification_id <<- showNotification("Warning: results invalid, fully depleted aquifer",duration=20,type="error")
+    }
   })
 
-  observeEvent(updateResults$update_particle_tracking_now,{
+  observeEvent(updateResults$update_particles_now,{
     print("particles 1")
     if (!is.null(particles_utm()) & !is.null(bounds$bounds_sf) & !is.null(wells_utm())) {
       # prep for particle tracking
@@ -1006,7 +1098,8 @@ server <- function(input, output, session) {
       })
     }
 
-    particles_next_view <- FALSE
+    updateCheckboxInput(session,"update_particles",value=FALSE)
+    updateCheckboxInput(session,"update_particles_results",value=FALSE)
   })
 
   # observe({
@@ -1028,8 +1121,8 @@ server <- function(input, output, session) {
   # output$clickwells <- renderPrint({print(mapclicks$well_locations)})
   output$aquifer <- renderPrint({print(aquifer())})
 
-  output$drawdown <- renderTable({
-    get_drawdown_relationships(wells$utm_with_images,aquifer(),group_column = Group, weights_column = Weight)
+  output$drawdowntable <- renderTable({
+    wells$drawdown_relationships
   })
 }
 
