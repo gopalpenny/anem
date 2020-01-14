@@ -31,6 +31,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' }
 #' @return
 #' Returns a data.frame containing the time and locations
+#' @export
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
