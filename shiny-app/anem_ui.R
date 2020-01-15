@@ -160,7 +160,7 @@ ui <- fluidPage(
                                 "n: Aquifer porosity</font></p>"))
                   ),
                   fluidRow(
-                    column(6,numericInput("pumpingtime","t, months",64,0,12*100)),
+                    column(6,numericInput("pumpingtime_months","t, months",64,0,12*100)),
                     conditionalPanel(
                       condition="input.aquifer_type == 'confined'",
                       column(6,numericInput("storativity","S, unitless",0.35,0,1,0.01))
@@ -508,8 +508,8 @@ server <- function(input, output, session) {
     Ksat <- current_aquifer$Ksat
     h0 <- current_aquifer$h0
     switch(input$aquifer_type,
-           "confined"=round(sqrt(Ksat*h0*input$pumpingtime*30*24*3600/input$storativity)),
-           "unconfined"=round(sqrt(Ksat*h0*input$pumpingtime*30*24*3600/input$porosity)))
+           "confined" = round(sqrt(2.25*Ksat*h0*input$pumpingtime_months*30*24*3600/input$storativity)), #pumpingtime_months to seconds
+           "unconfined"=round(sqrt(1.90*Ksat*h0*input$pumpingtime_months*30*24*3600/input$porosity)))
   })
 
   output$roi_confined <- renderUI({
@@ -714,8 +714,9 @@ server <- function(input, output, session) {
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
-                             autoWidth = TRUE,
-                             columnDefs = list(list(width = '200px', targets = "_all")))
+                             autoWidth = TRUE#,
+                             # columnDefs = list(list(width = '200px', targets = "_all"))
+                             )
               ) %>%
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen')))
@@ -880,9 +881,10 @@ server <- function(input, output, session) {
       clearGroup("head_cl") %>%
       clearControls()
 
+    print("images 1")
     withProgress(message="Reproducing aquifer boundaries", value=0, {
       n_progress <- 5
-      # print("2")
+      print("images 2")
       bounds_utm <- NULL
       # if there are bounds, map them and get proj4string
       if(!is.null(bounds$bounds_sf)) {
@@ -890,13 +892,13 @@ server <- function(input, output, session) {
         bounds_utm <- bounds$bounds_sf %>%
           dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
           sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
-        # print("2.1")
+        print("images 2.1")
         aquifer_utm <- aquifer()
-        # print("2.2")
+        print("images 2.2")
         # saveRDS(bounds_utm,"app-debug/bounds_utm.rds")
-        # print("2.3")
+        print("images 2.3")
         aquifer_utm$bounds <- define_bounds(bounds_utm)
-        # print("3")
+        print("images 2.4")
         # print(bounds$bounds_sf)
         leafletProxy("resultsmap") %>%
           clearGroup("bounds_rectangular") %>%
@@ -904,20 +906,23 @@ server <- function(input, output, session) {
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                        fillOpacity = 0, opacity = 1, weight = 4,
                        data=bounds$bounds_sf)
-        # print('4')
+        print('images 2.5')
         # if no bounds, get proj4string from wells
       } else {
-        # print('3x')
+        print('images 2.9')
         if(!is.null(wells_utm())) {
           aquifer_utm <- aquifer()
         }
       }
       if (!is.null(wells_utm())) {
+        print('images 3')
 
         incProgress(1/n_progress,detail="Filtering for wells in aquifer")
 
-        # filter for only wells inside the aquifer
         if (!is.null(aquifer_utm$bounds)) {
+          print('images 3.1')
+
+          # filter for only wells inside the aquifer
           bounds_polygon <- use_anem_function("bounds_sf_to_polygon",bounds_sf=aquifer_utm$bounds)
           wells_utm_orig <- wells_utm()
           wells_utm_clipped <- sf::st_intersection(wells_utm(),bounds_polygon)
@@ -925,16 +930,21 @@ server <- function(input, output, session) {
             warning(dim(wells_utm_orig)[1]-dim(wells_utm_clipped)[1]," wells were outside the aquifer boundary. They have been removed.")
             mapclicks$well_locations <- mapclicks$well_locations %>% dplyr::filter(wID %in% wells_utm_clipped$wID)
           }
+
+          # generate well images
+          print('images 3.2')
+          incProgress(1/n_progress,detail="Generating well images")
+          wells$utm_with_images <- wells_utm_clipped %>%
+            define_wells() %>%
+            generate_image_wells(aquifer_utm)
+
+        } else {
+          print('images 3.8')
+          wells_utm_clipped <- wells_utm()
         }
 
-        # generate well images
-        incProgress(1/n_progress,detail="Generating well images")
-        wells$utm_with_images <- wells_utm_clipped %>%
-          define_wells() %>%
-          generate_image_wells(aquifer_utm)
-        # print("n wells")
-        # print(wells$utm_with_images)
         incProgress(1/n_progress,detail="Mapping the wells")
+        print('images 4')
         leafletProxy("resultsmap") %>%
           clearGroup("wells") %>%
           addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",

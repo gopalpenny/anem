@@ -42,6 +42,7 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
 1. Define particles
     + *Add particles.* Click the map to set initial locations for particle tracking.
     + *Max transit time.* Set the maximum time for determining particle trajectories.
+    + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particle would arrive in less or more time. Furthermore, this analysis would greatly underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
         
 #### View results
 
