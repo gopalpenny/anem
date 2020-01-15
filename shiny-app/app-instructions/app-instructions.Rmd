@@ -23,7 +23,7 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
 
 1. Define aquifer
     + *Define boundaries*. The aquifer boundary serves as the domain boundary. With the approach used in this app, the aquifer **must** be rectangular. 
-        + Boundary vertices. Define boundaries by clicking 4 points on the map. The points must be clicked sequentially, following the boundaries of the rectangle. The app will "rectangularize" the boundaries to ensure normal angles at the corners.
+        + Boundary vertices. Define boundaries by clicking 4 points on the map. The points must be clicked sequentially, following the boundaries of the rectangle. The app will "rectangularize" the boundaries to ensure right angles at the corners.
         + Boundary types. Boundaries can be set as "no flow" or "constant head".
     + *Define properties*.
         + Porosity, n
