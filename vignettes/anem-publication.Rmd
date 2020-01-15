@@ -20,17 +20,17 @@ knitr::opts_chunk$set(
 ### Abstract 
 
 Numerous tools exist for simulating groundwater flow via finite element models (e.g., MODFLOW) or analytic element models (e.g., gflow).
-These tools allows for analysis of complex groundwater behavior, functionality that may not be necessary projects that demand simple groundwater models and more advanced statistical or theoretical analysis.
-Tighter integration of groundwater models with analytical environments can provide numerous benefits for quickly analyzing groundwater hydrology problems.
-To this end, we develop an R package designed to simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
-The package, "anem", contains functions for defining aquifers and pumping wells, determining hydraulic head and lateral flow, and calculating drawdown relationships among groups of wells.
-These features make this package a useful tool for simulating groundwater behavior as a precursor to more complex groundwater modeling, or simulating synthetic scenarios as a way to explore variability and uncertainty.
+These tools allow for analysis of complex groundwater behavior, but such functionality that may not be necessary projects that demand simple groundwater models combined with (1) ease of use or (2) advanced statistical or theoretical analysis.
+We address each of these needs through the development of a web application and an R package that simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
+Both tools can be used independent of the computer platform, and offer functionality for defining aquifers and pumping wells, determining hydraulic head and lateral flow, calculating drawdown relationships among groups of wells, and estimating travel times for particles.
+The ease of use of the web application should be especially valuabe in low-budget applications, such as small water management agencies or educational settings.
+Integration of groundwater models with R can provide numerous benefits for quickly simulating and analyzing groundwater hydrology problems.
+Such simulation can serve as a precursor to more complex groundwater modeling, or be used to simulate synthetic scenarios as a way to explore variability and uncertainty.
 Because R is a functional programming language, the outputs from this package can be easily analyzed, mapped, and incorporated into more complex models in R.
 Indeed, the linear behavior of groundwater flow and principle of superposition means that physically plausible groundwater dynamics can be incorporated into more complex models of hydrology and coupled human-natural systems.
-We validate the package and describe multiple scenarios in which this package might be used, emphasizing the potential benefits of incorporating drawdown relationships into more complex models.
+We validate the code and describe multiple scenarios in which the web application and R package might be used.
 
 ## Outline
-
 
 **Introduction**
 
@@ -47,16 +47,27 @@ Groundwater modeling background:
     * integration with R, data analytics
     * precursor to more complex groundwater models
     * component of more complex hydrological models or coupled models
-
-
-**Package description**
-
-Basic functionality of the package
+    
+    
+**Theoretical background**
 
 1. groundwater theory
     * flow equations
     * principle of superposition
     * confined and unconfined flow
+    
+**Web application**
+
+1. Interface
+    * Overview -- map-based interactive tool. Leaflet & open street map to immediately access basemaps. This interface is useful to seamlessly connect model results with physical setting.
+    * Prepare scenario & view results tabs
+1. Prepare scenario
+1. View results
+
+**Package description**
+
+Basic functionality of the package
+
 1. defining wells and aquifers in `anem`
 1. generating drawdown relationships
 
@@ -79,6 +90,10 @@ Validation of the package
 
 ## Introduction
 
+Groundwater modeling is essential in a variety of applications in industry, academia, and resources management. Many tools exist to simulate groundwater behavior, including numerical solutions and analytical solutions. Rapid increases in computer processing mean that numerical approaches to groundwater modeling have become widely accepted and implemented. However, analytical approach to groundwater modeling still have value. Faster processing, multiple platforms exist in addition to computing platforms timml (Bakker). GUIs exist for specific platforms, such as windows. However, these tools are not cross-platform. One exception is the python package by Bakker. 
+
+Make groundwater modeling more readily accessible for simple scenarios.
+
 This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.
 
 This package models *simple* aquifer and well configurations. The boundaries of the aquifer can be specified as *no flow* or *constant head* boundaries, and the corners of the aquifer must be right angles. For fully bounded aquifers, this means that the aquifer must be a rectangle. The constant head boundaries take the head of the undisturbed aquifer, h0.
@@ -87,7 +102,7 @@ Units are designed for length dimensions given in meters (or m^2^), and time in 
 
 As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. 
 
-## Package description
+## Theoretical background
 
 ### Analytic elements
 
@@ -120,7 +135,7 @@ library(sf)
 library(anem)
 ```
 
-```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
+```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3,cache=TRUE}
 # Create a grid of locations
 loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
 
@@ -158,6 +173,10 @@ gridExtra::grid.arrange(p_CH,p_NF,nrow=1)
 ```
 
 
+## Web application
+
+## R package
+
 ### A simple example of drawdown relationships
 
 Load packages for the vignette
@@ -184,7 +203,7 @@ Aquifers in this package are characterized by:
 
 Use the `define_aquifer()` function to create a new aquifer, which has the class `aquifer`. This class is essentially a list with names parameters and a separate print method.
 
-```{r}
+```{r cache=TRUE}
 # define aquifer
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
@@ -204,7 +223,7 @@ The code below Defines 8 pumping wells using random locations and arbitrarily di
 
 The `generate_image_wells()` function generates well images to recreate the bounderies defined by the aquifer, `aquifer_unconfined`.
 
-```{r set_simple_aquifer}
+```{r set_simple_aquifer,cache=TRUE}
 # define wells and well images
 set.seed(15)
 wells_actual <- define_wells(x = runif(8,0,1000),
@@ -219,7 +238,7 @@ wells <- wells_actual %>% generate_image_wells(aquifer_unconfined)
 
 Plot the aquifer and wells.
 
-```{r set_simple_wells,echo=FALSE}
+```{r set_simple_wells,echo=FALSE,cache=TRUE}
 ggplot() +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
@@ -229,11 +248,11 @@ ggplot() +
 
 Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean. The results show $\Phi_{ii}$ and $\Phi_{ij}$.
 
-```{r drawdown_relationships,results='hide'}
+```{r drawdown_relationships,results='hide',cache=TRUE}
 drawdown_relationships <- get_drawdown_relationships(wells, aquifer_unconfined, country, weights)
 ```
 
-```{r print_drawdown_kable,echo=FALSE}
+```{r print_drawdown_kable,echo=FALSE,cache=TRUE}
 drawdown_relationships %>% 
   knitr::kable("html") #%>% kableExtra::kable_styling()
 ```
@@ -242,11 +261,11 @@ drawdown_relationships %>%
 
 The hydrodynamics of the aquifer can be mapped by obtaining gridded heand flow using the `get_gridded_hydrodynamics()` function. The function takes as input the wells, aquifer, and grid dimensions for head and flow. It returns a `list` object with data.frames for head and flow, which can then be plotted.
 
-```{r}
+```{r cache=TRUE}
 gridded <- get_gridded_hydrodynamics(wells,aquifer_unconfined,c(20,20),c(8,8))
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=FALSE, warning=FALSE,cache=TRUE}
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
@@ -255,7 +274,6 @@ ggplot() +
   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
   coord_equal()
 ```
-
 
 ## Validation
 
@@ -301,7 +319,7 @@ loc <- tribble(~pID,~x,~y,
 
 The well and its images and radii of influence, along with observation locations, look like this:
 
-```{r confined_plot,fig.width=8,warning=FALSE,echo=FALSE,message=FALSE}
+```{r confined_plot,fig.width=8,warning=FALSE,echo=FALSE,message=FALSE,cache=TRUE}
 p_full <- ggplot() +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_polygon(data=gen_circles(well),aes(x,y,group=id),alpha=0.25) +
@@ -315,7 +333,7 @@ gridExtra::grid.arrange(p_full,p_aquifer,nrow=1)
 
 The image wells are labeled "Image (+Q)", indicating they have the same sign as the "Actual" well. If the "Actual" well is negative, the images will also have negative pumping rates. The first point (pID=1) is within the radius of influence of four wells. We can manually calculate $h-h_0$ using the Thiem solution for the influence of each well
 
-```{r loc_radii,echo=FALSE}
+```{r loc_radii,echo=FALSE,cache=TRUE}
 loc_radii <- loc %>% crossing(well %>% rename(xw=x,yw=y)) %>% 
   mutate(r=sqrt((xw-x)^2+(yw-y)^2),r=if_else(r<diam/2,diam/2,r)) %>%
   filter(r<R) %>%
@@ -327,26 +345,26 @@ loc_radii_net <- loc_radii %>% group_by(pID) %>% summarize(net=sum(`h-h0`))
 
 The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==1],4)`. We can compare these results with those from `anem` and `get_potential_differential()`:
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==1,],well,aquifer)
 ```
 
 We can compare the same results for the second observation point: 
 
-```{r loc_radii2,echo=FALSE}
+```{r loc_radii2,echo=FALSE,cache=TRUE}
 loc_radii %>% filter(pID==2,r<R) %>% select(pID,wID,Q,well_image,r,`h-h0`) %>% 
   knitr::kable("html",1)
 ```
 
 The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==2],4)`.
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==2,],well,aquifer)
 ```
 
 And the results for the third observation point.
 
-```{r loc_radii3,echo=FALSE}
+```{r loc_radii3,echo=FALSE,cache=TRUE}
 loc_radii %>% 
   filter(pID==3,r<R) %>% mutate(r=format(r, scientific=F)) %>%
   select(pID,wID,Q,well_image,r,`h-h0`) %>% 
@@ -355,7 +373,7 @@ loc_radii %>%
 
 The sum of the $h-h_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==3],3)`.
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==3,],well,aquifer)
 ```
 
@@ -365,7 +383,7 @@ In this last case, the observation location is within the radius of the well cas
 
 Following the same analysis as above but redefining the aquifer as "unconfined", we further validate the package.
 
-```{r}
+```{r cache=TRUE}
 aquifer_uconfined <- define_aquifer(
   aquifer_type="unconfined",
   Ksat=1e-4,
@@ -376,7 +394,7 @@ aquifer_uconfined <- define_aquifer(
 
 The first point (pID=1) is within the radius of influence of four wells. We can manually calculate $h-h_0$ using the Thiem solution for the influence of each well
 
-```{r loc_radii_unconf,echo=FALSE}
+```{r loc_radii_unconf,echo=FALSE,cache=TRUE}
 loc_radii <- loc %>% crossing(well %>% rename(xw=x,yw=y)) %>% 
   mutate(r=sqrt((xw-x)^2+(yw-y)^2),r=if_else(r<diam/2,diam/2,r)) %>%
   filter(r<R) %>%
@@ -388,26 +406,26 @@ loc_radii_net <- loc_radii %>% group_by(pID) %>% summarize(net=sum(`phi-phi0`))
 
 The sum of the $\phi-\phi_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==1],3)`. We can compare these results with those from `anem` and `get_potential_differential()`:
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==1,],well,aquifer_uconfined)
 ```
 
 We can compare the same results for the second observation point: 
 
-```{r loc_radii_unconf2,echo=FALSE}
+```{r loc_radii_unconf2,echo=FALSE,cache=TRUE}
 loc_radii %>% filter(pID==2,r<R) %>% select(pID,wID,Q,well_image,r,`phi-phi0`) %>% 
   knitr::kable("html",1)
 ```
 
 The sum of the $\phi-\phi_0$ column is `r round(loc_radii_net$net[loc_radii_net$pID==2],3)`.
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==2,],well,aquifer_uconfined)
 ```
 
 And the results for the third observation point.
 
-```{r loc_radii_unconf3,echo=FALSE}
+```{r loc_radii_unconf3,echo=FALSE,cache=TRUE}
 loc_radii %>% 
   filter(pID==3,r<R) %>% mutate(r=format(r, scientific=F)) %>%
   select(pID,wID,Q,well_image,r,`phi-phi0`) %>% 
@@ -416,7 +434,7 @@ loc_radii %>%
 
 The sum of the $\phi-\phi_0$ column is `r format(loc_radii_net$net[loc_radii_net$pID==3],scientific=F,nsmall=3)`.
 
-```{r}
+```{r cache=TRUE}
 get_potential_differential(loc[loc$pID==3,],well,aquifer_uconfined)
 ```
 
@@ -429,14 +447,14 @@ The function `get_bounds_behavior()` is a helper function to generate hydraulic 
 * no images (ie, homogeneous, uniform aquifer -- all well images removed)
 * images (ie, aquifer with boundaries -- all well images intact)
 
-```{r check_bounds,fig.width=6,fig.height=4}
+```{r check_bounds,fig.width=6,fig.height=4,cache=TRUE}
 bounds_behavior <- plot_bounds_behavior(wells,aquifer_unconfined)
 gridExtra::grid.arrange(bounds_behavior$p_h,bounds_behavior$p_f,nrow=1)
 ```
 
-Finally, the function `plot_bounds_behavior` also includes the raw data of head and flow used to create the above plots (`bounds_behavior$bounds_behavior`), as well as a summary of these values which includes mean head on each of the boundaries and mean flow as the mean of the absolute value of flow normal to each boundary (`bounds_behavior$table`). To numerically check that the boundaries are working as expected, we can print `bounds_behavior$table`:
+The function `plot_bounds_behavior` also includes the raw data of head and flow used to create the above plots (`bounds_behavior$bounds_behavior`), as well as a summary of these values which includes mean head on each of the boundaries and mean flow as the average of the absolute value of flow normal to each boundary (`bounds_behavior$table`). To numerically check that the boundaries are working as expected, we can print `bounds_behavior$table`:
 
-```{r echo=FALSE}
+```{r echo=FALSE,cache=TRUE}
 bounds_behavior$table %>% 
   knitr::kable("html") #%>% kableExtra::kable_styling()
 ```
