@@ -15,10 +15,6 @@ You can install directly from github using `devtools`:
 devtools::install_github("https://github.com/gopalpenny/anem")
 ```
 
-## Usage
-
-Use of the package is further described in the [package vignette](github.com)
-
 ## Shiny app
 
 The basic functionality of the package is also implemented in a Shiny application: <https://gopalpenny.shinyapps.io/anem-app/>
