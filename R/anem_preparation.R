@@ -293,7 +293,7 @@ define_recharge <- function(recharge_params, recharge_type, recharge_vector, aqu
   # 2. Recharge type: Divide
   } else if (recharge_type == "D") {
     if (!all(c("flow_main","flow_opp","x0","y0") %in% names(input_params))) {
-      stop("For recharge type == \"D\", argument ... must contain flow, flow_opp, x0, y0")
+      stop("For recharge type == \"D\", argument ... must contain flow_main, flow_opp, x0, y0")
     }
 
     recharge_line <- get_slope_intercept(x1,y1,x2,y2)
@@ -314,12 +314,17 @@ define_recharge <- function(recharge_params, recharge_type, recharge_vector, aqu
       y_term_opp <- input_params$flow_opp * sin(theta) * sign(dy) / (aquifer$Ksat * aquifer$z0)
       h0_divide <- aquifer$h0 + x_term_main * (x1-input_params$x0) + y_term_main * (y1-input_params$y0)
       scenario <- "cD"
-    } #else if (aquifer$aquifer_type=="unconfined") {
-    #   if (!all(c("Ksat") %in% names(aquifer))) {
-    #     stop("For recharge type == \"D\", unconfined aquifer must contain Ksat")
-    #   }
-    #   scenario <- "uD"
-    # }
+    } else if (aquifer$aquifer_type=="unconfined") {
+      if (!all(c("Ksat") %in% names(aquifer))) {
+        stop("For recharge type == \"D\", unconfined aquifer must contain Ksat")
+      }
+      x_term_main <- - 2 * input_params$flow_main * cos(theta) * sign(dx) / aquifer$Ksat
+      y_term_main <- - 2 * input_params$flow_main * sin(theta) * sign(dy) / aquifer$Ksat
+      x_term_opp <- 2 * input_params$flow_opp * cos(theta) * sign(dx) / aquifer$Ksat
+      y_term_opp <- 2 * input_params$flow_opp * sin(theta) * sign(dy) / aquifer$Ksat
+      h0_divide <- sqrt(aquifer$h0^2 + x_term_main * (x1-input_params$x0) + y_term_main * (y1-input_params$y0))
+      scenario <- "uD"
+    }
     # Divide output recharge_params
     output_params <- c(list(recharge_type=recharge_type,x1=x1,y1=y1,x2=x2,y2=y2),
                        input_params,
