@@ -155,3 +155,10 @@ test_that("get_contour_lines doesn't fail",{
 })
 
 
+
+test_that("get_perpendicular_line works for slope = 0, Inf, or real number",{
+  expect_equal(get_perpendicular_line(Inf,2,3),list(m=0,b=3))
+  expect_equal(get_perpendicular_line(0,2,3),list(m=Inf,b=2))
+  expect_equal(get_perpendicular_line(1/2,2,2),list(m=-2,b=6))
+  expect_equal(get_perpendicular_line(-2,2,2),list(m=1/2,b=1))
+})
