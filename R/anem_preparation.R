@@ -163,16 +163,20 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 
 #' Define aquifer recharge
 #'
-#' Define recharge as undisturbed water table gradients
-#' @param type Type of recharge gradient. One of "F" (uniform flow),
-#' H (head boundaries), or D (recharge divide)
+#' Define recharge as undisturbed water table gradients. Note that recharge acts as if the
+#' aquifer boundaries did not exist. Therefore, when parameterizing recharge, care must be taken
+#' to ensure only plausible scenarios.
+#' @param params A list containing any of the named or unnamed (i.e, in \code{...}) input parameters.
+#' If any named arguments are missing, they will be replaced by items in this list.
+#' @param recharge_type Type of recharge gradient. One of "F" (uniform flow),
+#' "H" (head boundaries), or "D" (recharge divide)
 #' @param recharge_vector A numeric vector containing \code{c(x1, y1, x2, y2)}
 #' @param aquifer Aquifer containing \code{aquifer_type}, \code{Ksat}, and if necessary \code{h0} and \code{z0}
 #' @param ... See details for required and optional parameters
 #' @details
 #' This function defines recharge to the aquifer by defining the undisturbed water
-#' table profile. Each of the following describes the required parameters for \code{recharge_type}
-#' within the \code{...} input:
+#' table profile. In addition to the named parameters, each \code{recharge_type} has additional
+#' parameters that must be specified as named arguments in \code{recharge_params} or \code{...}:
 #' \describe{
 #' \item{Constant flow, "F"}{This allows a uniform constant flow in the direction of the
 #' \code{recharge_vector}. Flow is specified as cumec/m, where the length dimension in the
@@ -193,17 +197,19 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' If this is specified, there will be a watershed divide
 #' }
 #' }
-#' \item{Recharge divide, "D"}{NOT YET IMPLEMENTED. This allows a uniform constant flow in opposite directions on
-#' both sides of a watershed divide. The divide goes through the \code{recharge_vector} origin \code{x1, y1}
-#' and is perpendicular to the \code{recharge_vector}. Flow on both sides specified as cumec/m, where the length dimension in the
-#' denominator is parallel to the to the recharge divide This \code{recharge_type} requires parameters:
+#' \item{Recharge divide, "D"}{This allows a uniform constant flow in opposite directions on
+#' both sides of a divide. The divide goes through the \code{recharge_vector} origin \code{x1, y1}
+#' and is perpendicular to the \code{recharge_vector}. Flow on either side is specified as cumec/m, where the length dimension in the
+#' denominator is parallel to the to the recharge divide. This \code{recharge_type} requires parameters:
 #' \itemize{
 #' \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
-#' \item \code{flow}: Flow in the direction of the \code{recharge_vector}
-#' \item \code{flow2}: Flow in the opposite direction of the \code{recharge_vector} (other side of the divide).
+#' \item \code{flow_main}: Flow in the direction of the \code{recharge_vector}.
+#' \item \code{flow_opp}: Flow in the opposite direction of the \code{recharge_vector}.
+#' Positive value means flow away from divide.
 #' }
 #' }
 #' }
+#' @export
 #' @return
 #' The function returns a list containing two elements:
 #' \describe{
@@ -212,34 +218,114 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' }
 #' @examples
 #' aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
-#' input_params <- list(flow=1,x0=3,y0=3)
-#' define_recharge(recharge_type="F",recharge_vector=c(0,0,3,3),aquifer=aquifer,flow=1,x0=3,y0=3)
-define_recharge <- function(recharge_type, recharge_vector, aquifer, ...) {
-  if (length(recharge_vector) != 4 | class(recharge_vector)!="numeric") {
-    stop("recharge_vector must be numeric vector of length 4.")
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+#' define_recharge(recharge_params,aquifer=aquifer)
+#'
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),aquifer=aquifer,flow=1,x0=3,y0=3)
+#' define_recharge(recharge_params)
+#'
+#' aquifer <- define_aquifer("unconfined",Ksat=0.001,h0=100)
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+#' define_recharge(recharge_params, aquifer=aquifer)
+#'
+#' aquifer <- define_aquifer("confined",Ksat=1,z0=10,h0=0)
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),aquifer=aquifer,flow_main=1,flow_opp=1,x0=1,y0=1)
+#' define_recharge(recharge_params)
+define_recharge <- function(recharge_params, recharge_type, recharge_vector, aquifer, ...) {
+  # If any inputs are missing, replace values with those from recharge_params
+  if (missing(recharge_type)) {
+    recharge_type <- recharge_params$recharge_type
   }
-  input_params <- list(...)
+  if (missing(recharge_vector)) {
+    recharge_vector <- recharge_params$recharge_vector
+  }
+  if (missing(aquifer)) {
+    aquifer <- recharge_params$aquifer
+  }
 
-  print(names(input_params))
-  # recharge_type <- input_params$recharge_type
+  if (length(recharge_vector) != 4 | class(recharge_vector)!="numeric") {
+    stop(paste0("recharge_vector must be numeric vector of length 4. Recharge vector is: ",cat(recharge_vector)))
+  }
+  # for debugging only:
+  if (interactive()) { # add unnamed recharge_params to input_params
+    input_params <- recharge_params[-which(names(recharge_params) %in% c("recharge_type","recharge_vector","aquifer"))]
+  }
+  if (missing(recharge_params)) {
+    input_params <- list(...)
+  } else {  # add unnamed recharge_params to input_params
+    input_params <- c(list(...),recharge_params[-which(names(recharge_params) %in% c("recharge_type","recharge_vector","aquifer"))])
+  }
+
   x1 <- recharge_vector[1]
   y1 <- recharge_vector[2]
   x2 <- recharge_vector[3]
   y2 <- recharge_vector[4]
 
-  if (recharge_type == "F" & aquifer$aquifer_type=="confined") {
+  # 1. Recharge type: Flow
+  if (recharge_type == "F") {
     if (!all(c("flow","x0","y0") %in% names(input_params))) {
       stop("For recharge type == \"F\", argument ... must contain flow, x0, y0")
     }
     dx <- x2 - x1
     dy <- y2 - y1
     theta <- atan(abs(dy/dx))
-    x_term <- - input_params$flow * cos(theta) * sign(dx) / (aquifer$Ksat * aquifer$z0)
-    y_term <- - input_params$flow * sign(theta) * sign(dy) / (aquifer$Ksat * aquifer$z0)
+
+    if (aquifer$aquifer_type=="confined") {
+      if (!all(c("Ksat","z0") %in% names(aquifer))) {
+        stop("For recharge type == \"F\", confined aquifer must contain Ksat, z0")
+      }
+      x_term <- - input_params$flow * cos(theta) * sign(dx) / (aquifer$Ksat * aquifer$z0)
+      y_term <- - input_params$flow * sin(theta) * sign(dy) / (aquifer$Ksat * aquifer$z0)
+      scenario <- "cF"
+    } else if (aquifer$aquifer_type=="unconfined") {
+      if (!all(c("Ksat") %in% names(aquifer))) {
+        stop("For recharge type == \"F\", unconfined aquifer must contain Ksat")
+      }
+      x_term <- - 2 * input_params$flow * cos(theta) * sign(dx) / aquifer$Ksat
+      y_term <- - 2 * input_params$flow * sin(theta) * sign(dy) / aquifer$Ksat
+      scenario <- "uF"
+    }
+    # Flow output recharge_params
     output_params <- c(list(recharge_type=recharge_type,x1=x1,y1=y1,x2=x2,y2=y2),
                        input_params,
                        list(scenario="cF",x_term=x_term, y_term=y_term))
-    # recharge_func <- get_recharge_potential_confined_flow
+
+  # 2. Recharge type: Divide
+  } else if (recharge_type == "D") {
+    if (!all(c("flow_main","flow_opp","x0","y0") %in% names(input_params))) {
+      stop("For recharge type == \"D\", argument ... must contain flow, flow_opp, x0, y0")
+    }
+
+    recharge_line <- get_slope_intercept(x1,y1,x2,y2)
+    recharge_divide <- get_perpendicular_line(recharge_line$m,x1,y1)
+    main_side <- c(sign(x2-x1),sign(y2-y1)) # side of divide where recharge_vector is defined
+
+    dx <- x2 - x1
+    dy <- y2 - y1
+    theta <- atan(abs(dy/dx))
+
+    if (aquifer$aquifer_type=="confined") {
+      if (!all(c("Ksat","z0") %in% names(aquifer))) {
+        stop("For recharge type == \"D\", confined aquifer must contain Ksat, z0")
+      }
+      x_term_main <- - input_params$flow_main * cos(theta) * sign(dx) / (aquifer$Ksat * aquifer$z0)
+      y_term_main <- - input_params$flow_main * sin(theta) * sign(dy) / (aquifer$Ksat * aquifer$z0)
+      x_term_opp <- input_params$flow_opp * cos(theta) * sign(dx) / (aquifer$Ksat * aquifer$z0)
+      y_term_opp <- input_params$flow_opp * sin(theta) * sign(dy) / (aquifer$Ksat * aquifer$z0)
+      h0_divide <- aquifer$h0 + x_term_main * (x1-input_params$x0) + y_term_main * (y1-input_params$y0)
+      scenario <- "cD"
+    } #else if (aquifer$aquifer_type=="unconfined") {
+    #   if (!all(c("Ksat") %in% names(aquifer))) {
+    #     stop("For recharge type == \"D\", unconfined aquifer must contain Ksat")
+    #   }
+    #   scenario <- "uD"
+    # }
+    # Divide output recharge_params
+    output_params <- c(list(recharge_type=recharge_type,x1=x1,y1=y1,x2=x2,y2=y2),
+                       input_params,
+                       list(scenario="cF", h0_divide=h0_divide, divide_m = recharge_divide$m, divide_b=recharge_divide$b,
+                            main_side_x = main_side[1], main_side_y = main_side[2],
+                            x_term_main=x_term_main, y_term_main=y_term_main,x_term_opp=x_term_opp, y_term_opp=y_term_opp))
   } else {
     stop(paste0("This combination of aquifer_type (",aquifer_type,") and recharge type (",recharge_type,")",
                 "is currently not supported."))
@@ -257,7 +343,7 @@ define_recharge <- function(recharge_type, recharge_vector, aquifer, ...) {
 #'
 #' @param aquifer_type "confined" or "unconfined"
 #' @param Ksat Saturated hydraulic conductivity
-#' @param ... Optional parameters including boundaries, recharge zone, and aquifer thickness
+#' @param ... Optional parameters including boundaries, recharge_params, and aquifer thickness
 #' @return This function returns an S3 "aquifer" object that behaves as a list and contains
 #'  the named items:
 #' \itemize{
@@ -271,6 +357,7 @@ define_recharge <- function(recharge_type, recharge_vector, aquifer, ...) {
 #' @export
 #' @examples
 #' (aquifer <- define_aquifer("confined",1e-4))
+#' (aquifer <- define_aquifer("confined",1e-4,h0=100,z0=10))
 #'
 #' bounds_df1 <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' aquifer_confined <- define_aquifer("confined",1e-3,bounds=bounds_df1,h0=100,z0=10)
@@ -279,16 +366,26 @@ define_recharge <- function(recharge_type, recharge_vector, aquifer, ...) {
 #' bounds_df2 <- data.frame(bound_type=c("CH","CH","NF","NF"),x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' aquifer_confined <- define_aquifer("unconfined",1e-3,bounds=bounds_df2,h0=100)
 #' aquifer_confined
+#'
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+#' aquifer <- define_aquifer("confined",1e-3,h0=50,z0=10,recharge=recharge_params)
 define_aquifer <- function(aquifer_type,Ksat,...) {
   params <- list(...)
-  aquifer_params <- params
+  aquifer_params <- params[!(names(params) %in% c("bounds","recharge"))]
 
+  aquifer_prep <- c(list(aquifer_type=aquifer_type,Ksat=Ksat),aquifer_params)
+
+  # define boundaries
   if (!is.null(params$bounds)) {
-    aquifer_params$bounds <- define_bounds(params$bounds)
+    aquifer_prep$bounds <- define_bounds(params$bounds)
   }
 
-  aquifer <- c(list(aquifer_type=aquifer_type,Ksat=Ksat),aquifer_params)
+  # define recharge
+  if (!is.null(params$recharge)) {
+    aquifer_prep$recharge <- define_recharge(params$recharge,aquifer = aquifer_prep)
+  }
 
+  aquifer <- aquifer_prep
   class(aquifer) <- "aquifer"
   return(aquifer)
 }
