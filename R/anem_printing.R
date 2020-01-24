@@ -28,7 +28,7 @@ print.aquifer <- function(aquifer) {
   }
 
   # Print recharge zones
-  cat("# recharge: \n")
+  cat("# recharge (undisturbed water table): \n")
   if (!is.null(aquifer$recharge)) {
     print(aquifer$recharge)
   } else {
