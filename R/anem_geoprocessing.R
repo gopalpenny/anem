@@ -762,3 +762,31 @@ bounds_sf_to_polygon <- function(bounds_sf) {
 
   return(bound_polygon)
 }
+
+#' Get perpendicular line
+#'
+#' Get perpendicular in from slope and point
+#' @param m Slope of line
+#' @param x Coordinate through which perpendicular line should pass
+#' @param y Coordinate through which perpendicular line should pass
+#' @return
+#' Returns a list containing $m and $b, the slope and intercept of a perpendicular
+#' line that passes through x, y.
+#' @examples
+#' get_perpendicular_line(Inf,2,3)
+#' get_perpendicular_line(0,2,3)
+#' get_perpendicular_line(1/2,2,2)
+#' get_perpendicular_line(-2,2,2)
+get_perpendicular_line <- function(m,x,y) {
+  if (abs(m==Inf)) {
+    m_perp <- 0
+    b_perp <- y
+  } else if (m==0) {
+    m_perp <- Inf
+    b_perp <- x
+  } else {
+    m_perp <- -1/m
+    b_perp <- y - m_perp*x
+  }
+  return(list(m=m_perp,b=b_perp))
+}
