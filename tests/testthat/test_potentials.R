@@ -88,6 +88,44 @@ test_that("get_flowdir returns no flow along diagonal line between two pumping w
                data.frame(diff=c(0,0.03291868,0,-0.03291868,0),sign=c(-1,1,0,-1,1),opp=c(F,T,T,T,F)))
 })
 
+### TEST RECHARGE
+no_wells <- define_wells(Q=0,x=10,y=10,R=10,diam=1)
+recharge_params <- list(recharge_type="F",recharge_vector=c(10,10,11,11),flow=sqrt(2),x0=11,y0=11)
+con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+rech_loc <- expand.grid(x=9:11,y=9:11)
+head <- c(4,3,2,3,2,1,2,1,0) #get_hydraulic_head(rech_loc,no_wells,con_aquifer) %>% paste(collapse=",")
+df <- data.frame(dx=rep(1,9),
+                 dy=rep(1,9))
+test_that("get_hydraulic_head works for \"F\" recharge",{
+  expect_equal(round(get_hydraulic_head(rech_loc,no_wells,con_aquifer),3),head)
+})
+test_that("get_flowdir works for \"F\" recharge",{
+  expect_equal(round(get_flowdir(rech_loc,no_wells,con_aquifer),3),df)
+})
+
+recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=sqrt(2),flow_opp=sqrt(2),x0=11,y0=11)
+con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+head <- c(0,1,2,1,2,1,2,1,0) #get_hydraulic_head(rech_loc,no_wells,con_aquifer) %>% round(3) %>% paste(collapse=",")
+df <- data.frame(dx=c(-1,-1,0,-1,0,1,0,1,1),
+                 dy=c(-1,-1,0,-1,0,1,0,1,1))
+test_that("get_hydraulic_head works for \"D\" recharge, confined",{
+  expect_equal(round(get_hydraulic_head(rech_loc,no_wells,con_aquifer),3),head)
+})
+test_that("get_flowdir works for \"D\" recharge, confined",{
+  expect_equal(round(get_flowdir(rech_loc,no_wells,con_aquifer),3),df)
+})
+
+un_aquifer <- define_aquifer("unconfined",1,h0=10,z0=1,recharge=recharge_params)
+head <- c(10,10.1,10.198,10.1,10.198,10.1,10.198,10.1,10) # round(get_hydraulic_head(rech_loc,no_wells,con_aquifer),3) %>% paste(collapse=",")
+test_that("get_hydraulic_head works for \"D\" recharge, confined",{
+  expect_equal(round(get_hydraulic_head(rech_loc,no_wells,un_aquifer),3),head)
+})
+df <- data.frame(dx=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1),
+                 dy=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1))
+test_that("get_flowdir works for \"D\" recharge, unconfined",{
+  expect_equal(round(get_flowdir(rech_loc,no_wells,un_aquifer),3),df)
+})
+### END TEST RECHARGE
 
 # Create a grid of locations and define aquifer
 loc <- tidyr::crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))

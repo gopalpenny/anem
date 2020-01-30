@@ -184,7 +184,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' loc <- expand.grid(x=-1:1,y=-1:1)
 #' loc %>% bind_cols(get_flowdir(loc,wells,aquifer))
 #'
-#' recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=1,flow_opp=1,x0=0,y0=0)
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=sqrt(2),flow_opp=sqrt(2),x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 #' loc <- expand.grid(x=9:11,y=9:11)
 #' get_flowdir(loc,wells,aquifer)
