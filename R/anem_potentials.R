@@ -252,7 +252,16 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
 #' grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
 #' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
 #' get_potential_differential(grid_pts,wells,aquifer_unconfined)
+#'
+#' get_potential_differential(c(1,1))
+#' get_potential_differential(data.frame(x=c(1,1),y=c(2,2)))
 get_potential_differential <- function(loc, wells, aquifer) {
+  if (null_or_missing(wells)) {
+    if (max(grepl("data.frame",class(loc)))) {
+      return(rep(0,nrow(loc)))
+    } else {
+      return(0)
+    }  }
   x_well <- wells$x
   y_well <- wells$y
   R <- wells$R

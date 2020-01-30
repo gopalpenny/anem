@@ -24,6 +24,11 @@ test_that("get_potential works in unconfined case",{
   expect_equal(round(get_potential_differential(loc=c(50,50),wells,aquifer_unconfined),4), -4.6481)
 })
 
+test_that("get_potential_differentiall returns 0 when wells is missing from input",{
+  expect_equal(get_potential_differential(c(1,1)),0)
+  expect_equal(get_potential_differential(data.frame(x=1:10,y=11:20)),rep(0,10))
+})
+
 ### USING wells2. NOTE DISTINCTION WITH wells
 wells2 <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 aquifer_confined2 <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
