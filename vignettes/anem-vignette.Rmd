@@ -37,7 +37,6 @@ Load packages for the vignette
 library(tidyverse)
 library(sf)
 # devtools::install_github("https://github.com/gopalpenny/anem")
-# devtools::load_all("~/Projects/R_packages/anem")
 library(anem)
 ```
 
