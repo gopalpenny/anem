@@ -136,69 +136,81 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
 #' mirror_across_bounds(well1,bounds)
 #' mirror_across_bounds(wells,bounds)
+#'
+#' bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
+#' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
+#' mirror_across_bounds(well1,bounds)
 mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE) {
-  # make sure boundaries are parallel
-  if (length(unique(round(bounds$m,10)))>1) {
-    stop("mirror_across_bounds can only mirror across parallel boundaries.")
-  }
-
-
-  # estimate number of levels
-  if (!is.null(num_levels)) {
-    num_levels <- num_levels
-  } else if (length(bounds$m)==1) {
-    # if there is 1 boundary, we only need 1 image
-    num_levels <- 1
-  } else if (length(bounds$m)==2) {
-    # if there are 2 boundaries, calculate the numer of image levels
-    # check: make sure wells contain a radius of influence
-    wCheck <- check_wells(wells,c("R","x","y"))
-    max_radius <- max(wells$R)
-    # get distance between boundaries
-    if (abs(bounds$m[1]==Inf)) {
-      dist <- abs(bounds$b[2] - bounds$b[1])
-    } else if (bounds$m[1]==0) {
-      dist <- abs(bounds$b[2] - bounds$b[1])
-    } else { # find distance from x1=0, b1 to point on other line given by
-      m <- bounds$m[1]
-      b1 <- bounds$b[1]
-      b2 <- bounds$b[2]
-      x_i <- m * (b2-b1) / (m^2 + 1)
-      y_i <- -1/m * x_i + b2
-      dist <- sqrt((x_i-0)^2 + (y_i-b2)^2)
-    }
-    num_levels <- floor(max_radius / dist + 1)
-  }
-
-  if (!max(grepl("^wID$",names(wells)))) { # generate wID's if they are not present
-    wells <- wells %>% dplyr::mutate(wID=dplyr::row_number())
-  }
-  if (!tibble::has_name(wells,"R")) {
-    wells <- wells %>% dplyr::mutate(R= NA)
-  }
 
   if (first_mirror) { # initialize wells
     wells <- wells %>% dplyr::mutate(orig_wID=wID,transform="none",source_bound="none",path="x",max_mirror_dist=0)
   }
-  well_cols <- names(wells)
-
   wells_full <- list(wells)
-  for (i in 1:num_levels) { # for each level, generate mirrored points in next level
-    new_wells <- wells_full[[i]] %>% dplyr::filter(FALSE)
-    for (j in 1:dim(wells_full[[i]])[1]) { # for each well in level i
-      well <- wells_full[[i]][j,] # get well in level i
 
-      for (k in 1:dim(bounds)[1]) { # for each boundary
-        boundary <- bounds[k,] # get boundary
-        if (well$source_bound!=boundary$bID) { # only take mirror for boundaries that are not the source boundary
-          new_wID <- max(c(wells_full[[i]]$wID,new_wells$wID)) + 1 # get new well id
-          new_point <- get_mirror_point(well,boundary,new_wID) # get new well
-          new_wells <- new_wells %>% rbind(new_point) # add well to new_wells
+  bounds <- bounds %>% dplyr::filter(bound_type!="PB")
+
+  # only do mirrors if 1 or more bounds exist (it's possible some are labelled "PB" for pervious boundary)
+  if (nrow(bounds) > 0) {
+
+    # make sure boundaries are parallel
+    if (length(unique(round(bounds$m,10)))>1) {
+      stop("mirror_across_bounds can only mirror across parallel boundaries.")
+    }
+
+
+    # estimate number of levels
+    if (!is.null(num_levels)) {
+      num_levels <- num_levels
+    } else if (length(bounds$m)==1) {
+      # if there is 1 boundary, we only need 1 image
+      num_levels <- 1
+    } else if (length(bounds$m)==2) {
+      # if there are 2 boundaries, calculate the numer of image levels
+      # check: make sure wells contain a radius of influence
+      wCheck <- check_wells(wells,c("R","x","y"))
+      max_radius <- max(wells$R)
+      # get distance between boundaries
+      if (abs(bounds$m[1]==Inf)) {
+        dist <- abs(bounds$b[2] - bounds$b[1])
+      } else if (bounds$m[1]==0) {
+        dist <- abs(bounds$b[2] - bounds$b[1])
+      } else { # find distance from x1=0, b1 to point on other line given by
+        m <- bounds$m[1]
+        b1 <- bounds$b[1]
+        b2 <- bounds$b[2]
+        x_i <- m * (b2-b1) / (m^2 + 1)
+        y_i <- -1/m * x_i + b2
+        dist <- sqrt((x_i-0)^2 + (y_i-b2)^2)
+      }
+      num_levels <- floor(max_radius / dist + 1)
+    }
+
+    if (!max(grepl("^wID$",names(wells)))) { # generate wID's if they are not present
+      wells <- wells %>% dplyr::mutate(wID=dplyr::row_number())
+    }
+    if (!tibble::has_name(wells,"R")) {
+      wells <- wells %>% dplyr::mutate(R= NA)
+    }
+
+    well_cols <- names(wells)
+
+    for (i in 1:num_levels) { # for each level, generate mirrored points in next level
+      new_wells <- wells_full[[i]] %>% dplyr::filter(FALSE)
+      for (j in 1:dim(wells_full[[i]])[1]) { # for each well in level i
+        well <- wells_full[[i]][j,] # get well in level i
+
+        for (k in 1:dim(bounds)[1]) { # for each boundary
+          boundary <- bounds[k,] # get boundary
+          if (well$source_bound!=boundary$bID) { # only take mirror for boundaries that are not the source boundary
+            new_wID <- max(c(wells_full[[i]]$wID,new_wells$wID)) + 1 # get new well id
+            new_point <- get_mirror_point(well,boundary,new_wID) # get new well
+            new_wells <- new_wells %>% rbind(new_point) # add well to new_wells
+          }
         }
       }
+      new_wells[,well_cols[!(well_cols %in% names(new_wells))]] <- NA
+      wells_full[[i+1]] <- new_wells
     }
-    new_wells[,well_cols[!(well_cols %in% names(new_wells))]] <- NA
-    wells_full[[i+1]] <- new_wells
   }
 
   wells <- do.call(rbind,wells_full) %>%
@@ -241,20 +253,24 @@ mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE)
 #' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
 #' image_wells <- generate_image_wells(wells,bounds)
 #'
+#' bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+#' image_wells <- generate_image_wells(well1,bounds,include_image_columns=TRUE)
+#'
 #' ggplot() +
 #'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
 #'   scale_shape_manual(values=c(1,16)) +
 #'   coord_equal()
 #'
-#'   tstart <- Sys.time()
-#'   myfunc <- function(N,group_imaging) {
-#'     for (i in 1:N) {
-#'       generate_image_wells(wells,bounds,group_imaging=group_imaging)
-#'     }
+#' tstart <- Sys.time()
+#' myfunc <- function(N,group_imaging) {
+#'   for (i in 1:N) {
+#'     generate_image_wells(wells,bounds,group_imaging=group_imaging)
 #'   }
-#'   system.time(myfunc(5,TRUE))
-#'   system.time(myfunc(5,FALSE))
+#' }
+#' system.time(myfunc(5,TRUE))
+#' system.time(myfunc(5,FALSE))
 #'
 #' wells <- define_wells(x=rnorm(20),y=rnorm(20),Q=20,R=100,diam=1)
 #' system.time(generate_image_wells(wells,bounds,group_imaging=TRUE))
@@ -279,13 +295,16 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
     wells <- wells %>% dplyr::mutate(wID=dplyr::row_number())
   }
 
+  # GROUP IMAGING MIRRORS ALL WELLS AT THE SAME TIME. MIRROR ACROSS BOUNDS DOES MIRRORING RECURSIVELY.
   group_imaging<-FALSE # AVOID COMPLICATIONS OF USING GROUP_IMAGING. POTENTIALLY IMPLEMENT THIS LATER.
   if (group_imaging) {
     image_wells1 <- mirror_well_parallel_bounds(wells,bounds %>% dplyr::filter(bGroup==1))
     image_wells2 <- mirror_well_parallel_bounds(image_wells1,bounds %>% dplyr::filter(bGroup==2),first_mirror=FALSE)
   } else {
-    image_wells1 <- mirror_across_bounds(wells,bounds %>% dplyr::filter(bGroup==1))
-    image_wells2 <- mirror_across_bounds(image_wells1,bounds %>% dplyr::filter(bGroup==2),first_mirror=FALSE)
+    bounds_group_1 <- bounds %>% dplyr::filter(bGroup==1)
+    bounds_group_2 <- bounds %>% dplyr::filter(bGroup==2)
+    image_wells1 <- mirror_across_bounds(wells,bounds_group_1)
+    image_wells2 <- mirror_across_bounds(image_wells1,bounds_group_2,first_mirror=FALSE)
   }
 
 

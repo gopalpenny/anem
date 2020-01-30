@@ -90,6 +90,33 @@ test_that("generate_image_wells returns the proper type",{
                c("sf","tbl_df","tbl","data.frame"))
 })
 
+bounds <- data.frame(bound_type=c("PB","PB","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+bounds_right_angle <- tibble::tibble(wID=c(1, 2, 3, 4, 5, 6, 7, 8),
+                 Q=c(20, 20, 20, 20, 20, 20, 20, 20),
+                 R=c(100, 100, 100, 100, 100, 100, 100, 100),
+                 diam=c(1, 1, 1, 1, 1, 1, 1, 1),
+                 x=c(50, 25, 50, 25, 150, 175, 150, 175),
+                 y=c(50, 75, 150, 125, 50, 75, 150, 125),
+                 well_image=c("Actual", "Actual", "Image (+Q)", "Image (+Q)", "Image (+Q)", "Image (+Q)", "Image (+Q)", "Image (+Q)"),
+                 orig_wID=as.integer(c(1, 2, 1, 2, 1, 2, 1, 2)))
+test_that("generate_image_wells works for PB type boundary on 2 sides",{
+  expect_equal(generate_image_wells(wells,bounds) %>% dplyr::select(-well_type),bounds_right_angle)
+})
+
+bounds <- data.frame(bound_type=c("PB","PB","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+test_that("generate_image_wells returns correct number of images for PB type boundary on 3 sides",{
+  expect_equal(nrow(generate_image_wells(wells,bounds)),4)
+})
+
+bounds <- data.frame(bound_type=c("PB","PB","PB","PB"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+test_that("generate_image_wells returns original wells for PB type boundary on 4 sides",{
+  expect_equal(generate_image_wells(wells,bounds) %>% dplyr::select(-orig_wID),wells)
+})
+
+
 
 
 well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
