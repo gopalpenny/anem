@@ -50,7 +50,7 @@ Aquifers in this package are characterized by:
 * Aquifer boundaries, characterized by:
   + Boundary ID, or bID
   + Coordinates in a cartesian plane, given as slope, m, and intercept, b, and coordinates (x1, y1, x2, y2)
-  + Boundary type, NF or CH
+  + Boundary type, NF, CH, or PB
 * Additional user-defined parameters
 
 Use the `define_aquifer()` function to create a new aquifer, which has the class `aquifer`. This class is essentially a list with names parameters and a separate print method.
@@ -117,11 +117,12 @@ drawdown_relationships %>%
 The hydrodynamics of the aquifer can be mapped by obtaining gridded heand flow using the `get_gridded_hydrodynamics()` function. The function takes as input the wells, aquifer, and grid dimensions for head and flow. It returns a `list` object with data.frames for head and flow, which can then be plotted.
 
 ```{r}
-gridded <- get_gridded_hydrodynamics(wells,aquifer_unconfined,c(20,20),c(8,8))
+gridded_1 <- get_gridded_hydrodynamics(wells,aquifer_unconfined,c(20,20),c(8,8))
 
 ggplot() +
-  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
-  geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
+  geom_raster(data=gridded_1$head,aes(x,y,fill=head_m)) +
+  geom_contour(data=gridded_1$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
+  geom_segment(data=gridded_1$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
@@ -145,5 +146,36 @@ Finally, the function `plot_bounds_behavior` also includes the raw data of head 
 ```{r echo=FALSE}
 bounds_behavior$table %>% 
   knitr::kable("html") #%>% kableExtra::kable_styling()
+```
+
+
+### Defining background flow
+
+Background flow is parameterized by defining "recharge" in the aquifer. Recharge can be defined as a constant flow (F) or a recharge divide (D). In both cases, flow is defined as m^3^ / m-s, in the direction of the recharge vector. Recharge is therefore defined by specifying:
+
+* Type of recharge: constant flow (F) or recharge divide (D)
+* Recharge vector, pointing in the direction of flow
+* Flow magnitude, in units of m^3^ / m-s
+* Coordinates where the undisturbed water table (no wells) has a hydraulic head equal to aquifer$h0.
+
+```{r}
+# Define recharge for type "D"
+recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),flow_main=1e-3,flow_opp=2e-3,x0=0,y0=0)
+
+# Define bounds as "PB" -- pervious bounds, which have no effect (other than to define output grid)
+bounds_recharge <- define_bounds(data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(0,0,1000,1000)))
+aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params,bounds=bounds_recharge)
+gridded_2 <- get_gridded_hydrodynamics(wells_actual,aquifer_recharge,c(20,20),c(8,8))
+```
+The results can then be plotted, just as above.
+```{r echo=FALSE}
+ggplot() +
+  geom_raster(data=gridded_2$head,aes(x,y,fill=head_m)) +
+  geom_contour(data=gridded_2$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
+  geom_segment(data=gridded_2$flow,aes(x,y,xend=x2,yend=y2),
+               arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
+  geom_segment(data=aquifer_recharge$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_point(data=wells_actual,aes(x,y),shape=21) +
+  coord_equal()
 ```
 
