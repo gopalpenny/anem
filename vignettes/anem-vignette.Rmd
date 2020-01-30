@@ -149,7 +149,7 @@ bounds_behavior$table %>%
 ```
 
 
-### Defining background flow
+### Defining recharege / background flow
 
 Background flow is parameterized by defining "recharge" in the aquifer. Recharge can be defined as a constant flow (F) or a recharge divide (D). In both cases, flow is defined as m^3^ / m-s, in the direction of the recharge vector. Recharge is therefore defined by specifying:
 
@@ -158,16 +158,21 @@ Background flow is parameterized by defining "recharge" in the aquifer. Recharge
 * Flow magnitude, in units of m^3^ / m-s
 * Coordinates where the undisturbed water table (no wells) has a hydraulic head equal to aquifer$h0.
 
+See `?define_recharge` for more details.
+
 ```{r}
 # Define recharge for type "D"
-recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),flow_main=1e-3,flow_opp=2e-3,x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),
+                        flow_main=1e-3,flow_opp=2e-3,x0=0,y0=0)
 
 # Define bounds as "PB" -- pervious bounds, which have no effect (other than to define output grid)
 bounds_recharge <- define_bounds(data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(0,0,1000,1000)))
 aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params,bounds=bounds_recharge)
 gridded_2 <- get_gridded_hydrodynamics(wells_actual,aquifer_recharge,c(20,20),c(8,8))
 ```
-The results can then be plotted, just as above.
+
+The results can then be plotted, just as above:
+
 ```{r echo=FALSE}
 ggplot() +
   geom_raster(data=gridded_2$head,aes(x,y,fill=head_m)) +
