@@ -56,9 +56,9 @@ get_row_as_vector <- function(df,row=1) {
   return(df %>% dplyr::slice(row) %>% unlist(.,use.names = FALSE))
 }
 
-#' Get cumulative effect of wells at location
+#' Get hydraulic head
 #'
-#' Get the hydraulic head at a location, accounting for the aquifer type
+#' Get hydraulic head at location, accounting for the cumulative effect of wells at location, the aquifer type
 #' (confined or unconfined), resting head, and cumulative effect of all wells. This function
 #' is a wrapper around \code{get_potential_differential()} to get the actual hydraulic head instead of the differential potential.
 #'
@@ -88,7 +88,7 @@ get_row_as_vector <- function(df,row=1) {
 #' get_hydraulic_head(wells,loc=c(5,5),aquifer=aquifer)
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=50,z0=30)
 #' get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
 #' get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
 #' get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)
@@ -105,11 +105,17 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 
   dP <- get_potential_differential(loc,wells,aquifer)
 
+  if (is.null(aquifer$recharge)) {
+    undisturbed_potential <- ifelse(aquifer$aquifer_type=="confined",aquifer$h0,aquifer$h0^2)
+  } else {
+    undisturbed_potential <- get_recharge_undisturbed_potential(loc,aquifer)
+  }
+
   # calculate head using h0 and change in potential
   if (aquifer$aquifer_type=="confined") {
-    h <- aquifer$h0 + dP
+    h <- undisturbed_potential + dP
   } else if (aquifer$aquifer_type=="unconfined") {
-    h_squared <- pmax(aquifer$h0^2 + dP,0)
+    h_squared <- pmax(undisturbed_potential + dP,0)
     h <- sqrt(h_squared)
   } else {
     stop("aquifer_type specified as:",aquifer$aquifer_type,". It should be specified as \"confined\" or \"unconfined\".\n")
@@ -166,6 +172,22 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' library(ggplot2)
 #' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
 #'   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
+#'
+#'
+#' wells <- define_wells(Q=0,x=10,y=10,R=10,diam=1)
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1,x0=0,y0=0)
+#' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' get_flowdir(c(-1,-1),wells,aquifer)
+#'
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
+#' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' loc <- expand.grid(x=-1:1,y=-1:1)
+#' loc %>% bind_cols(get_flowdir(loc,wells,aquifer))
+#'
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=1,flow_opp=1,x0=0,y0=0)
+#' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' loc <- expand.grid(x=9:11,y=9:11)
+#' get_flowdir(loc,wells,aquifer)
 get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
   cAquifer <- check_aquifer(aquifer)
 
