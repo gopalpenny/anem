@@ -33,9 +33,10 @@ these parameters are:
 }
 \examples{
 ## Flow - confined aquifer
-recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,2),flow=1,x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,sqrt(3)),flow_main=1,flow_opp=2,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
-get_recharge_divide_potential(c(1/sqrt(2),1/sqrt(2)), aquifer)
+get_recharge_divide_potential(c(1/2,sqrt(3)/2), aquifer)
+get_recharge_divide_potential(c(-1/2,-sqrt(3)/2), aquifer)
 
 loc <- expand.grid(x=-2:2,y=-2:2)
 loc$h <- get_recharge_divide_potential(loc, aquifer)

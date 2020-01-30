@@ -49,20 +49,24 @@ bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,
 aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
 image_wells <- generate_image_wells(wells,bounds)
 
+bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
+image_wells <- generate_image_wells(well1,bounds,include_image_columns=TRUE)
+
 ggplot() +
   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()
 
-  tstart <- Sys.time()
-  myfunc <- function(N,group_imaging) {
-    for (i in 1:N) {
-      generate_image_wells(wells,bounds,group_imaging=group_imaging)
-    }
+tstart <- Sys.time()
+myfunc <- function(N,group_imaging) {
+  for (i in 1:N) {
+    generate_image_wells(wells,bounds,group_imaging=group_imaging)
   }
-  system.time(myfunc(5,TRUE))
-  system.time(myfunc(5,FALSE))
+}
+system.time(myfunc(5,TRUE))
+system.time(myfunc(5,FALSE))
 
 wells <- define_wells(x=rnorm(20),y=rnorm(20),Q=20,R=100,diam=1)
 system.time(generate_image_wells(wells,bounds,group_imaging=TRUE))

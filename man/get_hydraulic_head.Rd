@@ -2,7 +2,7 @@
 % Please edit documentation in R/anem_potentials.R
 \name{get_hydraulic_head}
 \alias{get_hydraulic_head}
-\title{Get cumulative effect of wells at location}
+\title{Get hydraulic head}
 \usage{
 get_hydraulic_head(loc, wells, aquifer)
 }
@@ -25,7 +25,7 @@ The output is the hydraulic head \code{loc}, accounting for the
   \item{aquifer_type="unconfined"}{\eqn{h=\sqrt{h_0^2+dP}}} }
 }
 \description{
-Get the hydraulic head at a location, accounting for the aquifer type
+Get hydraulic head at location, accounting for the cumulative effect of wells at location, the aquifer type
 (confined or unconfined), resting head, and cumulative effect of all wells. This function
 is a wrapper around \code{get_potential_differential()} to get the actual hydraulic head instead of the differential potential.
 }
@@ -42,7 +42,7 @@ wells <- rbind(well1,well2)
 get_hydraulic_head(wells,loc=c(5,5),aquifer=aquifer)
 
 grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
+aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=50,z0=30)
 get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
 get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
 get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)

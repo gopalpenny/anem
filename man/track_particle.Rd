@@ -37,7 +37,9 @@ aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bo
 wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
   define_wells() \%>\% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
-particle_path <- track_particle(c(600,500), wells, aquifer)
+
+system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
+particle_path[nrow(particle_path),]
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
@@ -45,16 +47,15 @@ ggplot() +
   geom_path(data=particle_path,aes(x,y),color="red") +
   coord_equal()
 
-particle_path[nrow(particle_path),]
 
 system.time(particle_path <- track_particle(c(725,825), wells, aquifer))
+particle_path[nrow(particle_path),]
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
   geom_path(data=particle_path,aes(x,y),color="red") +
   coord_equal()
-particle_path[nrow(particle_path),]
 
 particle_path <- track_particle(c(725,825), wells, aquifer, t_max=100)
 particle_path[nrow(particle_path),]
