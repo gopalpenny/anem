@@ -1,7 +1,7 @@
 ---
 title: "anem-vignette"
 author: "Gopal Penny"
-date: "` r Sys.Date()`"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{anema-vignette}

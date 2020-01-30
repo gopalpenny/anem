@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r include=FALSE}
+library(magrittr)
+library(ggplot2)
+```
+
+
+```{r eval=FALSE}
+devtools::install_github("https://github.com/gopalpenny/anem")
+library(anem)
+aquifer <- aquifer_example
+wells <- define_wells(wells_example) %>% generate_image_wells(aquifer)
+gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100))
+```
+
+```{r include=FALSE}
+library(anem)
+aquifer <- aquifer_example
+wells <- define_wells(wells_example) %>% generate_image_wells(aquifer)
+gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100))
+```
+
+```{r echo=FALSE,warning=FALSE,width=400}
+ggplot() +  
+  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+  # geom_path(data=contours,aes(x,y,color=level,group=as.factor(line))) +
+  geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
+               arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
+  # geom_contour(data=gridded$head,aes(x,y,z=head_m,color=head_m)) +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2),color="black") +
+  geom_point(data=wells_example,aes(x,y,color=country),shape=16) +
+  coord_equal()
+```
+
+
+
+
+
+
