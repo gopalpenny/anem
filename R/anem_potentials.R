@@ -92,6 +92,7 @@ get_row_as_vector <- function(df,row=1) {
 #' get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
 #' get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
 #' get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)
+#' get_hydraulic_head(NULL,loc=grid_pts,aquifer=aquifer_unconfined)
 #'
 #' # Ensure potentials are even when pumping is symmetric (and opposite sign)
 #' well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)
@@ -174,19 +175,22 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #'   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 #'
 #'
-#' wells <- define_wells(Q=0,x=10,y=10,R=10,diam=1)
-#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1,x0=0,y0=0)
-#' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' wells <- define_wells(Q=0.1,x=-2,y=-2,R=100,diam=0.5)
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1e-3,x0=0,y0=0)
+#' aquifer <- define_aquifer("confined",1e-3,h0=0,z0=1,recharge=recharge_params)
 #' get_flowdir(c(-1,-1),wells,aquifer)
+#' get_flowdir(c(-1,-1),NULL,aquifer)
 #'
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 #' loc <- expand.grid(x=-1:1,y=-1:1)
 #' loc %>% bind_cols(get_flowdir(loc,wells,aquifer))
+#' loc %>% bind_cols(get_flowdir(loc,NULL,aquifer))
 #'
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=sqrt(2),flow_opp=sqrt(2),x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 #' loc <- expand.grid(x=9:11,y=9:11)
+#' get_flowdir(loc,wells,aquifer)
 #' get_flowdir(loc,wells,aquifer)
 get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
   cAquifer <- check_aquifer(aquifer)
@@ -200,7 +204,12 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-4) {
     loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
     n <- length(loc_list)
 
-    if (n * dim(wells)[1] < 20 | !show_progress) { # no progress bar
+    if (!null_or_missing(wells)) {
+      n_wells <- dim(wells)[1]
+    } else {
+      n_wells <- 1
+    }
+    if (n * n_wells < 20 | !show_progress) { # no progress bar
       for (i in 1:n) {
         fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method.args=list(eps=eps),wells=wells,aquifer=aquifer)
         fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
