@@ -1,0 +1,61 @@
+library(anem)
+library(tidyverse)
+
+bounds_df <- define_bounds(tibble(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,5000,5000,0)))
+recharge_params <- list(recharge_type="F", recharge_vector=c(0,0,1,0),
+                        flow=0.001, x0=5000, y0=5000)
+aquifer <- define_aquifer("confined", 1e-3, h0=0, z0=10,
+                          bounds=bounds_df,recharge=recharge_params)
+# wells_orig <- define_wells(x=c(1000,1500,3500,4000),y=c(1000,3500,1500,4000),
+#                       R=rep(3300,4),diam=rep(1,4),Q=c(-0.01,0.01,-0.01,-0.01))
+# wells <- wells_orig[c(2,3),] %>%
+#   anem::generate_image_wells(aquifer)
+wells <-  define_wells(x=2500,y=2500,
+                      R=6000,diam=1,Q=-0.01) %>%
+    anem::generate_image_wells(aquifer)
+wells_roi <- anem::gen_circles(wells)
+
+# anem::get_gridded_hydrodynamics()
+loc <- crossing(x=seq(0,10000,length.out=201),y=seq(-5000,5000,length.out=201))
+
+streamfunction <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells,aquifer))
+
+thm <- theme(panel.background = element_rect(fill=NA,color=NA),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        legend.position="none",axis.text=element_blank(),
+        axis.ticks=element_blank(),axis.title=element_blank())
+
+p_base <- ggplot() +
+  geom_segment(data=aquifer$bounds %>% mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),labels=c("River","No flow","Open (no boundary)"))),
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=1) +
+  scale_shape_manual("Well type",values = c(16,4,3)) +
+  scale_color_manual("Boundary",values = c("blue","#555555","#CCCCCC"))
+
+f1_a <- p_base +
+  geom_point(data=wells %>% filter(well_image=="Actual"),aes(x,y,shape=well_image),size=2,stroke=1) +
+  coord_equal() +
+  thm
+
+f1_b <- p_base +
+  geom_polygon(data=wells_roi,aes(x,y,group=id),alpha=0.2,color=NA) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),aes(x,y,shape=well_image),size=2,stroke=1) +
+  geom_point(data=wells %>% filter(well_image!="Actual"),aes(x,y,shape=well_image),size=2,stroke=1) +
+  annotate("rect",xmin=2000,xmax=8000,ymin=-3000,ymax=3000,color="#992222",linetype="dashed",fill=NA,size=1) +
+  coord_equal() +
+  thm
+
+flowlines <- anem::get_contourlines(streamfunction %>% rename(z=streamfunction),nlevels=40)
+f1_c <- p_base +
+  geom_path(data=flowlines,aes(x,y,group=line),color="#66CCEE",alpha=1) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),aes(x,y,shape=well_image),size=2,stroke=1) +
+  geom_point(data=wells %>% filter(well_image!="Actual"),aes(x,y,shape=well_image),size=2,stroke=1) +
+  annotate("rect",xmin=2000,xmax=8000,ymin=-3000,ymax=3000,color="#AA3333",linetype="dashed",fill=NA,size=1) +
+  coord_equal(xlim=c(2000,8000),ylim=c(-3000,3000)) +
+  thm %+replace% theme(legend.position = "right")
+
+
+gridExtra::grid.arrange(f1_a,f1_b,f1_c,nrow=1,widths=c(0.25,0.25,0.5))
+
