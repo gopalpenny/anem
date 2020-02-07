@@ -16,24 +16,67 @@ knitr::opts_chunk$set(
   fig.width=4, 
   fig.height=2.5
 )
-# devtools::install()
+library(tidyverse)
+library(sf)
+# devtools::install_github("https://github.com/gopalpenny/anem")
+library(anem)
 ```
 
 This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.
 
 This package models *simple* aquifer and well configurations. The boundaries of the aquifer can be specified as *no flow* or *constant head* boundaries, and the corners of the aquifer must be right angles. For fully bounded aquifers, this means that the aquifer must be a rectangle. The constant head boundaries take the head of the undisturbed aquifer, h0.
 
-Units are designed for length dimensions given in meters (or m^2^), and time in seconds
+Units are designed for length dimensions given in meters (or m^2^), and time in seconds.
 
 As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. 
 
-The first section, however, describes how to obtain drawdown relationships between groups of wells.
+### Understanding the method of images
+
+The package relies on the method of images, where wells are mirrored across aquifer boundaries to reproduce characterics of the boundary, such as no flow or constant head. The following examples demonstrate (a) how a no-flow boundary is created by mirroring a well across the boundary, and (b) how a constant head boundary is recreated by mirroring the well and inverting the pumping.
+
+```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
+# Create a grid of locations
+loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
+
+# Constant head boundary
+wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0)
+constant_head_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_constant_head,aquifer))
+
+# No flow boundary
+wells_no_flow <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(-1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
+no_flow_boundary <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_no_flow,aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
+
+thm <- theme(axis.text=element_blank(),axis.title=element_blank(),axis.ticks=element_blank(),
+             panel.background = element_rect(fill=NA,color="black"),
+             panel.border = element_rect(fill=NA,color="black"),
+             plot.title = element_text(size=10))
+
+p_CH <- ggplot() +
+  geom_contour(data=constant_head_boundary,aes(x,y,z=head),bins=50,linetype="dashed",color="black") +
+  geom_contour(data=constant_head_boundary,aes(x,y,z=streamfunction),bins=25,color="darkblue") +
+  geom_point(data=wells_constant_head,aes(x,y,fill=well_type),size=3,shape=21) +
+  theme(legend.position=c(0.8,0.15),legend.title=element_blank()) +
+  coord_equal() + thm + ggtitle("Constant head boundary at x = 0")
+p_NF <- ggplot() +
+  geom_contour(data=no_flow_boundary,aes(x,y,z=head),bins=25,linetype="dashed",color="black") +
+  geom_contour(data=no_flow_boundary,aes(x,y,z=streamfunction),bins=50,color="darkblue") +
+  geom_point(data=wells_no_flow,aes(x,y,fill=well_type),size=3,shape=21) +
+  theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
+  coord_equal() + thm + ggtitle("No flow boundary at x = 0")
+gridExtra::grid.arrange(p_NF,p_CH,nrow=1)
+```
+
 
 ## A simple example of drawdown relationships
 
 Load packages for the vignette
 
-```{r setup, message=FALSE,warning=FALSE}
+```{r setup, message=FALSE,warning=FALSE,eval=FALSE}
 library(tidyverse)
 library(sf)
 # devtools::install_github("https://github.com/gopalpenny/anem")
