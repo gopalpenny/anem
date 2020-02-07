@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<!-- saved from url=(0120)file:///private/var/folders/js/4lzq4_rd12ndjrhf15w_jfrw0000gn/T/Rtmp1Bch25/preview-1a966d1c44e7.dir/anem-validation.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+
+<meta name="generator" content="pandoc">
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<title>anem-validation</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+<script type="text/javascript" src="./anem-validation_files/MathJax.js"></script><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Menu_Button .MathJax_Hover_Arrow {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; -khtml-border-radius: 4px; font-family: 'Courier New',Courier; font-size: 9px; color: #F0F0F0}
+.MathJax_Menu_Button .MathJax_Hover_Arrow span {display: block; background-color: #AAA; border: 1px solid; border-radius: 3px; line-height: 0; padding: 4px}
+.MathJax_Hover_Arrow:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_Hover_Arrow:hover span {background-color: #CCC!important}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_About.MathJax_MousePost {outline: none}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 5px 0px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 5px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -khtml-border-radius: 5px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 1px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; padding-top: .25em; color: #666666; font-size: .75em}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: .7em}
+.MathJax_MenuRadioCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuLabel {padding: 1px 2em 3px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #DDDDDD; margin: 4px 3px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: #606872; color: white}
+.MathJax_MenuDisabled:focus, .MathJax_MenuLabel:focus {background-color: #E8E8E8}
+.MathJax_ContextMenu:focus {outline: none}
+.MathJax_ContextMenu .MathJax_MenuItem:focus {outline: none}
+#MathJax_AboutClose {top: .2em; right: .2em}
+.MathJax_Menu .MathJax_MenuClose {top: -10px; left: -10px}
+.MathJax_MenuClose {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; font-family: 'Courier New',Courier; font-size: 24px; color: #F0F0F0}
+.MathJax_MenuClose span {display: block; background-color: #AAA; border: 1.5px solid; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; line-height: 0; padding: 8px 0 6px}
+.MathJax_MenuClose:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_MenuClose:hover span {background-color: #CCC!important}
+.MathJax_MenuClose:hover:focus {outline: none}
+</style><style type="text/css">.MathJax_Preview .MJXf-math {color: inherit!important}
+</style><style type="text/css">.MJX_Assistive_MathML {position: absolute!important; top: 0; left: 0; clip: rect(1px, 1px, 1px, 1px); padding: 1px 0 0 0!important; border: 0!important; height: 1px!important; width: 1px!important; overflow: hidden!important; display: block!important; -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none}
+.MJX_Assistive_MathML.MJX_Assistive_MathML_Block {width: 100%!important}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; -webkit-box-sizing: content-box; -moz-box-sizing: content-box; box-sizing: content-box; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MJXp-script {font-size: .8em}
+.MJXp-right {-webkit-transform-origin: right; -moz-transform-origin: right; -ms-transform-origin: right; -o-transform-origin: right; transform-origin: right}
+.MJXp-bold {font-weight: bold}
+.MJXp-italic {font-style: italic}
+.MJXp-scr {font-family: MathJax_Script,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-frak {font-family: MathJax_Fraktur,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-sf {font-family: MathJax_SansSerif,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-cal {font-family: MathJax_Caligraphic,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-mono {font-family: MathJax_Typewriter,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-largeop {font-size: 150%}
+.MJXp-largeop.MJXp-int {vertical-align: -.2em}
+.MJXp-math {display: inline-block; line-height: 1.2; text-indent: 0; font-family: 'Times New Roman',Times,STIXGeneral,serif; white-space: nowrap; border-collapse: collapse}
+.MJXp-display {display: block; text-align: center; margin: 1em 0}
+.MJXp-math span {display: inline-block}
+.MJXp-box {display: block!important; text-align: center}
+.MJXp-box:after {content: " "}
+.MJXp-rule {display: block!important; margin-top: .1em}
+.MJXp-char {display: block!important}
+.MJXp-mo {margin: 0 .15em}
+.MJXp-mfrac {margin: 0 .125em; vertical-align: .25em}
+.MJXp-denom {display: inline-table!important; width: 100%}
+.MJXp-denom > * {display: table-row!important}
+.MJXp-surd {vertical-align: top}
+.MJXp-surd > * {display: block!important}
+.MJXp-script-box > *  {display: table!important; height: 50%}
+.MJXp-script-box > * > * {display: table-cell!important; vertical-align: top}
+.MJXp-script-box > *:last-child > * {vertical-align: bottom}
+.MJXp-script-box > * > * > * {display: block!important}
+.MJXp-mphantom {visibility: hidden}
+.MJXp-munderover {display: inline-table!important}
+.MJXp-over {display: inline-block!important; text-align: center}
+.MJXp-over > * {display: block!important}
+.MJXp-munderover > * {display: table-row!important}
+.MJXp-mtable {vertical-align: .25em; margin: 0 .125em}
+.MJXp-mtable > * {display: inline-table!important; vertical-align: middle}
+.MJXp-mtr {display: table-row!important}
+.MJXp-mtd {display: table-cell!important; text-align: center; padding: .5em 0 0 .5em}
+.MJXp-mtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-mlabeledtr {display: table-row!important}
+.MJXp-mlabeledtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mlabeledtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MJXp-scale0 {-webkit-transform: scaleX(.0); -moz-transform: scaleX(.0); -ms-transform: scaleX(.0); -o-transform: scaleX(.0); transform: scaleX(.0)}
+.MJXp-scale1 {-webkit-transform: scaleX(.1); -moz-transform: scaleX(.1); -ms-transform: scaleX(.1); -o-transform: scaleX(.1); transform: scaleX(.1)}
+.MJXp-scale2 {-webkit-transform: scaleX(.2); -moz-transform: scaleX(.2); -ms-transform: scaleX(.2); -o-transform: scaleX(.2); transform: scaleX(.2)}
+.MJXp-scale3 {-webkit-transform: scaleX(.3); -moz-transform: scaleX(.3); -ms-transform: scaleX(.3); -o-transform: scaleX(.3); transform: scaleX(.3)}
+.MJXp-scale4 {-webkit-transform: scaleX(.4); -moz-transform: scaleX(.4); -ms-transform: scaleX(.4); -o-transform: scaleX(.4); transform: scaleX(.4)}
+.MJXp-scale5 {-webkit-transform: scaleX(.5); -moz-transform: scaleX(.5); -ms-transform: scaleX(.5); -o-transform: scaleX(.5); transform: scaleX(.5)}
+.MJXp-scale6 {-webkit-transform: scaleX(.6); -moz-transform: scaleX(.6); -ms-transform: scaleX(.6); -o-transform: scaleX(.6); transform: scaleX(.6)}
+.MJXp-scale7 {-webkit-transform: scaleX(.7); -moz-transform: scaleX(.7); -ms-transform: scaleX(.7); -o-transform: scaleX(.7); transform: scaleX(.7)}
+.MJXp-scale8 {-webkit-transform: scaleX(.8); -moz-transform: scaleX(.8); -ms-transform: scaleX(.8); -o-transform: scaleX(.8); transform: scaleX(.8)}
+.MJXp-scale9 {-webkit-transform: scaleX(.9); -moz-transform: scaleX(.9); -ms-transform: scaleX(.9); -o-transform: scaleX(.9); transform: scaleX(.9)}
+.MathJax_PHTML .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style><style type="text/css">.MathJax_Display {text-align: center; margin: 1em 0em; position: relative; display: block!important; text-indent: 0; max-width: none; max-height: none; min-width: 0; min-height: 0; width: 100%}
+.MathJax .merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MathJax .MJX-monospace {font-family: monospace}
+.MathJax .MJX-sans-serif {font-family: sans-serif}
+#MathJax_Tooltip {background-color: InfoBackground; color: InfoText; border: 1px solid black; box-shadow: 2px 2px 5px #AAAAAA; -webkit-box-shadow: 2px 2px 5px #AAAAAA; -moz-box-shadow: 2px 2px 5px #AAAAAA; -khtml-box-shadow: 2px 2px 5px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true'); padding: 3px 4px; z-index: 401; position: absolute; left: 0; top: 0; width: auto; height: auto; display: none}
+.MathJax {display: inline; font-style: normal; font-weight: normal; line-height: normal; font-size: 100%; font-size-adjust: none; text-indent: 0; text-align: left; text-transform: none; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; padding: 0; margin: 0}
+.MathJax:focus, body :focus .MathJax {display: inline-table}
+.MathJax.MathJax_FullWidth {text-align: center; display: table-cell!important; width: 10000em!important}
+.MathJax img, .MathJax nobr, .MathJax a {border: 0; padding: 0; margin: 0; max-width: none; max-height: none; min-width: 0; min-height: 0; vertical-align: 0; line-height: normal; text-decoration: none}
+img.MathJax_strut {border: 0!important; padding: 0!important; margin: 0!important; vertical-align: 0!important}
+.MathJax span {display: inline; position: static; border: 0; padding: 0; margin: 0; vertical-align: 0; line-height: normal; text-decoration: none}
+.MathJax nobr {white-space: nowrap!important}
+.MathJax img {display: inline!important; float: none!important}
+.MathJax * {transition: none; -webkit-transition: none; -moz-transition: none; -ms-transition: none; -o-transition: none}
+.MathJax_Processing {visibility: hidden; position: fixed; width: 0; height: 0; overflow: hidden}
+.MathJax_Processed {display: none!important}
+.MathJax_ExBox {display: block!important; overflow: hidden; width: 1px; height: 60ex; min-height: 0; max-height: none}
+.MathJax .MathJax_EmBox {display: block!important; overflow: hidden; width: 1px; height: 60em; min-height: 0; max-height: none}
+.MathJax_LineBox {display: table!important}
+.MathJax_LineBox span {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+.MathJax .MathJax_HitBox {cursor: text; background: white; opacity: 0; filter: alpha(opacity=0)}
+.MathJax .MathJax_HitBox * {filter: none; opacity: 1; background: transparent}
+#MathJax_Tooltip * {filter: none; opacity: 1; background: transparent}
+@font-face {font-family: MathJax_Blank; src: url('about:blank')}
+.MathJax .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+
+<body><div style="visibility: hidden; overflow: hidden; position: absolute; top: 0px; height: 1px; width: auto; padding: 0px; border: 0px; margin: 0px; text-align: left; text-indent: 0px; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal;"><div id="MathJax_Hidden"></div></div><div id="MathJax_Message" style="display: none;"></div>
+
+
+
+
+<h1 class="title toc-ignore">anem-validation</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># devtools::install_github("https://github.com/gopalpenny/anem")</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">library</span>(tidyverse)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co"># library(anem)</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">devtools<span class="op">::</span><span class="kw">load_all</span>(<span class="st">"~/Projects/R_packages/anem"</span>)</a></code></pre></div>
+<p>We need to validate the anem package for some simple use cases. In this validation we will consider:</p>
+<ol style="list-style-type: decimal">
+<li>hydraulic head in a confined aquifer</li>
+<li>discharge potential in an unconfined aquifer</li>
+<li>flow direction</li>
+<li>behavior along boundaries</li>
+</ol>
+<div id="hydraulic-head-in-a-confined-aquifer" class="section level2">
+<h2>Hydraulic head in a confined aquifer</h2>
+<p>We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-Dimensional and parallel to the aquifer bottom, which is horizontal. Flow is governed by Darcy’s law, which can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity (<span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-1-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;mo&gt;&amp;lt;&lt;/mo&gt;&lt;mi&gt;R&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-1" style="width: 2.741em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.265em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.26em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-2"><span class="mi" id="MathJax-Span-3" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span class="mo" id="MathJax-Span-4" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">&lt;</span><span class="mi" id="MathJax-Span-5" style="font-family: STIXGeneral-Italic; padding-left: 0.301em;">R</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 0.932em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi><mo>&lt;</mo><mi>R</mi></math></span></span><script type="math/tex" id="MathJax-Element-1">r<R</script></span>) of a pumping well:</p>
+<p><span class="math display"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><div class="MathJax_Display" style="text-align: center;"><span class="MathJax" id="MathJax-Element-2-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot; display=&quot;block&quot;&gt;&lt;mtable columnalign=&quot;right left right left right left right left right left right left&quot; rowspacing=&quot;3pt&quot; columnspacing=&quot;0em 2em 0em 2em 0em 2em 0em 2em 0em 2em 0em&quot; displaystyle=&quot;true&quot;&gt;&lt;mtr&gt;&lt;mtd&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;mfrac&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;mrow&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;mi&gt;&amp;#x03C0;&lt;/mi&gt;&lt;mi&gt;T&lt;/mi&gt;&lt;/mrow&gt;&lt;/mfrac&gt;&lt;mi&gt;log&lt;/mi&gt;&lt;mo&gt;&amp;#x2061;&lt;/mo&gt;&lt;mrow&gt;&lt;mo&gt;(&lt;/mo&gt;&lt;mfrac&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;mi&gt;R&lt;/mi&gt;&lt;/mfrac&gt;&lt;mo&gt;)&lt;/mo&gt;&lt;/mrow&gt;&lt;/mtd&gt;&lt;/mtr&gt;&lt;/mtable&gt;&lt;/math&gt;" role="presentation" style="text-align: center; position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-6" style="width: 12.503em; display: inline-block;"><span style="display: inline-block; position: relative; width: 10.42em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(0.777em, 1010.12em, 3.158em, -999.997em); top: -2.199em; left: 0em;"><span class="mrow" id="MathJax-Span-7"><span class="mtable" id="MathJax-Span-8" style="padding-right: 0.182em; padding-left: 0.182em;"><span style="display: inline-block; position: relative; width: 10.063em; height: 0px;"><span style="position: absolute; clip: rect(2.562em, 1009.94em, 4.943em, -999.997em); top: -3.985em; left: 0em;"><span style="display: inline-block; position: relative; width: 10.063em; height: 0px;"><span style="position: absolute; clip: rect(2.443em, 1009.94em, 4.884em, -999.997em); top: -3.926em; right: 0em;"><span class="mtd" id="MathJax-Span-9"><span class="mrow" id="MathJax-Span-10"><span class="mi" id="MathJax-Span-11" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-12" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-13" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-14" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-15" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span><span class="mo" id="MathJax-Span-16" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mo" id="MathJax-Span-17" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">−</span><span class="mfrac" id="MathJax-Span-18"><span style="display: inline-block; position: relative; width: 1.789em; height: 0px; margin-right: 0.122em; margin-left: 0.122em;"><span style="position: absolute; clip: rect(3.158em, 1000.72em, 4.348em, -999.997em); top: -4.64em; left: 50%; margin-left: -0.354em;"><span class="mi" id="MathJax-Span-19" style="font-family: STIXGeneral-Italic;">Q</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(3.158em, 1001.67em, 4.17em, -999.997em); top: -3.271em; left: 50%; margin-left: -0.83em;"><span class="mrow" id="MathJax-Span-20"><span class="mn" id="MathJax-Span-21" style="font-family: STIXGeneral-Regular;">2</span><span class="mi" id="MathJax-Span-22" style="font-family: STIXGeneral-Italic;">π<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span><span class="mi" id="MathJax-Span-23" style="font-family: STIXGeneral-Italic;">T<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(0.836em, 1001.79em, 1.253em, -999.997em); top: -1.307em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 1.789em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.074em;"></span></span></span></span><span class="mi" id="MathJax-Span-24" style="font-family: STIXGeneral-Regular;">log</span><span class="mo" id="MathJax-Span-25"></span><span class="mrow" id="MathJax-Span-26"><span class="mo" id="MathJax-Span-27" style="vertical-align: -0.414em;"><span style="font-family: STIXSizeTwoSym;">(</span></span><span class="mfrac" id="MathJax-Span-28"><span style="display: inline-block; position: relative; width: 0.717em; height: 0px; margin-right: 0.122em; margin-left: 0.122em;"><span style="position: absolute; clip: rect(3.396em, 1000.42em, 4.17em, -999.997em); top: -4.64em; left: 50%; margin-left: -0.176em;"><span class="mi" id="MathJax-Span-29" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.17em, -999.997em); top: -3.271em; left: 50%; margin-left: -0.295em;"><span class="mi" id="MathJax-Span-30" style="font-family: STIXGeneral-Italic;">R</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(0.836em, 1000.72em, 1.253em, -999.997em); top: -1.307em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 0.717em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.074em;"></span></span></span></span><span class="mo" id="MathJax-Span-31" style="vertical-align: -0.414em;"><span style="font-family: STIXSizeTwoSym;">)</span></span></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.205em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.996em; border-left: 0px solid; width: 0px; height: 2.575em;"></span></span></nobr><span class="MJX_Assistive_MathML MJX_Assistive_MathML_Block" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mtable columnalign="right left right left right left right left right left right left" rowspacing="3pt" columnspacing="0em 2em 0em 2em 0em 2em 0em 2em 0em 2em 0em" displaystyle="true"><mtr><mtd><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub><mo>=</mo><mo>−</mo><mfrac><mi>Q</mi><mrow><mn>2</mn><mi>π</mi><mi>T</mi></mrow></mfrac><mi>log</mi><mo>⁡</mo><mrow><mo>(</mo><mfrac><mi>r</mi><mi>R</mi></mfrac><mo>)</mo></mrow></mtd></mtr></mtable></math></span></span></div><script type="math/tex; mode=display" id="MathJax-Element-2">\begin{align}
+h - h_0 = -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right)
+\label{eq:thiemunconfined}
+\end{align}</script></span></p>
+<p>where <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-3-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-32" style="width: 0.598em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.479em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1000.48em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-33"><span class="mi" id="MathJax-Span-34" style="font-family: STIXGeneral-Italic;">h</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 1.004em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi></math></span></span><script type="math/tex" id="MathJax-Element-3">h</script></span> is hydraulic head at a distance <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-4-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-35" style="width: 0.539em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.42em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.967em, 1000.42em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-36"><span class="mi" id="MathJax-Span-37" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 0.646em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi></math></span></span><script type="math/tex" id="MathJax-Element-4">r</script></span> from a fully penetrating well that pumps at rate <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-5-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-38" style="width: 0.896em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.717em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1000.72em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-39"><span class="mi" id="MathJax-Span-40" style="font-family: STIXGeneral-Italic;">Q</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Q</mi></math></span></span><script type="math/tex" id="MathJax-Element-5">Q</script></span> (positive for injection, negative for abstraction), <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-6-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-41" style="width: 1.193em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.372em, 1000.96em, 2.562em, -999.997em); top: -2.199em; left: 0em;"><span class="mrow" id="MathJax-Span-42"><span class="msubsup" id="MathJax-Span-43"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-44" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-45" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.205em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-6">h_0</script></span> is the undisturbed hydraulic head when <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-7-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-46" style="width: 3.039em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.503em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.5em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-47"><span class="mi" id="MathJax-Span-48" style="font-family: STIXGeneral-Italic;">Q</span><span class="mo" id="MathJax-Span-49" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mn" id="MathJax-Span-50" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">0</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Q</mi><mo>=</mo><mn>0</mn></math></span></span><script type="math/tex" id="MathJax-Element-7">Q=0</script></span>, <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-8-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;T&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-51" style="width: 0.717em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.598em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1000.6em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-52"><span class="mi" id="MathJax-Span-53" style="font-family: STIXGeneral-Italic;">T<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 0.932em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi></math></span></span><script type="math/tex" id="MathJax-Element-8">T</script></span> is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer (<span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-9-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;T&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;K&lt;/mi&gt;&lt;mrow class=&quot;MJX-TeXAtom-ORD&quot;&gt;&lt;mi&gt;s&lt;/mi&gt;&lt;mi&gt;a&lt;/mi&gt;&lt;mi&gt;t&lt;/mi&gt;&lt;/mrow&gt;&lt;/msub&gt;&lt;msub&gt;&lt;mi&gt;z&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-54" style="width: 5.241em; display: inline-block;"><span style="display: inline-block; position: relative; width: 4.348em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1004.35em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-55"><span class="mi" id="MathJax-Span-56" style="font-family: STIXGeneral-Italic;">T<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span><span class="mo" id="MathJax-Span-57" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="msubsup" id="MathJax-Span-58" style="padding-left: 0.301em;"><span style="display: inline-block; position: relative; width: 1.61em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.72em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-59" style="font-family: STIXGeneral-Italic;">K<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="texatom" id="MathJax-Span-60"><span class="mrow" id="MathJax-Span-61"><span class="mi" id="MathJax-Span-62" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">s</span><span class="mi" id="MathJax-Span-63" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">a</span><span class="mi" id="MathJax-Span-64" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">t<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span><span class="msubsup" id="MathJax-Span-65"><span style="display: inline-block; position: relative; width: 0.836em; height: 0px;"><span style="position: absolute; clip: rect(3.396em, 1000.36em, 4.229em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-66" style="font-family: STIXGeneral-Italic;">z</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.42em;"><span class="mn" id="MathJax-Span-67" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi><mo>=</mo><msub><mi>K</mi><mrow class="MJX-TeXAtom-ORD"><mi>s</mi><mi>a</mi><mi>t</mi></mrow></msub><msub><mi>z</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-9">T= K_{sat} z_0</script></span>), and <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-10-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;R&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-68" style="width: 0.717em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.598em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1000.6em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-69"><span class="mi" id="MathJax-Span-70" style="font-family: STIXGeneral-Italic;">R</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 0.932em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math></span></span><script type="math/tex" id="MathJax-Element-10">R</script></span> is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping (<span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-11-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-71" style="width: 3.336em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.741em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.74em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-72"><span class="mi" id="MathJax-Span-73" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-74" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="msubsup" id="MathJax-Span-75" style="padding-left: 0.301em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-76" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-77" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>=</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-11">h=h_0</script></span>). This solution is valid for steady state flow in confined aquifers.</p>
+<p>To test the behavior, we define a confined aquifer with the following parameters and rectangular no-flow boundaries:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">aquifer &lt;-<span class="st"> </span><span class="kw">define_aquifer</span>(</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  <span class="dt">aquifer_type =</span> <span class="st">"confined"</span>,</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="dt">Ksat=</span><span class="fl">1e-4</span>,</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">  <span class="dt">z0=</span><span class="dv">10</span>,</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">  <span class="dt">bounds=</span><span class="kw">data.frame</span>(<span class="dt">bound_type=</span><span class="kw">rep</span>(<span class="st">"NF"</span>,<span class="dv">4</span>),<span class="dt">m=</span><span class="kw">c</span>(<span class="ot">Inf</span>,<span class="dv">0</span>,<span class="ot">Inf</span>,<span class="dv">0</span>),<span class="dt">b=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1000</span>,<span class="dv">1000</span>))</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">)</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="kw">print</span>(aquifer)</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#&gt; # aquifer_type: confined</span></a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="co">#&gt; # Ksat: 1e-04</span></a>
+<a class="sourceLine" id="cb2-10" data-line-number="10"><span class="co">#&gt; # h0: --</span></a>
+<a class="sourceLine" id="cb2-11" data-line-number="11"><span class="co">#&gt; # z0: 10</span></a>
+<a class="sourceLine" id="cb2-12" data-line-number="12"><span class="co">#&gt; # bounds: </span></a>
+<a class="sourceLine" id="cb2-13" data-line-number="13"><span class="co">#&gt; # A tibble: 4 x 8</span></a>
+<a class="sourceLine" id="cb2-14" data-line-number="14"><span class="co">#&gt;     bID bound_type     m     b    x1    y1    x2    y2</span></a>
+<a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></a>
+<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="co">#&gt; 1     1 NF           Inf     0     0     0     0  1000</span></a>
+<a class="sourceLine" id="cb2-17" data-line-number="17"><span class="co">#&gt; 2     2 NF             0     0     0     0  1000     0</span></a>
+<a class="sourceLine" id="cb2-18" data-line-number="18"><span class="co">#&gt; 3     3 NF           Inf  1000  1000     0  1000  1000</span></a>
+<a class="sourceLine" id="cb2-19" data-line-number="19"><span class="co">#&gt; 4     4 NF             0  1000     0  1000  1000  1000</span></a>
+<a class="sourceLine" id="cb2-20" data-line-number="20"><span class="co">#&gt; # recharge (undisturbed water table): </span></a>
+<a class="sourceLine" id="cb2-21" data-line-number="21"><span class="co">#&gt;     No recharge zones</span></a></code></pre></div>
+<p>We define a single pumping well in the center of the aquifer, with a pumping radius just less than the width of the aquifer.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">well &lt;-<span class="st"> </span><span class="kw">define_wells</span>(</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="dt">Q=</span><span class="op">-</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="dt">R=</span><span class="dv">1200</span>,</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="dt">diam=</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">  <span class="dt">x=</span><span class="dv">500</span>,</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  <span class="dt">y=</span><span class="dv">500</span></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="st">  </span><span class="kw">generate_image_wells</span>(aquifer)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9"><span class="kw">print</span>(well)</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"><span class="co">#&gt; # A tibble: 9 x 9</span></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11"><span class="co">#&gt;     wID     Q     R  diam     x     y well_type well_image orig_wID</span></a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"><span class="co">#&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt;     &lt;chr&gt;         &lt;int&gt;</span></a>
+<a class="sourceLine" id="cb3-13" data-line-number="13"><span class="co">#&gt; 1     1    -1  1200     1   500   500 Pumping   Actual            1</span></a>
+<a class="sourceLine" id="cb3-14" data-line-number="14"><span class="co">#&gt; 2     2    -1  1200     1   500  -500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-15" data-line-number="15"><span class="co">#&gt; 3     3    -1  1200     1   500  1500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-16" data-line-number="16"><span class="co">#&gt; 4     6    -1  1200     1  -500   500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-17" data-line-number="17"><span class="co">#&gt; 5     7    -1  1200     1  1500   500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-18" data-line-number="18"><span class="co">#&gt; 6     8    -1  1200     1  -500  -500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-19" data-line-number="19"><span class="co">#&gt; 7     9    -1  1200     1  1500  -500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-20" data-line-number="20"><span class="co">#&gt; 8    10    -1  1200     1  -500  1500 Pumping   Image (+Q)        1</span></a>
+<a class="sourceLine" id="cb3-21" data-line-number="21"><span class="co">#&gt; 9    11    -1  1200     1  1500  1500 Pumping   Image (+Q)        1</span></a></code></pre></div>
+<p>And finally, we select three locations for observation, including one at the well:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">loc &lt;-<span class="st"> </span><span class="kw">tribble</span>(<span class="op">~</span>pID,<span class="op">~</span>x,<span class="op">~</span>y,</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">               <span class="dv">1</span>, <span class="dv">750</span>, <span class="dv">500</span>,</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">               <span class="dv">2</span>, <span class="dv">625</span>, <span class="dv">750</span>,</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">               <span class="dv">3</span>, <span class="dv">500</span>, <span class="dv">500</span>)</a></code></pre></div>
+<p>The well and its images and radii of influence, along with observation locations, look like this:</p>
+<p><img src="data:image/png;base64,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v8Yaa9gIGavCfO1rX7PjfImWEVX71a9+ZYc6PPLII7axJpp2xhlnmPHjxxsibxBRwyeffNIaEaeffro57bTTzIorrljsCU7IhcGK4YXyqiPhMGFghxRuHeRFPumepSsYWfv161cH0YIy4Ewuv/zywWvtPgl+vCMrrbRSu0XpUj5GMpG92267zRrOOOVrr722NaBJyCTre++915xzzjnmmWeeMb/5zW/M+eefb3bffXfLB+MfZ4D8I0aM6MK72T+77bab+dnPfmbZEDD485//bCcYM6eC8vv372+YOzBw4EA7BIyI/pprrmnTr7766oaeA97/5ZZbztAjsO+++xr0DcQ15icIff/737f1pwyIHoj11lvP9o5QZyVFoC4IVG0wow/cMsqe+OvjSIAJhwZnX6m1CKj+/wDvnqL/W+4A8GIyme/EE080Q4cONXvuuaftgv/qV79qcAyIzknX/Te+8Q0bOdtwww3NKaecYrvt11lnHZt+v/32M9tvv701gu644w7rSBBtIGpHtPGII44o/clnBRYZL1o68xIYYlzVWT4MfpdwqHD6iBrUkZANh4WJanUkmVC92GKL1UY8nGOi5/TUETm/4YYbzM9//nP7zuKw0COAMc124YUX2uf1gQceMI899lijDtSHSHrZDsAGG2zQKGPllVc2w4YNa0yoXmaZZew1hlbhsFxyySWGITz/7//9P9vjePvtt9vrPBP0Xj777LPW6BeGa621lhkyZIj9S88R9RkwYIChV0AIg0R6COSc7hWBdiPg97RXIQ9BKSmnFQEqylIHoIo7mcxT9b+xIwd6iv5v+RAgXso//elP1vjnUWIYAxNWcQzohidKJsTx5MmTbfSAVXfoQoeIwGGUzZs3zzChlPMy4UjyCI+y9jTqdf7aL/LVeeIvxn5oSE27PwKW9nzUeVlQZK/jXADG8uMA8D4TMWdoDZH0W265xTDmXoba8D4RDaTR4P2V7cADD+wSTU+7R1mvL7300l2SLr744o3/7oRqdBLDg+ihJKCAriFQISTzQ5iI7VKfPn3sX55popA4MlIn9qxm9MUvftHNoseKQFsRoN1lq5po9+kJkHe96vLcHoeqy1L+XRFQ/d9z9H/LewB4VD71qU/ZJ4ZG8tRTT7WNLRE4jJklllii8TRxjOHPpFbyuI30kksuaSdqEpXnWIg8vtHGEKEzzzxT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iIAIiEDLECDmf+zYsebMM8+0SxCzUzkhP0r5EfCHwGAEZO0Rrye9d7ELjBG+y9Ndj5rOi0BtAjIAavPRWREQAREQgRIRGDp0qBk8eLCNcQ7btLBE4ja9KIT/eBOx+Hjh8wg/8pbjPvtHHQiponyvUeCu1bsIiEB0AgoBis5KV4qACIiACJSAgJsQWgJRWloElPygkBv4NyoFleU3Sholi8oRgVYi0CFHALp06VKqNvzd735nevbsaY4//vjM5GKt/awSq2iw3vaQIUOyytKu5pBVZldccYU54ogjDMv9ZZXYrCyrNHHiRHPMMceYAQMGZJWlXQ87s8yUkQiIgAgEEAhS/rkMrzxKeB4TnL1ioPwHzTkgBIlX0Dnv/fosAiIQTkAjAOFsGnbmqaeeMq+++mrDyotb0IIFC8zrr78e97aGXf/YY4+ZFStWNKy8uAWxURGbEymJgAiIQDMRCPO0E38f5JnPum61ynATk7MuU/mJQEch0CFHADpK46qeIiACItDRCYwYMSJw91jH5dlnn7UODiYWN0t66KGHrAf+hBNOyE1kJv/WW/Lz888/jzwKcP/995vddtvN9OvXL5LMjDIE7dTubsYIYc37NEuLuryC3hnduOmmm8xRRx1ld58OuqZsx9gU76677jLDhw83u+++e6h43bt3Dz2nEx2HgAyAjtPWqqkIiIAIdDgCBx54YM06L1myxLz11lumf//+Na8r08m7777bbsrVTDLfdtttZt999zV5Gi1ZthHzH8aMGWOOO+64pvltvPnmm+aVV14xF198sZbHzfLH0KJ5yQAoQcM++uijJZAiXIR//OMf4SdLcOZf//pXCaQIF6HM4V3hUuuMCIiACIiACIhAqxKQAdCqLat6iYAIiIAI1CVAnDk73DZTYglMQnSaKcG4mZbudCFGhCI1SyIcKs+wqGbhIDmjEdiuEufWFu1SXSUCIiACIiACIiACIiACItDsBLQKUINa8IknntjGY8PKNY8//rj5z3/+004KVjdYvHixYXKafxk2rm3kqjeNLq8diMqXrLiFsfaXF/U77fL888/beEu/DR1WVq12Dbsnqjy6TgREQAREQAREQASiEvjarysp6sW6LhmB++67z7DW/09/+lO7fjK5TJ061TzwwAN2JYdbbrnFTjL61re+Zb744gvzs5/9zE7wwghgiVB2vWQ48uWXXzYXXHCB2XHHHQ0TqhhS3W+//ZIJFeGuRpfnFykrbmGs/eVF/f7++++bM844w7bJ8uXLbVuwOylDxWFl1WrXsHuiyqPrREAEREAEREAERCAOgeYJbotTq5JcS4zmlVdeaViay5vWrFljFi1aZObMmWOXMLvnnnvMjBkzzKRJk8y9995rl0lD0SeNGzfOsErFoYceam644QZzzTXXmIMOOsicfPLJhmXr2Jwrr7jKRpfnGGXJrWvXrqGsXXlx32fPnm25YwSQaGNGKg444IDQssLaNQ/54tZH14tARyXAqNzSpUutMd+nT5+GrG0flfXbb79t1q5da/t+4rpdwjHjXQOfTSQ7depkTzOS+M4779iNGzt37uxuacj7u+++a9avX18ta+edd7ar/nCAkeQXX3zR7Lnnnua73/1u9Ro+FCXza6+9Zj755JN2ssCMlYo+/fRTw3lv4hlMKuo3g0ys8ONf+SmMXxmZe3nqc/EEFAKUYxuwUyGdBh5+b1q1apVdV9itX8wuu26jLTp9vrvkzqEUv/fee9X1iHfddVe7G+y6devcpZm+N7o8r/BZcqvF2ltmnM8YZYzmuLR161Y7clOrrLB2rXWPy1/vIiAC2RNgVG706NF2lJW10ydMmBB5TfvspWmf4y9/+Us7sohyh4xupTP65UsuucSwpr57uWcAI4nXXXedHSlm+UoU8kam22+/3fz1r3+tyuVkxmBhVJslKmGM3C4VKTOr2zEK717seM/+CqQXXnjBsnSMncxF/WbYj4Fgjblz5zp09j2MX1mZtxNeXwonoBGAHJuATUx+8pOfbFPChg0bDOE+Lu2www7VUQLCS/juEp9R/D/44AOz/fbbW0+VO0cemzZtMnvttZc7lNl7o8vzCp4lN/IKY+0tM85n74jLk08+advnRz/6ke2cw8oKa9c85ItTF10rAh2VQNionPP0FsUFz/OHH35o7rzzTisCHnNGifv27WsYPWaDJ0JKvYnjYaPK3uvy/MxeCsjVo0ePdsWEjSQzWlCkzOPHj6/KSSgnI7kYTiTqwrN71KhR1Wv4UMRvBifRpZdeap9j3udLrTYvK/N2MPWlcAIaAciwCW699VYzbdo0+9q4cWNozl/72tcMXm6X8Oq4Id6wc/7j3Mt9eS1f1+jyHIta736ZknDz3lOrrCjnHnzwQfOnP/3JXH/99eab3/ymKZt8Ueqga0SgoxIIG5Urmsf+++9v/vznP1fFYITR7ciLYooBwN4xeIPZiZdU9EgicuCMwnBhNAWnFYn+NmzkumiZrYCVP4T0/OY3vzG/+tWvqs43ONOns+EaowFuoYcifjOwveyyyww7WntTGL9mYO6thz4XR0AGQIbssc7dC2UwLO2yyy62s3Tn6Ti7detmvxKDyHeX+Mz26cRTfvbZZ+1iP905d22W740uL4rsSbjVuidKmWHX4J2bNWuWNfb22GMPe1mtssLatdY9YWXruAiIQHoCQaNy/vla6UuJn4Nby507GYmlrzn99NNtRoTREBZE7DrvzAUj1rvWqHJ8CeLfsXLlSvtsQlnGucUctvnz59ccuS5aZlfLBQsW2Oc2IywuYQCwyhsjtHfccYcNu+JcEb8Z5pYF7WYdxq/W6H3YPa7eeu9YBGQAZNjeI0eOtB01nXWtCVhMNmOYlwleWOvz5s2rbtt9+OGHm0ceecR6fOjYWQq0d+/edoWZfv36GbzOpGeeecbstNNO9pVhFapZsaJNI8urFlzjQxJute6pUVTNUw8//LBZuHChYcSHuRgu1SorrF1r3ePy1bsIiED2BGqN2GVfWvwcV69ebc4991wbP+/Cks466yzzt7/9zZx00kk2np4+mtGAouvCanTEyZ999tk2bObCCy80f//737eRCwo88xi5Llpm1yI8U48//nj31b5Pnz7dhjMNHz7c/OEPfzCECDGSURaZETJMFv9xri0bc2RSKp6A5gAU0AbE9Y8dO9au4sPqDXiQMR5IRx99tN0DgOE+PEGnnHJKNcb/nHPOqU6i4hwxi3mmRpdXry5JuYWxrlde2HkeDoR4sQKTSzwozj///ETtmrV8Tia9i4AIhBMIGpXr3r17+A0NPPPGG2/YVeFQpI888shqyUz4Re5vfOMb9hjx9nh1WSxi2bJl1eu8o8rVgzl+2LJli/n444+rDinkoo/ESeVGrvGmk9zINd70ImVGFiZKw3TAgAF8tenLL7+0Kym5lZWY84WjB3nL9Jth9DiIn3f0vozMHWe9l4AAOwErFUOg0tG0VYZyAwuvdKZtlc2mAs9t3rw58HheBxtdXr16JOFW65565cU9X6ussHatdU/c8nW9CIhAfQKVkda2ioLdVlnZpa0Su95WCadpq8RV178x5yuQpbKvSNtLL720TUmVlXbaKvHq9nhFsW6rjDa3VcJu2irzBNqGDRvWVlFo7XOjslx0W2WkYJv78zpQiY1vq0yabavEq7f997//bfvjH//YNmXKFFtcZeWftkq4pP1cWXmnrbKqkf1ctMwIUdlUs+2iiy6y8rg/yH/aaae1Pffcc/ZQZYU+2x48j4v8zVT2BGqrrADlxKzZ5mVmXq2APhROYDskKIEdIhFEQAREQAREoGEECIu46qqrbDimG20ltKboVFGezcyZM9ut+IY3muUq8bKz0g4r6DDhdtCgQea8886zo8UsYckiFG5UmT1jCOVsVCI0iXh6uDJay7KaXbp0sd50lv8kNMWNXLN3AalomZlsjbyMdnsTexZwjh3f4Txx4kS7/n6Rv5mnn37aEH5aMayqoobxYy+IsjKvCq8PhROQAVB4E0gAERABERCBoggwoZZV2BqpLKetKyvDoFC7EA+XHworq9qwgk0RqeI9t5toYQD4E2FC7GLvT0XL7JfH+50VmKjLdttt5z1sJ2GX5TdTi18zMm8HWl9yJSADIFe8ylwEREAEREAEREAEREAEykVAqwCVqz0kjQiIgAiIgAiIgAiIgAjkSkAGQK54lXkUAqwhfdNNN0W5VNeIgAiIgAiIgAiIgAikJKAQoJQAdXs6AsRY9u/f364LvXTp0nSZ6W4REAEREAEREAEREIG6BDQCUBeRLsiLQGUJNtOrVy/DCICSCIiACIhAxyGgkd+O09aqaTkJyAAoZ7s0vVTsZjxu3Di7Tb2rzNSpUw1L05FYnYDdF0eNGlXdZt1dp3cREAEREIHWJcDI77HHHmvuuOOO1q2kaiYCJScgA6DkDdSs4h1++OFm4cKF5he/+IWtwrx58+y6xAMHDrTft99+e1PZdMdMnjzZfP3rX2/WakpuERABERCBGAQ08hsDli4VgRwJyADIEW5Hzpp1qGfMmGFmz55tpk+fbsaMGWM33TnssMMsFpT+rl27dmREqrsIiIAItBQBjfy2VHOqMi1OQAZAizdwkdXr16+fufzyy63yT6w/uykqiYAIiIAItCYBjfy2ZruqVq1JoHH7hLcmP9WqDgG38yO7FSqJgAiIgAi0LgE38vuDH/zAHH300dbpc9VVVxmN/LZum6tmzUtAIwDN23all3z58uX2AXDzzTeb119/3UyZMqX0MktAERABERCB5AQ08pucne4UgUYS0AhAI2l3oLK+/PJLc+qpp5phw4aZ8ePHm06dOtkVfwYPHmx69+7dgUioqiIgAiLQsQho5Ldjtbdq25wENALQnO1WeqmJ/V+/fr255ZZbrKwjRowwQ4YMsUbBF198UXr5JaAIiIAIiEB8Ahr5jc9Md4hAEQS0E3AR1FWmCIiACIiACLQYAUZ++/bta3r27GlmzZplZs6caUd+lyxZss3I79VXX23mzp1rtAN8i/0IVJ2mIaARgKZpKgkqAiIgAiIgAuUloJHf8raNJBMBPwGNAPiJ6LsIiIAIiIAIiIAIiIAItDABjQC0cOOqaiIgAiIgAiIgAiIgAiLgJyADwE9E30VABERABERABERABESghQnIAGjhxlXVREAEREAEREAEREAERMBPQAaAn4i+i4AIiIAIiIAIiIAIiEALE5AB0MKNq6qJgAiIgAiIgAiIgAiIgJ+ADAA/EX0XAREQAREQAREQAREQgRYmIAOghRtXVRMBERABERABERABERABPwEZAH4i+i4CIiACIiACIiACIiACLUxABkALN66qJgIiIAIiIAIiIAIiIAJ+AjIA/ET0XQREQAREQAREQAREQARamIAMgBZuXFVNBERABERABERABERABPwEZAD4iei7CIiACIiACIiACIiACLQwARkALdy4qpoIiIAIiIAIiIAIiIAI+AnIAPAT0XcREAEREAEREAEREAERaGECMgBauHFVNREQAREQAREQAREQARHwE5AB4Cei7yIgAiIgAiIgAiIgAiLQwgRkALRw46pqIiACIiACIiACIiACIuAnIAPAT0TfRUAEREAEREAEREAERKCFCcgAaOHGVdVEQAREQAREQAREQAREwE9ABoCfiL6LgAiIgAiIgAiIgAiIQAsTkAHQwo2rqomACIiACIiACIiACIiAn4AMAD8RfRcBERABERABERABERCBFiYgA6CFG1dVEwEREAEREAEREAEREAE/ARkAfiL6LgIiIAIiIAIiIAIiIAItTEAGQAs3rqomAiIgAiIgAiIgAiIgAn4CMgD8RPRdBERABERABERABERABFqYgAyAFm5cVU0EREAEREAEREAEREAE/ARkAPiJ6LsIiIAIiIAIiIAIiIAItDABGQAt3LiqmgiIgAiIgAiIgAiIgAj4CcgA8BPRdxEQAREQAREQAREQARFoYQL/C3fJZOMZH/fmAAAAAElFTkSuQmCC"><!-- --></p>
+<p>The image wells are labeled “Image (+Q)”, indicating they have the same sign as the “Actual” well. If the “Actual” well is negative, the images will also have negative pumping rates. The first point (pID=1) is within the radius of influence of four wells. We can manually calculate <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-12-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-78" style="width: 3.158em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.622em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.62em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-79"><span class="mi" id="MathJax-Span-80" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-81" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-82" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-83" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-84" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-12">h-h_0</script></span> using the Thiem solution for the influence of each well</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+h-h0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+250.0
+</td>
+<td style="text-align:right;">
+-249.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1030.8
+</td>
+<td style="text-align:right;">
+-24.2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1030.8
+</td>
+<td style="text-align:right;">
+-24.2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+750.0
+</td>
+<td style="text-align:right;">
+-74.8
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-13-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-85" style="width: 3.158em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.622em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.62em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-86"><span class="mi" id="MathJax-Span-87" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-88" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-89" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-90" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-91" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-13">h-h_0</script></span> column is -372.8424. We can compare these results with those from <code>anem</code> and <code>get_potential_differential()</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">1</span>,],well,aquifer)</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt; [1] -372.8424</span></a></code></pre></div>
+<p>We can compare the same results for the second observation point:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+h-h0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+279.5
+</td>
+<td style="text-align:right;">
+-231.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+760.3
+</td>
+<td style="text-align:right;">
+-72.6
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1152.4
+</td>
+<td style="text-align:right;">
+-6.4
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+910.0
+</td>
+<td style="text-align:right;">
+-44.0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1152.4
+</td>
+<td style="text-align:right;">
+-6.4
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-14-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-92" style="width: 3.158em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.622em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.62em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-93"><span class="mi" id="MathJax-Span-94" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-95" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-96" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-97" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-98" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-14">h-h_0</script></span> column is -361.4155.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">2</span>,],well,aquifer)</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="co">#&gt; [1] -361.4155</span></a></code></pre></div>
+<p>And the results for the third observation point.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+h-h0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+-1238.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-29.0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-29.0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-29.0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-29.0
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-15-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-99" style="width: 3.158em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.622em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.62em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-100"><span class="mi" id="MathJax-Span-101" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-102" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-103" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-104" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-105" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-15">h-h_0</script></span> column is -1354.808.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">3</span>,],well,aquifer)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">#&gt; [1] -1354.808</span></a></code></pre></div>
+<p>In this last case, the observation location is within the radius of the well casing, which means that the effect of the co-located well is measured a distance of <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-16-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mi&gt;d&lt;/mi&gt;&lt;mi&gt;i&lt;/mi&gt;&lt;mi&gt;a&lt;/mi&gt;&lt;mi&gt;m&lt;/mi&gt;&lt;mrow class=&quot;MJX-TeXAtom-ORD&quot;&gt;&lt;mo&gt;/&lt;/mo&gt;&lt;/mrow&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mn&gt;0.5&lt;/mn&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-106" style="width: 8.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 7.027em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.67em, 1006.97em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-107"><span class="mi" id="MathJax-Span-108" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span class="mo" id="MathJax-Span-109" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mi" id="MathJax-Span-110" style="font-family: STIXGeneral-Italic; padding-left: 0.301em;">d<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span class="mi" id="MathJax-Span-111" style="font-family: STIXGeneral-Italic;">i</span><span class="mi" id="MathJax-Span-112" style="font-family: STIXGeneral-Italic;">a</span><span class="mi" id="MathJax-Span-113" style="font-family: STIXGeneral-Italic;">m</span><span class="texatom" id="MathJax-Span-114"><span class="mrow" id="MathJax-Span-115"><span class="mo" id="MathJax-Span-116" style="font-family: STIXGeneral-Regular;">/</span></span></span><span class="mn" id="MathJax-Span-117" style="font-family: STIXGeneral-Regular;">2</span><span class="mo" id="MathJax-Span-118" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mn" id="MathJax-Span-119" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">0.5</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 1.004em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi><mo>=</mo><mi>d</mi><mi>i</mi><mi>a</mi><mi>m</mi><mrow class="MJX-TeXAtom-ORD"><mo>/</mo></mrow><mn>2</mn><mo>=</mo><mn>0.5</mn></math></span></span><script type="math/tex" id="MathJax-Element-16">r=diam/2=0.5</script></span>. In this case, the results are also valid.</p>
+</div>
+<div id="hydraulic-head-in-an-unconfined-aquifer" class="section level2">
+<h2>Hydraulic head in an unconfined aquifer</h2>
+<p>The solution can also be written for unconfined aquifers in terms of <em>discharge potential</em>, <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-17-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-120" style="width: 0.836em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.658em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1000.6em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-121"><span class="mi" id="MathJax-Span-122" style="font-family: STIXGeneral-Italic;">ϕ</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.218em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ϕ</mi></math></span></span><script type="math/tex" id="MathJax-Element-17">\phi</script></span>: <span class="math display"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><div class="MathJax_Display" style="text-align: center;"><span class="MathJax" id="MathJax-Element-18-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot; display=&quot;block&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;mfrac&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;mrow&gt;&lt;mi&gt;&amp;#x03C0;&lt;/mi&gt;&lt;msub&gt;&lt;mi&gt;K&lt;/mi&gt;&lt;mrow class=&quot;MJX-TeXAtom-ORD&quot;&gt;&lt;mi&gt;s&lt;/mi&gt;&lt;mi&gt;a&lt;/mi&gt;&lt;mi&gt;t&lt;/mi&gt;&lt;/mrow&gt;&lt;/msub&gt;&lt;/mrow&gt;&lt;/mfrac&gt;&lt;mi&gt;log&lt;/mi&gt;&lt;mo&gt;&amp;#x2061;&lt;/mo&gt;&lt;mrow&gt;&lt;mo&gt;(&lt;/mo&gt;&lt;mfrac&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;mi&gt;R&lt;/mi&gt;&lt;/mfrac&gt;&lt;mo&gt;)&lt;/mo&gt;&lt;/mrow&gt;&lt;mo&gt;,&lt;/mo&gt;&lt;/math&gt;" role="presentation" style="text-align: center; position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-123" style="width: 13.217em; display: inline-block;"><span style="display: inline-block; position: relative; width: 11.015em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.967em, 1010.96em, 4.527em, -999.997em); top: -3.509em; left: 0em;"><span class="mrow" id="MathJax-Span-124"><span class="mi" id="MathJax-Span-125" style="font-family: STIXGeneral-Italic;">ϕ</span><span class="mo" id="MathJax-Span-126" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-127" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.348em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-128" style="font-family: STIXGeneral-Italic;">ϕ</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="mn" id="MathJax-Span-129" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span><span class="mo" id="MathJax-Span-130" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mo" id="MathJax-Span-131" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">−</span><span class="mfrac" id="MathJax-Span-132"><span style="display: inline-block; position: relative; width: 2.265em; height: 0px; margin-right: 0.122em; margin-left: 0.122em;"><span style="position: absolute; clip: rect(3.158em, 1000.72em, 4.348em, -999.997em); top: -4.64em; left: 50%; margin-left: -0.354em;"><span class="mi" id="MathJax-Span-133" style="font-family: STIXGeneral-Italic;">Q</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(3.158em, 1002.15em, 4.348em, -999.997em); top: -3.271em; left: 50%; margin-left: -1.068em;"><span class="mrow" id="MathJax-Span-134"><span class="mi" id="MathJax-Span-135" style="font-family: STIXGeneral-Italic;">π<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span><span class="msubsup" id="MathJax-Span-136"><span style="display: inline-block; position: relative; width: 1.61em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.72em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-137" style="font-family: STIXGeneral-Italic;">K<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.063em;"></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="texatom" id="MathJax-Span-138"><span class="mrow" id="MathJax-Span-139"><span class="mi" id="MathJax-Span-140" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">s</span><span class="mi" id="MathJax-Span-141" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">a</span><span class="mi" id="MathJax-Span-142" style="font-size: 70.7%; font-family: STIXGeneral-Italic;">t<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(0.836em, 1002.26em, 1.253em, -999.997em); top: -1.307em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 2.265em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.074em;"></span></span></span></span><span class="mi" id="MathJax-Span-143" style="font-family: STIXGeneral-Regular;">log</span><span class="mo" id="MathJax-Span-144"></span><span class="mrow" id="MathJax-Span-145"><span class="mo" id="MathJax-Span-146" style="vertical-align: -0.414em;"><span style="font-family: STIXSizeTwoSym;">(</span></span><span class="mfrac" id="MathJax-Span-147"><span style="display: inline-block; position: relative; width: 0.717em; height: 0px; margin-right: 0.122em; margin-left: 0.122em;"><span style="position: absolute; clip: rect(3.396em, 1000.42em, 4.17em, -999.997em); top: -4.64em; left: 50%; margin-left: -0.176em;"><span class="mi" id="MathJax-Span-148" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.17em, -999.997em); top: -3.271em; left: 50%; margin-left: -0.295em;"><span class="mi" id="MathJax-Span-149" style="font-family: STIXGeneral-Italic;">R</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; clip: rect(0.836em, 1000.72em, 1.253em, -999.997em); top: -1.307em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 0.717em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.074em;"></span></span></span></span><span class="mo" id="MathJax-Span-150" style="vertical-align: -0.414em;"><span style="font-family: STIXSizeTwoSym;">)</span></span></span><span class="mo" id="MathJax-Span-151" style="font-family: STIXGeneral-Regular;">,</span></span><span style="display: inline-block; width: 0px; height: 3.515em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -1.068em; border-left: 0px solid; width: 0px; height: 2.789em;"></span></span></nobr><span class="MJX_Assistive_MathML MJX_Assistive_MathML_Block" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mi>ϕ</mi><mo>−</mo><msub><mi>ϕ</mi><mn>0</mn></msub><mo>=</mo><mo>−</mo><mfrac><mi>Q</mi><mrow><mi>π</mi><msub><mi>K</mi><mrow class="MJX-TeXAtom-ORD"><mi>s</mi><mi>a</mi><mi>t</mi></mrow></msub></mrow></mfrac><mi>log</mi><mo>⁡</mo><mrow><mo>(</mo><mfrac><mi>r</mi><mi>R</mi></mfrac><mo>)</mo></mrow><mo>,</mo></math></span></span></div><script type="math/tex; mode=display" id="MathJax-Element-18">\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),</script></span> where discharge potential is defined as <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-19-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;msup&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;/msup&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-152" style="width: 3.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.86em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.551em, 1002.86em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-153"><span class="mi" id="MathJax-Span-154" style="font-family: STIXGeneral-Italic;">ϕ</span><span class="mo" id="MathJax-Span-155" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="msubsup" id="MathJax-Span-156" style="padding-left: 0.301em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-157" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -4.342em; left: 0.479em;"><span class="mn" id="MathJax-Span-158" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">2</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.432em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ϕ</mi><mo>=</mo><msup><mi>h</mi><mn>2</mn></msup></math></span></span><script type="math/tex" id="MathJax-Element-19">\phi=h^2</script></span>, and <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-20-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;msub&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-159" style="width: 1.313em; display: inline-block;"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.372em, 1001.07em, 2.562em, -999.997em); top: -2.199em; left: 0em;"><span class="mrow" id="MathJax-Span-160"><span class="msubsup" id="MathJax-Span-161"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.348em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-162" style="font-family: STIXGeneral-Italic;">ϕ</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="mn" id="MathJax-Span-163" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.205em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.218em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>ϕ</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-20">\phi_0</script></span> is the undisturbed discharge potential when <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-21-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;Q&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-164" style="width: 3.039em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.503em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.5em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-165"><span class="mi" id="MathJax-Span-166" style="font-family: STIXGeneral-Italic;">Q</span><span class="mo" id="MathJax-Span-167" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mn" id="MathJax-Span-168" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">0</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Q</mi><mo>=</mo><mn>0</mn></math></span></span><script type="math/tex" id="MathJax-Element-21">Q=0</script></span>.</p>
+<p>Following the same analysis as above but redefining the aquifer as “unconfined”, we further validate the package.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1">aquifer_uconfined &lt;-<span class="st"> </span><span class="kw">define_aquifer</span>(</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="dt">aquifer_type=</span><span class="st">"unconfined"</span>,</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="dt">Ksat=</span><span class="fl">1e-4</span>,</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">  <span class="dt">bounds=</span>aquifer<span class="op">$</span>bounds</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">)</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="kw">print</span>(aquifer_uconfined)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="co">#&gt; # aquifer_type: unconfined</span></a>
+<a class="sourceLine" id="cb8-8" data-line-number="8"><span class="co">#&gt; # Ksat: 1e-04</span></a>
+<a class="sourceLine" id="cb8-9" data-line-number="9"><span class="co">#&gt; # h0: --</span></a>
+<a class="sourceLine" id="cb8-10" data-line-number="10"><span class="co">#&gt; # bounds: </span></a>
+<a class="sourceLine" id="cb8-11" data-line-number="11"><span class="co">#&gt; # A tibble: 4 x 8</span></a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"><span class="co">#&gt;     bID bound_type     m     b    x1    y1    x2    y2</span></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13"><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></a>
+<a class="sourceLine" id="cb8-14" data-line-number="14"><span class="co">#&gt; 1     1 NF           Inf     0     0     0     0  1000</span></a>
+<a class="sourceLine" id="cb8-15" data-line-number="15"><span class="co">#&gt; 2     2 NF             0     0     0     0  1000     0</span></a>
+<a class="sourceLine" id="cb8-16" data-line-number="16"><span class="co">#&gt; 3     3 NF           Inf  1000  1000     0  1000  1000</span></a>
+<a class="sourceLine" id="cb8-17" data-line-number="17"><span class="co">#&gt; 4     4 NF             0  1000     0  1000  1000  1000</span></a>
+<a class="sourceLine" id="cb8-18" data-line-number="18"><span class="co">#&gt; # recharge (undisturbed water table): </span></a>
+<a class="sourceLine" id="cb8-19" data-line-number="19"><span class="co">#&gt;     No recharge zones</span></a></code></pre></div>
+<p>The first point (pID=1) is within the radius of influence of four wells. We can manually calculate <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-22-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;h&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-169" style="width: 3.158em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.622em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.62em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-170"><span class="mi" id="MathJax-Span-171" style="font-family: STIXGeneral-Italic;">h</span><span class="mo" id="MathJax-Span-172" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-173" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 0.955em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.48em, 4.17em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-174" style="font-family: STIXGeneral-Italic;">h</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.479em;"><span class="mn" id="MathJax-Span-175" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.146em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi><mo>−</mo><msub><mi>h</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-22">h-h_0</script></span> using the Thiem solution for the influence of each well</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+phi-phi0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+250.0
+</td>
+<td style="text-align:right;">
+-4993.1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1030.8
+</td>
+<td style="text-align:right;">
+-483.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1030.8
+</td>
+<td style="text-align:right;">
+-483.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+750.0
+</td>
+<td style="text-align:right;">
+-1496.1
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-23-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-176" style="width: 3.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.86em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.86em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-177"><span class="mi" id="MathJax-Span-178" style="font-family: STIXGeneral-Italic;">ϕ</span><span class="mo" id="MathJax-Span-179" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-180" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.348em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-181" style="font-family: STIXGeneral-Italic;">ϕ</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="mn" id="MathJax-Span-182" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.218em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ϕ</mi><mo>−</mo><msub><mi>ϕ</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-23">\phi-\phi_0</script></span> column is -7456.848. We can compare these results with those from <code>anem</code> and <code>get_potential_differential()</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">1</span>,],well,aquifer_uconfined)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="co">#&gt; [1] -7456.848</span></a></code></pre></div>
+<p>We can compare the same results for the second observation point:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+phi-phi0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+279.5
+</td>
+<td style="text-align:right;">
+-4637.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+760.3
+</td>
+<td style="text-align:right;">
+-1452.5
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1152.4
+</td>
+<td style="text-align:right;">
+-128.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+910.0
+</td>
+<td style="text-align:right;">
+-880.5
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1152.4
+</td>
+<td style="text-align:right;">
+-128.7
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-24-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-183" style="width: 3.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.86em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.86em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-184"><span class="mi" id="MathJax-Span-185" style="font-family: STIXGeneral-Italic;">ϕ</span><span class="mo" id="MathJax-Span-186" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-187" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.348em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-188" style="font-family: STIXGeneral-Italic;">ϕ</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="mn" id="MathJax-Span-189" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.218em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ϕ</mi><mo>−</mo><msub><mi>ϕ</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-24">\phi-\phi_0</script></span> column is -7228.309.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">2</span>,],well,aquifer_uconfined)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="co">#&gt; [1] -7228.309</span></a></code></pre></div>
+<p>And the results for the third observation point.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+pID
+</th>
+<th style="text-align:right;">
+wID
+</th>
+<th style="text-align:right;">
+Q
+</th>
+<th style="text-align:left;">
+well_image
+</th>
+<th style="text-align:right;">
+r
+</th>
+<th style="text-align:right;">
+phi-phi0
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Actual
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+-24774.8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-580.3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-580.3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-580.3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+-1
+</td>
+<td style="text-align:left;">
+Image (+Q)
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+-580.3
+</td>
+</tr>
+</tbody>
+</table>
+<p>The sum of the <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-25-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mo&gt;&amp;#x2212;&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;&amp;#x03D5;&lt;/mi&gt;&lt;mn&gt;0&lt;/mn&gt;&lt;/msub&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-190" style="width: 3.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 2.86em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.729em, 1002.86em, 2.92em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-191"><span class="mi" id="MathJax-Span-192" style="font-family: STIXGeneral-Italic;">ϕ</span><span class="mo" id="MathJax-Span-193" style="font-family: STIXGeneral-Regular; padding-left: 0.241em;">−</span><span class="msubsup" id="MathJax-Span-194" style="padding-left: 0.241em;"><span style="display: inline-block; position: relative; width: 1.074em; height: 0px;"><span style="position: absolute; clip: rect(3.158em, 1000.6em, 4.348em, -999.997em); top: -3.985em; left: 0em;"><span class="mi" id="MathJax-Span-195" style="font-family: STIXGeneral-Italic;">ϕ</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span><span style="position: absolute; top: -3.807em; left: 0.658em;"><span class="mn" id="MathJax-Span-196" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">0</span><span style="display: inline-block; width: 0px; height: 3.991em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.282em; border-left: 0px solid; width: 0px; height: 1.218em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ϕ</mi><mo>−</mo><msub><mi>ϕ</mi><mn>0</mn></msub></math></span></span><script type="math/tex" id="MathJax-Element-25">\phi-\phi_0</script></span> column is -27096.162.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">get_potential_differential</span>(loc[loc<span class="op">$</span>pID<span class="op">==</span><span class="dv">3</span>,],well,aquifer_uconfined)</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="co">#&gt; [1] -27096.16</span></a></code></pre></div>
+<p>In this last case, the observation location is within the radius of the well casing, which means that the effect of the co-located well is measured a distance of <span class="math inline"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-26-Frame" tabindex="0" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mi&gt;r&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mi&gt;d&lt;/mi&gt;&lt;mi&gt;i&lt;/mi&gt;&lt;mi&gt;a&lt;/mi&gt;&lt;mi&gt;m&lt;/mi&gt;&lt;mrow class=&quot;MJX-TeXAtom-ORD&quot;&gt;&lt;mo&gt;/&lt;/mo&gt;&lt;/mrow&gt;&lt;mn&gt;2&lt;/mn&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mn&gt;0.5&lt;/mn&gt;&lt;/math&gt;" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-197" style="width: 8.455em; display: inline-block;"><span style="display: inline-block; position: relative; width: 7.027em; height: 0px; font-size: 120%;"><span style="position: absolute; clip: rect(1.67em, 1006.97em, 2.741em, -999.997em); top: -2.557em; left: 0em;"><span class="mrow" id="MathJax-Span-198"><span class="mi" id="MathJax-Span-199" style="font-family: STIXGeneral-Italic;">r<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span class="mo" id="MathJax-Span-200" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mi" id="MathJax-Span-201" style="font-family: STIXGeneral-Italic; padding-left: 0.301em;">d<span style="display: inline-block; overflow: hidden; height: 1px; width: 0.003em;"></span></span><span class="mi" id="MathJax-Span-202" style="font-family: STIXGeneral-Italic;">i</span><span class="mi" id="MathJax-Span-203" style="font-family: STIXGeneral-Italic;">a</span><span class="mi" id="MathJax-Span-204" style="font-family: STIXGeneral-Italic;">m</span><span class="texatom" id="MathJax-Span-205"><span class="mrow" id="MathJax-Span-206"><span class="mo" id="MathJax-Span-207" style="font-family: STIXGeneral-Regular;">/</span></span></span><span class="mn" id="MathJax-Span-208" style="font-family: STIXGeneral-Regular;">2</span><span class="mo" id="MathJax-Span-209" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">=</span><span class="mn" id="MathJax-Span-210" style="font-family: STIXGeneral-Regular; padding-left: 0.301em;">0.5</span></span><span style="display: inline-block; width: 0px; height: 2.562em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.068em; border-left: 0px solid; width: 0px; height: 1.004em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi><mo>=</mo><mi>d</mi><mi>i</mi><mi>a</mi><mi>m</mi><mrow class="MJX-TeXAtom-ORD"><mo>/</mo></mrow><mn>2</mn><mo>=</mo><mn>0.5</mn></math></span></span><script type="math/tex" id="MathJax-Element-26">r=diam/2=0.5</script></span>. In this case, the results are also valid.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+
+<div style="position: absolute; width: 0px; height: 0px; overflow: hidden; padding: 0px; border: 0px; margin: 0px;"><div id="MathJax_Font_Test" style="position: absolute; visibility: hidden; top: 0px; left: 0px; width: auto; padding: 0px; border: 0px; margin: 0px; white-space: nowrap; text-align: left; text-indent: 0px; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; font-size: 40px; font-weight: normal; font-style: normal; font-family: STIXSizeOneSym, sans-serif;"></div></div></body></html>
