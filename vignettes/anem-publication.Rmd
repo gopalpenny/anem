@@ -1,5 +1,5 @@
 ---
-title: "anem-publication"
+title: "An R package and web application for simple groundwater modeling"
 output: 
   html_notebook:
     toc: true
@@ -28,7 +28,7 @@ library(tidyverse)
 ### Abstract 
 
 Numerous tools exist for simulating groundwater flow via finite element models (e.g., MODFLOW) or analytic element models (e.g., gflow).
-These tools allow for analysis of complex groundwater behavior, but such functionality that may not be necessary projects that demand simple groundwater models combined with (1) ease of use or (2) advanced statistical or theoretical analysis.
+These tools allow for analysis of complex groundwater behavior, but such functionality that may not be necessary in projects that demand simple groundwater models combined with (1) ease of use or (2) advanced statistical or theoretical analysis.
 We address each of these needs through the development of a web application and an R package that simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
 Both tools can be used independent of the computer platform, and offer functionality for defining aquifers and pumping wells, determining hydraulic head and lateral flow, calculating drawdown relationships among groups of wells, and estimating travel times for particles.
 The ease of use of the web application should be especially valuabe in low-budget applications, such as small water management agencies or educational settings.
@@ -187,7 +187,7 @@ f1_d <- ggplot() +
                  mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),
                                   labels=c("River","No flow","Open (no boundary)"))) %>%
                  filter(bound_type!="PB"),
-               aes(x1,y1,xend=x2,yend=y2,color=bt),size=1,show.legend = FALSE) +
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=2,show.legend = FALSE) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(0.75,"mm")),color="black") +
   geom_point(data=wells %>% filter(well_image=="Actual"),
@@ -236,6 +236,14 @@ The analytic element method represents the aquifer domain as the sum of analytic
 
 This allows for the principle of superposition, where $f(a h_1 + b h_2) = a f(h_1) + b f(h_2)$. In the studies of aquifers, the effect of pumping from multiple wells can be calculated as the sum of the effects from individual wells, which can be estimated separately.
 
+*confined* vs *unconfined flow*
+
+*background flow*
+
+**Recharge**
+
+Uniform constant flow.
+
 **Pumping from a single well**
 
 We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-dimensional and parallel to the aquifer bottom, which is horizontal. Generally speaking, this means that the thickness of the aquifer must be considerably less than the lateral extent of the aquifer, and wells must be screened from the bottom to the top of the wetted portion of the aquifer. Flow is governed by Darcy's law which, in the case of radial flow to a well, can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity ($r<R$) of a pumping well:
@@ -251,12 +259,18 @@ The solution can also be written for unconfined aquifers in terms of *discharge 
 $$\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
 where discharge potential is defined as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potential when $Q=0$.
 
-**Method of images**
+
+*Radius of influence*
+
+**Boundary conditions**
+
+e.g., compare with modflow -- inside the grid.
 
 In the analytic element method, boundaries are mimicked by strategic placement of wells. For instance, two wells with equivalent pumping mimic a no-flow boundary along the line of equal distance, because no flow occurs across this line (Figure 1c, horizontal boundary). Two wells pumping at an equivalent rate but opposite sign mimic a constant head boundary. In this case, the flow lines are perpendicular to the equal distance line meaning that no flow occurs along the boundary and it is of a constant head (Figure 1c, vertical boundary). This approach can be used to exactly reproduce no-flow and constant head boundaries by successively imaging wells across the boundaries.
 
+
 ```{r f1_plot, echo=FALSE, fig.width=10, fig.height=2.2, fig.cap=cap}
-cap <- "Figure 1: Basic functionality of anem R package. (a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario."
+cap <- "Figure 1: Basic functionality of anem R package. (a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Stream goes from gaining to losing."
 # ggpubr::ggarrange(f1_a,f1_b,f1_c,f1_d,nrow=1,labels=c("(a)","(b)","(c)","(d)"),widths=c(0.32,0.2,0.2,0.32)) %>% 
 # ggpubr::annotate_figure(bottom = "This is the caption.")
 f1_a | f1_b | f1_c | f1_d
@@ -295,6 +309,8 @@ One of the most important advantages of this package is the ability to quickly c
 \end{align}
 
 In other words, this framework of drawdown relationships provides simple ways to incorporate groundater behavior into complex models in a realistic framework, and these relationships are easily estimated with the *anem* package.
+
+**Particle tracking**
 
 ## Web application
 
