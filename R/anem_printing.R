@@ -13,10 +13,19 @@ print.aquifer <- function(aquifer) {
   if (aquifer$aquifer_type == "confined") {
     standard_columns <- c(standard_columns,"z0")
   }
+  if (any(names(aquifer)=="n")) {
+    standard_columns <- c(standard_columns,"n")
+  }
   for (i in 1:length(standard_columns)) {
     value <- aquifer[standard_columns[i]]
     print_value <- ifelse(is.null(value[[1]]),"--",value)
     cat(paste0("# ",standard_columns[i],": ",print_value,"\n"))
+  }
+
+  # Any additional named items?
+  additional_names <- aquifer_names[!(aquifer_names %in% c(standard_columns,"bounds","recharge"))]
+  if (length(additional_names) > 0) {
+    cat("# Additional named objects:",paste(additional_names,collapse=", "),"\n")
   }
 
   # Print boundaries
@@ -33,11 +42,5 @@ print.aquifer <- function(aquifer) {
     print(aquifer$recharge)
   } else {
     cat("    No recharge zones\n")
-  }
-
-  # Any additional named items?
-  additional_names <- aquifer_names[!(aquifer_names %in% c(standard_columns,"bounds","recharge"))]
-  if (length(additional_names) > 0) {
-    cat("# Additional, non-essential named objects:",paste(additional_names,collapse=", "))
   }
 }
