@@ -4,7 +4,7 @@
 \alias{get_confined_flowlines}
 \title{Get flowlines in confined aquifer}
 \usage{
-get_confined_flowlines(wells, aquifer, nominal_levels = 20,
+get_confined_flowlines(wells, aquifer, nominal_levels = 40,
   flow_dim = c(100, 100))
 }
 \arguments{

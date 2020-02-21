@@ -11,7 +11,7 @@ particle_velocity_m_day(t, loc, params)
 
 \item{loc}{loc as c(x,y)}
 
-\item{params}{params for radau -- must included $wells, $aquifer$Ksat, $n}
+\item{params}{params for radau -- must included $wells, $aquifer$Ksat, $n, $direction (+1 or -1 for reverse)}
 }
 \value{
 Returns the velocity of the particle in m/day

@@ -4,7 +4,8 @@
 \alias{track_particle}
 \title{Track particle in aquifer}
 \usage{
-track_particle(loc, wells, aquifer, t_max = 365 * 10)
+track_particle(loc, wells, aquifer, t_max = 365 * 10, reverse = FALSE,
+  method = "radau1")
 }
 \arguments{
 \item{loc}{Coordinate vector as \code{c(x, y)}}
@@ -14,6 +15,8 @@ track_particle(loc, wells, aquifer, t_max = 365 * 10)
 \item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}}
 
 \item{t_max}{Maximum time, in days, for which to calculate travel time}
+
+\item{reverse}{If \code{TRUE}, particle tracking will run in reverse. Used for well capture zones}
 }
 \value{
 Returns a data.frame containing the time and locations
@@ -38,7 +41,9 @@ wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam
   define_wells() \%>\% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 
-system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
+system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau1"))
+particle_path[nrow(particle_path),]
+system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau2"))
 particle_path[nrow(particle_path),]
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
@@ -48,7 +53,11 @@ ggplot() +
   coord_equal()
 
 
-system.time(particle_path <- track_particle(c(725,825), wells, aquifer))
+system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau1"))
+particle_path[nrow(particle_path),]
+system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau2"))
+particle_path[nrow(particle_path),]
+system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="rk4"))
 particle_path[nrow(particle_path),]
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
