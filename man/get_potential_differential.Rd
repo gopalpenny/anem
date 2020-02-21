@@ -40,4 +40,7 @@ wells <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(
 grid_pts <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
 aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
 get_potential_differential(grid_pts,wells,aquifer_unconfined)
+
+get_potential_differential(c(1,1))
+get_potential_differential(data.frame(x=c(1,1),y=c(2,2)))
 }

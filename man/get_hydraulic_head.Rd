@@ -46,6 +46,7 @@ aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=50,
 get_hydraulic_head(well1,loc=grid_pts,aquifer=aquifer_unconfined)
 get_hydraulic_head(well2,loc=grid_pts,aquifer=aquifer_unconfined)
 get_hydraulic_head(wells,loc=grid_pts,aquifer=aquifer_unconfined)
+get_hydraulic_head(NULL,loc=grid_pts,aquifer=aquifer_unconfined)
 
 # Ensure potentials are even when pumping is symmetric (and opposite sign)
 well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.5,R=300)

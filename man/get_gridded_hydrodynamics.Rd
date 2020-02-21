@@ -51,12 +51,11 @@ ggplot() +
   geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y),shape=21) +
   coord_equal()
 
-wells <- define_wells(Q=0.001,x=10,y=10,R=10,diam=1)
 recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),
 flow_main=.001,flow_opp=.002,x0=1000,y0=1000)
 bounds <- define_bounds(data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(0,0,1000,1000)))
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params,bounds=bounds)
-gridded <- get_gridded_hydrodynamics(wells,aquifer,c(20,20),c(8,8))
+gridded <- get_gridded_hydrodynamics(wells=NULL,aquifer,c(20,20),c(8,8))
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
