@@ -40,7 +40,9 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   define_wells() %>% generate_image_wells(aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 #'
-#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
+#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau1"))
+#' particle_path[nrow(particle_path),]
+#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau2"))
 #' particle_path[nrow(particle_path),]
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
@@ -50,7 +52,11 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   coord_equal()
 #'
 #'
-#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer))
+#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau1"))
+#' particle_path[nrow(particle_path),]
+#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau2"))
+#' particle_path[nrow(particle_path),]
+#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="rk4"))
 #' particle_path[nrow(particle_path),]
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
@@ -64,7 +70,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'
 #' system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
 #' particle_path[nrow(particle_path),]
-track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE) {
+track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, method = "radau1") {
 
   # function for roots (ie, when to stop numerical integration) -- stop the integration if the particle enters a well
   rootfun <- function(t, x, params) {
@@ -108,18 +114,20 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE)
   while (all(d_wells > params$orig_wells$diam/1) & d_bounds > 1 & sum(abs(v)) > 0 & particle_status == "On path" & i < 100) {
     # print(i)
 
-    # get new travel time guess -- this is two times the shortest-path time to nearest object at current speed
+    start_loc <- as.numeric(last[c("x","y")])
     min_dist <- min(d_wells,d_bounds)
+
+    # get new travel time guess -- this is two times the shortest-path time to nearest object at current speed
     # travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2) # original specification. now multiply by 2 to speed things up if possible
-    travel_time_guess <- min_dist * 2 / sqrt(v[1]^2 + v[2]^2) # multiply by 2 -- Radau seems to allow this
 
     # get particle tracking based on first guess of travel time
     ########################################################
     ########################################################
     # ptm <- proc.time()
-    start_loc <- as.numeric(last[c("x","y")])
-    new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50) ### TESTED AND WORKS (BUT SLOWLY)
-    if (TRUE) {
+    if (method == "radau1") { # works
+      message("Using method: radau1")
+      travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2)
+      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50) ### TESTED AND WORKS (BUT SLOWLY)
       # radau chosen to allow a root function which stops integration when the particle reaches a well or boundary
       # if the time guess is multiplied by 2, the particle can apparently skip over boundaries -- e.g.,
       # particle_path <- track_particle(loc=c(600,500), wells, aquifer) with the examples in the documentation
@@ -130,16 +138,40 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE)
       # new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day,
       #                                parms=params, rootfunc = rootfun)
       # proc.time() - ptm
-    } else {
+    } else if (method == "radau2") {
+      message("Using method: radau2")
+      travel_time_guess <- min_dist * 2 / sqrt(v[1]^2 + v[2]^2) # multiply by 2 -- Radau seems to allow this
+      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50)
+      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
+                                     parms=params, rootfunc = rootfun, atol = 1e-2)
+    } else if (method == "radau_tmax") {
+      # note: this version runs quickly over short time periods. But it failed in the simulation in figs_test -- I stopped the sim after running for 11.6 minutes
+      message("Using method: radau_tmax")
+      travel_time_guess <- t_max
+      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 100)
+      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
+                                     parms=params, rootfunc = rootfun, atol = 1e-2)
+    } else if (method == "rk4") {
+      message("Using method: radau_tmax")
+      travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2) #
+      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 100)
+      new_particle <- deSolve::rk4(start_loc, new_times, particle_velocity_m_day,
+                                     parms=params)
+    } else if (FALSE) {
       new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
                                      parms=params, atol = 1e-2, events = list(func= rootfun, root= TRUE, terminalroot=1))
+    } else if (FALSE) {
       new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day, method = "rk23bs",
                                   parms=params, atol = 1e-2, events = list(func= rootfun, root= TRUE))
+    } else if (FALSE) {
       new_particle <- deSolve::ode(start_loc, new_times, particle_velocity_m_day,
                                    parms=params, atol = 1e-2, rootfun = rootfun, events = list(func= rootfun, root= TRUE))
+    } else if (FALSE) {
       new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day,
                                      parms=params, rootfunc = rootfun, atol = 1e-2)
       identical(new_particle1,new_particle)
+    } else {
+      stop("method not appropriately specified")
     }
     ########################################################
     ########################################################
@@ -167,10 +199,10 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE)
       particle_status <- "Zero velocity"
     } else if (suppressWarnings(particle[nrow(particle),"time"] >= t_max)) {
       particle_status <- "Max time reached"
+    } else if (i >= 100) {
+      warning("track_particle max iterations (i=100) reached.")
+      particle_status <- "Max itrations reached"
     }
-  }
-  if(i>=100) {
-    warning("track_particle max iterations (i=100) reached.")
   }
 
   particle_path <- particle %>% tibble::as_tibble() %>% setNames(c("time","x","y")) %>% dplyr::mutate(status="On path")
@@ -220,12 +252,15 @@ wells_in_direction <- function(loc, v, wells) {
 #'   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=cl0,aes(x,y,color=as.factor(line))) +
 #'   coord_equal()
-get_confined_flowlines <- function(wells,aquifer,nominal_levels=20, flow_dim=c(100,100)) {
+get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(100,100)) {
 
+  # define grid groundaries
   grid_bounds <- get_quad_vertices(aquifer$bounds) %>% dplyr::filter(!is.na(x)) %>%
     dplyr::summarize(xmin=min(x),xmax=max(x),ymin=min(y),ymax=max(y))
+  # define grid
   loc <- with(grid_bounds,tidyr::crossing(x=seq(xmin,xmax,length.out=flow_dim[1]),
                                                     y=seq(ymin,ymax,length.out=flow_dim[2])))
+  # get stream function
   df <- loc %>%
     dplyr::bind_cols(streamfunction=get_stream_function(loc,wells,aquifer)) %>%
     dplyr::rename(z=streamfunction)
@@ -294,7 +329,6 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=20, flow_dim=c(1
 #' @param n_particles number of particles to initialize for each well
 #' @param type specifie which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.
 #' @importFrom magrittr %>%
-#' @export
 #' @details
 #' \itemize{
 #'   \item "all": Returns a list containing all three named objects described below.
@@ -305,10 +339,10 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=20, flow_dim=c(1
 #' @examples
 #' aquifer <- aquifer_example
 #' wells <- define_wells(wells_example[c(3,4,5),]) %>% generate_image_wells(aquifer)
-#' get_capture_zone(wells,aquifer, wIDs = c(1,6))
+#' get_capture_zone(wells,aquifer, wIDs = c(1,2))
 #' ggplot() + geom_point(data=wells,aes(x,y,color=wID))
 get_capture_zone <- function(wells, aquifer, wIDs, t_max, n_particles = 8, type="all") {
-  theta <- seq(0,2*pi,2*pi/n_particles)
+  theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
   pts <- data.frame(dx = cos(theta), dy = sin(theta)) %>% dplyr::mutate(pID = dplyr::row_number())
   wells_capture <- wells %>%
     dplyr::filter(wID %in% wIDs)
@@ -323,7 +357,7 @@ get_capture_zone <- function(wells, aquifer, wIDs, t_max, n_particles = 8, type=
   for (i in 1:nrow(particles_matrix)) {
     print(i)
     loc <- particles_matrix[i,c("xp","yp")]
-    particle <- track_particle(loc, wells, aquifer, t_max, reverse=TRUE) %>%
+    particle <- track_particle(loc, wells, aquifer, t_max = 1000, reverse=TRUE, method="radau_tmax") %>%
       dplyr::mutate(wID=particles_matrix[i,"wID"],pID=particles_matrix[i,"pID"])
     if (i == 1) {
       particle_path_df <- particle
@@ -337,10 +371,14 @@ get_capture_zone <- function(wells, aquifer, wIDs, t_max, n_particles = 8, type=
     print(elapsed_time)
   }
 
-  ggplot() +
+  p_radau_tmax <- ggplot() +
+    geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
     geom_path(data=particle_path_df,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
-    geom_point(data=wells %>% filter(wID==orig_wID,wID %in% c(1,6)),aes(x,y,color=as.factor(wID)),size=3) +
-    coord_equal()
+    geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
+    geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
+    scale_shape_manual(values=c(3,4,5,0,1)) +
+    coord_equal() + labs(caption = "radau_tmax method with travel time guess and t_max = 1000 days. elapsed time = 10.2 min")
+  ggsave("figs_test/radau_tmax.png",p_radau_tmax,width=7,height=4)
 
   particle_endpoint %>% pull(time_days) %>% mean()
 
