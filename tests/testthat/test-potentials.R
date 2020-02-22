@@ -112,7 +112,8 @@ recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_ma
 con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 head <- c(0,1,2,1,2,1,2,1,0) #get_hydraulic_head(rech_loc,no_wells,con_aquifer) %>% round(3) %>% paste(collapse=",")
 df <- data.frame(dx=c(-1,-1,0,-1,0,1,0,1,1),
-                 dy=c(-1,-1,0,-1,0,1,0,1,1))
+                 dy=c(-1,-1,0,-1,0,1,0,1,1)) %>%
+  dplyr::mutate_all(function(x) ifelse(x==0,1,x))
 test_that("get_hydraulic_head works for \"D\" recharge, confined",{
   expect_equal(round(get_hydraulic_head(rech_loc,no_wells,con_aquifer),3),head)
 })
@@ -126,7 +127,8 @@ test_that("get_hydraulic_head works for \"D\" recharge, confined",{
   expect_equal(round(get_hydraulic_head(rech_loc,no_wells,un_aquifer),3),head)
 })
 df <- data.frame(dx=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1),
-                 dy=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1))
+                 dy=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1)) %>%
+  dplyr::mutate_all(function(x) ifelse(x==0,0.098,x))
 test_that("get_flowdir works for \"D\" recharge, unconfined",{
   expect_equal(round(get_flowdir(rech_loc,no_wells,un_aquifer),3),df)
 })
@@ -155,4 +157,8 @@ constant_head_boundary <- loc %>%
   dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer))
 test_that("get_stream_function accurately models constant-head boundary perpendicular to boundary and intersecting wells",{
   expect_equal(constant_head_boundary %>% dplyr::filter(y==0) %>% purrr::pluck("streamfunction") %>% table() %>% length(),2)
+})
+
+test_that("get_flowdir_confined works for recharge with no wells -- need to set up this test!",{
+  expect_equal(TRUE,FALSE)
 })

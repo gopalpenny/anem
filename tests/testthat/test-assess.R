@@ -22,8 +22,8 @@ wells <- wells_actual %>% generate_image_wells(aquifer)
 
 test_that("get_bounds_behavior works shows no normal flow for NF boundaries and constant head for CH boundaries",{
   expect_equal(get_bounds_behavior(wells_actual,aquifer) %>%
-                 dplyr::group_by(bID) %>% dplyr::summarize(flow_normal=sum(flow_normal)) %>% purrr::pluck(2) %>% round(6),
-               c(0.000519,-0.000543,-0.000381, 0.000484))
+                 dplyr::group_by(bID) %>% dplyr::summarize(flow_normal=sum(flow_normal)) %>% purrr::pluck(2) %>% round(5),
+               c(0.00052,-0.00054,-0.00038, 0.00049)) # c(0.000519,-0.000543,-0.000381, 0.000484)) used for more precise Richardson approx of flow
 })
 
 
