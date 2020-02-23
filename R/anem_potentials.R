@@ -361,11 +361,18 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
 #' aquifer_norecharge <- define_aquifer("confined",1,h0=0,z0=1)
 #' aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
-#' loc <- expand.grid(x=9:11,y=9:11)
+#' loc <- expand.grid(x=-1:1,y=-1:1)
 #' (a <- get_flowdir(loc,wells,aquifer_recharge))
 #' (b <- get_flowdir(loc,wells,aquifer_norecharge))
 #' (d <- get_flowdir(loc,NULL,aquifer_recharge))
 #' b + d - a
+#'
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,10),flow_main=1,flow_opp=1,x0=0,y0=0)
+#' aquifer_norecharge <- define_aquifer("confined",1,h0=0,z0=1)
+#' aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' loc <- expand.grid(x=9:11,y=9:11)
+#' (d <- get_flowdir(loc,NULL,aquifer_recharge))
+#' cbind(loc,d)
 get_flowdir_confined <- function(loc, wells, aquifer) {
 
   df_input <- any(grepl("data.frame",class(loc)))
@@ -416,11 +423,11 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
       fd_r_y <- rep(rech$y_term,mj)
     # 2. Recharge type: Divide
     } else if (rech$recharge_type == "D") {
-      y_side <- sign(y_loc - (rech$divide_m * x_loc + rech$divide_b))
-      y_side <- ifelse(is.nan(y_side),Inf,y_side)
-      x_side_Inf <- sign(x_loc - params$divide_b)
-      # main side indicates locations on "main" side of divide
-      main_side <- y_side == params$main_side_y | (x_side_Inf == rech$main_side_x & abs(rech$divide_m) == Inf)
+      if (abs(rech$divide_m)!=Inf) {
+        main_side <- sign(y_loc - (rech$divide_m * x_loc + rech$divide_b)) != -rech$main_side_y
+      } else {
+        main_side <- sign(x_loc - rech$divide_b) != -rech$main_side_x
+      }
 
       fd_r_x <- rep(rech$x_term_main,mj)
       fd_r_x[!main_side] <- rech$x_term_opp
@@ -446,9 +453,9 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
     stop("aquifer_type must be confined for get_flowdir_confined")
   }
   if (df_input) {
-    fd <- data.frame(dx=dx + fd_r_x,dy=dy + fd_r_y)
+    fd <- data.frame(dx=dx - fd_r_x,dy=dy - fd_r_y)
   } else {
-    fd <- c(dx + fd_r_x, dy + fd_r_y)
+    fd <- c(dx - fd_r_x, dy - fd_r_y)
   }
 
   return(fd)
