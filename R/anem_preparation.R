@@ -214,7 +214,7 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' }
 #' }
 #' }
-#' @section Potential future implementation:
+#' @section Potential future implementation
 #' \describe{
 #' \item{Head boundaries, "H"}{This is not yet implemented. It would allow the head profile to be specified by 2 or 3 points,
 #' where the result is steady uniform flow determined by the hydraulic gradient between head at the \code{recharge_vector}
@@ -234,11 +234,25 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' The parameters \code{x_term} and \code{y_term} specify the flow direction, and their
 #' calculation depends on \code{aquifer_type} as follows:
 #' \describe{
-#' \item{"confined"}{\eqn{x_term, y_term ~ Q / (Ksat z0)}. They are equivalent to -dh/dx and -dh/dy.
-#' Head differential in the x-direction is therefore \eqn{h - h0 = (x-x0) x_term}.
-#' Flow per unit length in the x-direction is \eqn{Qx/L = x_term Ksat z0}.}
-#' \item{"unconfined"}{\eqn{x_term, y_term ~ 2 Q / Ksat}. They are equivalent to -dh^2/dx and -dh^2/dy.
-#' Change in discharge potential in the x-direction is therefore \eqn{h^2- h0^2 = (x-x0) x_term}}
+#' \item{"confined"}{\eqn{x_term, y_term ~ - Q / (Ksat z0)}. They are equivalent to dh/dx and dh/dy.
+#' Head differential in the x-direction with respect to some x = x0, h = h0 is therefore
+#' \eqn{h - h0 = (x-x0) x_term}.
+#' Flow per unit length in the x-direction is \eqn{Qx/L = -x_term Ksat z0}. They are defined as:
+#' \itemize{
+#' \item \code{x_term}: -flow * cos(theta) * sign(dx) / (Ksat * z0)
+#' \item \code{y_term}: -flow * sin(theta) * sign(dy) / (Ksat * z0)
+#' }
+#' where sin(theta) * sign(dx) is the component of \code{recharge_vector} in the x direction.
+#' }
+#' \item{"unconfined"}{\eqn{x_term, y_term ~ - 2 Q / Ksat}. They are equivalent to dh^2/dx and dh^2/dy.
+#' Change in discharge potential in the x-direction with respect to some x = x0, h = h0 is therefore
+#' \eqn{h^2- h0^2 = (x-x0) x_term}. They are defined as:
+#' \itemize{
+#' \item \code{x_term}: -2 * flow * cos(theta) * sign(dx) / Ksat
+#' \item \code{y_term}: -2 * flow * sin(theta) * sign(dy) / Ksat
+#' }
+#' where sin(theta) * sign(dx) is the component of \code{recharge_vector} in the x direction.
+#' }
 #' }
 #' @examples
 #' aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
