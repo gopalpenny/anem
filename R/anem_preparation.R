@@ -166,7 +166,7 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' Define recharge as undisturbed water table gradients. Note that recharge acts as if the
 #' aquifer boundaries did not exist. Therefore, when parameterizing recharge, care must be taken
 #' to ensure only plausible scenarios.
-#' @param params A list containing any of the named or unnamed (i.e, in \code{...}) input parameters.
+#' @param recharge_params A list containing any of the named or unnamed (i.e, in \code{...}) input parameters.
 #' If any named arguments are missing, they will be replaced by items in this list.
 #' @param recharge_type Type of recharge gradient. One of "F" (uniform flow),
 #' "H" (head boundaries), or "D" (recharge divide)
@@ -183,10 +183,40 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' denominator is perpendicular to the recharge vector. This \code{recharge_type} requires parameters:
 #' \itemize{
 #' \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
-#' \item \code{flow}: Flow in cumec
+#' \item \code{flow}: Flow in cumec, per m (perpendicular to the flow vector)
+#' }
+#' The function returns a list of named parameters including:
+#' \itemize{
+#' \item All of the input parameters
+#' \item \code{scenario}: A string combining "c" or "u" for aquifer type, and the recharge type
+#' \item \code{x_term}, \code{y_term}: flow direction. See Value for details.
 #' }
 #' }
-#' \item{Head boundaries, "H"}{NOT YET IMPLEMENTED. This allows the head profile to be specified by 2 or 3 points,
+#' \item{Recharge divide, "D"}{This allows a uniform constant flow in opposite directions on
+#' both sides of a divide. The divide goes through the \code{recharge_vector} origin \code{x1, y1}
+#' and is perpendicular to the \code{recharge_vector}. Flow on either side is specified as cumec/m, where the length dimension in the
+#' denominator is parallel to the to the recharge divide. This \code{recharge_type} requires parameters:
+#' \itemize{
+#' \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
+#' \item \code{flow_main}: Flow in cumec in the direction of the \code{recharge_vector}, per m.
+#' \item \code{flow_opp}: Flow in cumec the opposite direction of the \code{recharge_vector}, per m.
+#' Positive value means flow away from divide.
+#' }
+#' The function returns a list of named parameters including:
+#' \itemize{
+#' \item All of the input parameters
+#' \item \code{scenario}: A string combining "c" or "u" for aquifer type, and the recharge type
+#' \item \code{h0_divide}: Hydraulic head at the divide
+#' \item \code{divide_m}, \code{divide_b}: Slope and aspect of dividing line
+#' \item \code{main_side_x}, \code{main_side_y}: Direction (+1 or -1) of flow_main relative to divide
+#' \item \code{x_term_main}, \code{y_term_main}: \code{x_term} and \code{y_term} for main direction of flow. See Value for details.
+#' \item \code{x_term_opp}, \code{y_term_opp}: \code{x_term} and \code{y_term} for opposite direction of flow. See Value for details.
+#' }
+#' }
+#' }
+#' @section Potential future implementation:
+#' \describe{
+#' \item{Head boundaries, "H"}{This is not yet implemented. It would allow the head profile to be specified by 2 or 3 points,
 #' where the result is steady uniform flow determined by the hydraulic gradient between head at the \code{recharge_vector}
 #' origin and head at the other 1 (or 2) point(s). Note that \code{aquifer$h0} is ignored with this option.
 #' This \code{recharge_type} requires parameters:
@@ -197,24 +227,18 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' If this is specified, there will be a watershed divide
 #' }
 #' }
-#' \item{Recharge divide, "D"}{This allows a uniform constant flow in opposite directions on
-#' both sides of a divide. The divide goes through the \code{recharge_vector} origin \code{x1, y1}
-#' and is perpendicular to the \code{recharge_vector}. Flow on either side is specified as cumec/m, where the length dimension in the
-#' denominator is parallel to the to the recharge divide. This \code{recharge_type} requires parameters:
-#' \itemize{
-#' \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
-#' \item \code{flow_main}: Flow in the direction of the \code{recharge_vector}.
-#' \item \code{flow_opp}: Flow in the opposite direction of the \code{recharge_vector}.
-#' Positive value means flow away from divide.
-#' }
-#' }
 #' }
 #' @export
 #' @return
-#' The function returns a list containing two elements:
+#' The function returns a list containing the elements described in Details.
+#' The parameters \code{x_term} and \code{y_term} specify the flow direction, and their
+#' calculation depends on \code{aquifer_type} as follows:
 #' \describe{
-#' \item{recharge_params}{A list of all required parameters for recharge_func, as described above in the "Details" section.}
-#' \item{recharge_func}{A function that takes \code{recharge_params} and {aquifer} as inputs}
+#' \item{"confined"}{\eqn{x_term, y_term ~ Q / (Ksat z0)}. They are equivalent to -dh/dx and -dh/dy.
+#' Head differential in the x-direction is therefore \eqn{h - h0 = (x-x0) x_term}.
+#' Flow per unit length in the x-direction is \eqn{Qx/L = x_term Ksat z0}.}
+#' \item{"unconfined"}{\eqn{x_term, y_term ~ 2 Q / Ksat}. They are equivalent to -dh^2/dx and -dh^2/dy.
+#' Change in discharge potential in the x-direction is therefore \eqn{h^2- h0^2 = (x-x0) x_term}}
 #' }
 #' @examples
 #' aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
