@@ -17,17 +17,17 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'
 #' Track a particle in the aquifer from an original location to a pumping well,
 #' aquifer boundary, or outside of the wells ROI. Coordinates must be in meters.
-#' @param loc Coordinate vector as \code{c(x, y)}
-#' @param wells Wells \code{data.frame} object, containing well images.
-#' @param aquifer Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}
+#' @param loc Coordinate vector as \code{c(x, y)} or \code{data.frame} with \code{x} and \code{y} columns
+#' @param wells Wells \code{data.frame} object, containing well images
+#' @param aquifer Aquifer as an \code{aquifer} object, with \code{Ksat}, porosity, \code{n}, and boundaries (which are used to calculate gridded velocities)
 #' @param t_max Maximum time, in days, for which to calculate travel time
 #' @param reverse If \code{TRUE}, particle tracking will run in reverse. Used for well capture zones
 #' @param dL Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
 #' any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
 #' than the grid spacing to ensure that particles are captured by wells.
 #' @details
-#' This function numerically integrates particle paths using the Euler method. The time step of integration is
-#' variable -- each time step is calculated so that the particle advances by a distance of dL.
+#' This function numerically integrates particle paths using the Euler method. The time step of integration depends on velocity.
+#' Each time step is set so that the particle advances by a distance of dL (although there is a maximum time step 1 year).
 #' Particle tracking continues as long as:
 #' \itemize{
 #' \item The particle has not encountered a well or boundary
@@ -38,7 +38,9 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
 #' step is calculated using bilinear interpolation.
 #' @return
-#' Returns a data.frame containing the time and locations of particle.
+#' Returns a data.frame containing the time and locations of particle. If \code{loc} is a \code{data.frame},
+#' columns in \code{loc} not named x or y are included in results.
+#' @importFrom magrittr %>%
 #' @export
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -47,18 +49,19 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   define_wells() %>% generate_image_wells(aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 #'
-#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
+#' system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer))
 #' particle_path[nrow(particle_path),]
 #'
-#' loc <- data.frame(x=c(600,725,900),y=c(500,825,50))
-#' system.time(particle_path <- track_particle(loc, wells, aquifer))
+#' loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700)) %>% dplyr::mutate(p=letters[row_number()])
+#' system.time(particle_path <- track_particles(loc, wells, aquifer, t_max=365*100))
+#' particle_path %>% filter(status!="On path")
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
-#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
-#'   geom_path(data=particle_path,aes(x,y),color="red") +
+#'   geom_path(data=particle_path,aes(x,y,color=p)) +
 #'   coord_equal()
-track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto") {
+track_particles <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto") {
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
@@ -92,7 +95,7 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
     do.call(rbind,lapply(split(terminal_wells,1:nrow(terminal_wells)),
                          function(well,df) df[which.min(sqrt((df$x - well$x)^2 +
                                                                (df$y - well$y)^2))[1],c("x","y")], df=gridvals)) %>%
-    mutate(well_cell=TRUE)
+    dplyr::mutate(well_cell=TRUE)
   stop_sim <- gridvals %>% dplyr::left_join(well_grid_pts,by=c("x","y")) %>%
     dplyr::mutate(inside_aquifer=check_point_in_aquifer(x,y,aquifer),
                   inside_well=!is.na(well_cell),
@@ -136,7 +139,7 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
       v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
       # calculate speed (v) and timestep (dt)
       v <- sqrt(v_x^2 + v_y^2)
-      dt <- dL / v
+      dt <- min(dL / v, 365)
 
       # get particle_i movement
       dx <- v_x * dt
@@ -168,16 +171,17 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
 
     particle_i_path <- particle_i %>% tibble::as_tibble() %>% setNames(c("time","x","y")) %>%
       dplyr::mutate(status="On path",
-                    id=i) %>%
-      dplyr::rename(time_days=time)
+                    i=i) %>%
+      dplyr::rename(time_days=time) %>%
+      dplyr::bind_cols(loc %>% dplyr::select(-x,-y) %>% dplyr::slice(rep(i,nrow(particle_i))))
     particle_i_path$status[nrow(particle_i_path)] <- particle_status
     if (i == 1) {
-      particles <- particle_i_path
+      particle_paths <- particle_i_path
     } else {
-      particles <- rbind(particles,particle_i_path)
+      particle_paths <- rbind(particle_paths,particle_i_path)
     }
   }
-  return(particle_path)
+  return(particle_paths)
 }
 
 
@@ -226,7 +230,7 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 
 
     a <- cl0 %>% dplyr::group_by(level,line) %>%
-      dplyr::mutate(i=row_number(),
+      dplyr::mutate(i=dplyr::row_number(),
                     x_i=x-well_i$x,
                     y_i=y-well_i$y,
                     theta=get_theta(x_i,y_i),
@@ -246,39 +250,16 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
   # ggplot() +
 }
 
-# df <- constant_head_boundary
-# # df %>% tidyr::complete(x,y) %>% purrr::pluck("z") %>% filter(is.na(z)) %>% any()
-# # df %>% tidyr::complete(x,y) %>% filter(is.na(z),!is.nan(z))
-#
-# a <- df %>% group_by(x) %>% arrange(x,y) %>% mutate(d=abs(z-lag(z))) %>% filter(d==max(d,na.rm=TRUE))
-#
-# cl0 <- get_contourlines(df,nlevels = 20)
-# cl <- cl0 %>% mutate(dist=sapply(y,function(a) min(abs(a-wells_constant_head$y)))) # %>% filter(dist>y_diff*2)
-# cl <- cl %>% group_by(line,level) %>% mutate(min_dist = min(dist),max_y=max(y)) %>% filter(min_dist < 2, max_y > 150)
-#
-# cl1 <- get_contourlines(df,levels = unique(cl$level)+1e-2)
-# ggplot() +
-#   geom_raster(data=constant_head_boundary,aes(x,y,fill=streamfunction),alpha=0.5) +
-#   # geom_contour(data=constant_head_boundary,aes(x,y,z=head),bins=20,linetype="dashed",color="black") +
-#   # geom_contour(data=constant_head_boundary,aes(x,y,z=streamfunction),bins=20,color="black") +
-#   # geom_path(data=cl,aes(x,y,group=line,color=level)) +
-#   geom_path(data=cl0,aes(x,y,group=line),color="red",alpha=0.5) +
-#   geom_path(data=cl1,aes(x,y,group=line),color="black",alpha=0.5) +
-#   # geom_point(data=wells_constant_head,aes(x,y,color=well_type),size=3,shape=21) +
-#   # theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
-#   coord_equal()
-#
-# a <- df %>% filter(x==0) %>% arrange(y)
-
 #' Get capture zone
 #'
 #' Get the capture zone for one or more wells
-#' @inheritParams track_particle
+#' @inheritParams track_particles
 #' @param wID numeric value (or vector) containing wID for wells at which to generate capture zones.
 #' @param t_max number of days to run particle tracking
 #' @param n_particles number of particles to initialize for each well
 #' @param type specifie which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.
 #' @importFrom magrittr %>%
+#' @export
 #' @details
 #' \itemize{
 #'   \item "all": Returns a list containing all three named objects described below.
@@ -307,7 +288,7 @@ get_capture_zone <- function(wells, aquifer, wIDs, t_max, n_particles = 8, type=
   for (i in 1:nrow(particles_matrix)) {
     print(i)
     loc <- particles_matrix[i,c("xp","yp")]
-    particle <- track_particle(loc, wells, aquifer, t_max = 1000, reverse=TRUE, method="radau_tmax") %>%
+    particle <- track_particles(loc, wells, aquifer, t_max = 1000, reverse=TRUE, method="radau_tmax") %>%
       dplyr::mutate(wID=particles_matrix[i,"wID"],pID=particles_matrix[i,"pID"])
     if (i == 1) {
       particle_path_df <- particle
