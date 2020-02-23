@@ -22,16 +22,23 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' @param aquifer Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}
 #' @param t_max Maximum time, in days, for which to calculate travel time
 #' @param reverse If \code{TRUE}, particle tracking will run in reverse. Used for well capture zones
+#' @param dL Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
+#' any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
+#' than the grid spacing to ensure that particles are captured by wells.
 #' @details
-#' This function uses numerical integration to track a particle along its path. The particle continues tracking,
-#' provided that:
+#' This function numerically integrates particle paths using the Euler method. The time step of integration is
+#' variable -- each time step is calculated so that the particle advances by a distance of dL.
+#' Particle tracking continues as long as:
 #' \itemize{
 #' \item The particle has not encountered a well or boundary
 #' \item The particle velocity is greater than 0
 #' \item The total time is less than \code{t_max}
+#' \item The particle has travelled less than dL * 1e5
 #' }
+#' The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
+#' step is calculated using bilinear interpolation.
 #' @return
-#' Returns a data.frame containing the time and locations
+#' Returns a data.frame containing the time and locations of particle.
 #' @export
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -70,175 +77,111 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'
 #' system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
 #' particle_path[nrow(particle_path),]
-track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, method = "radau1") {
-
-  # function for roots (ie, when to stop numerical integration) -- stop the integration if the particle enters a well
-  rootfun <- function(t, x, params) {
-    d_bounds <- get_distance_to_bounds(x, params$aquifer$bounds)
-    d_wells <- sqrt((params$orig_wells$x - x[1])^2 + (params$orig_wells$y - x[2])^2)
-    # ifelse(x[1] > 200,0,1)
-    root <- ifelse(any(d_wells <= params$orig_wells$diam),0,1)
-    return(root)
-  }
-
+#'
+#' ggplot(particle_df) +
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+#'   geom_path(aes(x,y)) +
+#'   geom_point(data=wells,aes(x,y,shape=well_type))
+track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto") {
+  # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
     stop("check_aquifer() failed.")
   }
 
-  # prep params
-  orig_wells <- wells %>% dplyr::filter(wID==orig_wID)
-  wells_no_diam <- wells %>% dplyr::mutate(diam=0)
-  params <- list(wells=wells_no_diam, orig_wells=orig_wells, aquifer=aquifer, n=aquifer$n, direction=ifelse(reverse,-1,1))
+  # prep variables
+  flow_sign <- ifelse(!reverse,1,-1)
+  terminal_well_pumping_sign <- ifelse(!reverse,-1,1)
+  terminal_wells <- wells %>% dplyr::filter(well_image=="Actual", sign(Q)==terminal_well_pumping_sign)
+
+  # set grid to aquifer bounds, +1 cell on each side
+  xgrid <- seq(min(c(aquifer$bounds$x1,aquifer$bounds$x2)),max(c(aquifer$bounds$x1,aquifer$bounds$x2)),length.out=200)
+  xgrid <- c(2*xgrid[1]-xgrid[2],xgrid,xgrid[length(xgrid)] + xgrid[2] - xgrid[1])
+  ygrid <- seq(min(c(aquifer$bounds$y1,aquifer$bounds$y2)),max(c(aquifer$bounds$y1,aquifer$bounds$y2)),length.out=200)
+  ygrid <- c(2*ygrid[1]-ygrid[2],ygrid,ygrid[length(ygrid)] + ygrid[2] - ygrid[1])
+  gridvals <- expand.grid(x=xgrid,y=ygrid)
+
+  # get gridded velocities
+  if (aquifer$aquifer_type == "confined") {
+    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
+  } else if (aquifer$aquifer_type == "unconfined") {
+    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
+    # head0 <- get_flowdir(gridvals,wells,aquifer)
+    # headdx <- get_flowdir(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
+    # headdy <- get_flowdir(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
+  }
+
+  # Identify grid cells (aquifer boundaries & wells) where the simulation should stop
+  well_grid_pts <-
+    do.call(rbind,lapply(split(terminal_wells,1:nrow(terminal_wells)),
+                         function(well,df) df[which.min(sqrt((df$x - well$x)^2 +
+                                                               (df$y - well$y)^2))[1],c("x","y")], df=gridvals)) %>%
+    mutate(well_cell=TRUE)
+  stop_sim <- gridvals %>% left_join(well_grid_pts) %>%
+    dplyr::mutate(inside_aquifer=check_point_in_aquifer(x,y,aquifer),
+                  inside_well=!is.na(well_cell),
+                  stop=!inside_aquifer | inside_well,
+                  stop_val=ifelse(stop,1e3,0))
+
+  # # mapping / debugging
+  # v_map <- cbind(gridvals,v_grid_m_day)
+  # ggplot(v_map) + geom_raster(aes(x,y,fill=dx))
+  # ggplot(stop_sim) + geom_raster(aes(x,y,fill=stop_val))
+
+  # set up the grid for lookup / interpolation of values
+  v_x_grid <- matrix(v_grid_m_day$dx,nrow=length(xgrid))
+  v_y_grid <- matrix(v_grid_m_day$dy,nrow=length(xgrid))
+  stop_grid <- matrix(stop_sim$stop_val,nrow=length(xgrid))
 
   particle <- cbind(time=0,x=loc[1],y=loc[2]) # columns have to be in this order -- it's what is returned by deSolve
   last <- particle[nrow(particle),]
-  v <- particle_velocity_m_day(0, last[c("x","y")], params)[[1]]
   i <- 1
-  if (sum(abs(v)) > 0) {
-    particle_status <- "On path"
-    d_bounds <- get_distance_to_bounds(as.numeric(loc), params$aquifer$bounds)
-    wells_to_keep <- wells_in_direction(loc, v, params$orig_wells)
-    d_wells <- ifelse(wells_to_keep,
-                      sqrt((params$orig_wells$x - loc[1])^2 + (params$orig_wells$y - loc[2])^2),
-                      rep(Inf,length(wells_to_keep)))
-  } else {
-    particle_status <- "Zero velocity"
-    d_wells <- Inf
-    d_bounds <- Inf
+  stop_val <- 0
+  if (dL=="auto") {
+    dL <- min(c(xgrid[2]-xgrid[1],ygrid[2]-ygrid[1]))/2
   }
 
+  # track particle until one of the conditions is reached:
+  while (last["time"] < t_max & v != 0 & stop_val < 25 & i <= 1e5) {
+    # get current velocity
+    v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
+    v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
+    # calculate speed (v) and timestep (dt)
+    v <- sqrt(v_x^2 + v_y^2)
+    dt <- dL / v
 
-  # conditions to continue particle tracking:
-  # 1. the distance of the particle from all wells and boundaries must be greater than 1 m
-  # 2. the particle velocity must be greater than 0
-  # 3. the total integration time is less than the specified number of years
-  while (all(d_wells > params$orig_wells$diam/1) & d_bounds > 1 & sum(abs(v)) > 0 & particle_status == "On path" & i < 100) {
-    # print(i)
+    # get particle movement
+    dx <- v_x * dt
+    dy <- v_y * dt
 
-    start_loc <- as.numeric(last[c("x","y")])
-    min_dist <- min(d_wells,d_bounds)
-
-    # get new travel time guess -- this is two times the shortest-path time to nearest object at current speed
-    # travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2) # original specification. now multiply by 2 to speed things up if possible
-
-    # get particle tracking based on first guess of travel time
-    ########################################################
-    ########################################################
-    # ptm <- proc.time()
-    if (method == "euler") {
-      system.time(gridded <- get_gridded_hydrodynamics(wells,aquifer,head_dim = c(1,1), flow_dim = c(100,100)))
-
-      system.time(fields::interp.surface(gridded$flow %>% dplyr::rename(z=dx), matrix(c(500,700),byrow=TRUE,ncol=2)))
-      # discretize domain & calculate velocity on grid. set velocity outside the grid to be 0 so that the simulation stops
-      # to get particle velocity, use lookup and bilinear interpolation
-      # if particle is close to a well, set velocity directly towards or away from the well
-      # hard code euler method, & allow checks to exit the code
-      # use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
-    } else if (method == "radau1") { # works
-      message("Using method: radau1")
-      travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2)
-      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50) ### TESTED AND WORKS (BUT SLOWLY)
-      # radau chosen to allow a root function which stops integration when the particle reaches a well or boundary
-      # if the time guess is multiplied by 2, the particle can apparently skip over boundaries -- e.g.,
-      # particle_path <- track_particle(loc=c(600,500), wells, aquifer) with the examples in the documentation
-      # -- jumps boundary
-      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params, rootfunc = rootfun, atol = 1e-2)
-      # can try testing other numerical integration methods...
-      # new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day,
-      #                                parms=params, rootfunc = rootfun)
-      # proc.time() - ptm
-    } else if (method == "radau2") {
-      message("Using method: radau2")
-      travel_time_guess <- min_dist * 2 / sqrt(v[1]^2 + v[2]^2) # multiply by 2 -- Radau seems to allow this
-      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50)
-      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params, rootfunc = rootfun, atol = 1e-2)
-    } else if (method == "radau_tmax") {
-      # note: this version runs quickly over short time periods. But it failed in the simulation in figs_test -- I stopped the sim after running for 11.6 minutes
-      message("Using method: radau_tmax")
-      travel_time_guess <- t_max
-      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 100)
-      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params, rootfunc = rootfun, atol = 1e-2)
-    } else if (method == "rk4") {
-      message("Using method: radau_tmax")
-      travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2) #
-      new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 100)
-      new_particle <- deSolve::rk4(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params)
-    } else if (FALSE) {
-      new_particle <- deSolve::radau(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params, atol = 1e-2, events = list(func= rootfun, root= TRUE, terminalroot=1))
-    } else if (FALSE) {
-      new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day, method = "rk23bs",
-                                  parms=params, atol = 1e-2, events = list(func= rootfun, root= TRUE))
-    } else if (FALSE) {
-      new_particle <- deSolve::ode(start_loc, new_times, particle_velocity_m_day,
-                                   parms=params, atol = 1e-2, rootfun = rootfun, events = list(func= rootfun, root= TRUE))
-    } else if (FALSE) {
-      new_particle <- deSolve::rk(start_loc, new_times, particle_velocity_m_day,
-                                     parms=params, rootfunc = rootfun, atol = 1e-2)
-      identical(new_particle1,new_particle)
-    } else {
-      stop("method not appropriately specified")
-    }
-    ########################################################
-    ########################################################
-
-    particle <- rbind(particle,new_particle[-1,])
-    last <- particle[nrow(particle),]
-
-    # get distance to objects
-    d_bounds <- get_distance_to_bounds(as.vector(last[c("x","y")]), params$aquifer$bounds)
-    # d_wells <- sqrt((params$orig_wells$x - last["x"])^2 + (params$orig_wells$y - last["y"])^2) # old
-    wells_to_keep <- wells_in_direction(last[c("x","y")], v, params$orig_wells)
-    d_wells <- ifelse(wells_to_keep,
-                      sqrt((params$orig_wells$x - last["x"])^2 + (params$orig_wells$y - last["y"])^2),
-                      rep(Inf,length(wells_to_keep)))
-
-
+    # update particle location
+    last <- last + c(dt,dx,dy)
+    particle <- rbind(particle,last)
+    stop_val <- akima::bilinear(xgrid,ygrid,stop_grid,x0=last["x"],y0=last["y"])$z
     i <- i + 1
-    v <- particle_velocity_m_day(0, last[c("x","y")], params)[[1]]
+  }
+  particle_df <- as.data.frame(particle)
 
-    if (any(d_wells < params$orig_wells$diam/1)) {
-      particle_status <- "Reached well"
-    } else if (d_bounds < 1) {
-      particle_status <- "Reached boundary"
-    } else if (sum(abs(v)) == 0) {
-      particle_status <- "Zero velocity"
-    } else if (suppressWarnings(particle[nrow(particle),"time"] >= t_max)) {
-      particle_status <- "Max time reached"
-    } else if (i >= 100) {
-      warning("track_particle max iterations (i=100) reached.")
-      particle_status <- "Max itrations reached"
-    }
+  # get distance to objects
+  d_bounds <- get_distance_to_bounds(as.vector(last[c("x","y")]), params$aquifer$bounds)
+  d_wells <- sqrt((params$terminal_wells$x - last["x"])^2 + (params$terminal_wells$y - last["y"])^2)
+
+  if (v==0) {
+    particle_status <- "Zero velocity"
+  } else if (suppressWarnings(particle[nrow(particle),"time"] >= t_max)) {
+    particle_status <- "Max time reached"
+  } else if (i >= 1e5) {
+    warning("track_particle max iterations (i=1e5) reached.")
+    particle_status <- "Max iterations reached"
+  } else if (min(d_wells) <= min(d_bounds)) {
+    particle_status <- "Reached well"
+  } else if (min(d_wells) > min(d_bounds)) {
+    particle_status <- "Reached boundary"
   }
 
   particle_path <- particle %>% tibble::as_tibble() %>% setNames(c("time","x","y")) %>% dplyr::mutate(status="On path")
   particle_path$status[nrow(particle_path)] <- particle_status
   return(particle_path %>% dplyr::rename(time_days=time))
-}
-
-#' Wells in direction
-#'
-#' Wells in direction
-#' @details
-#' This function identifies which wells are in the direction the particle is moving (determined by line perpendicular to particle velocity)
-#' @examples
-#' wells_in_direction(c(0,0),c(1,1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
-#' wells_in_direction(c(0,0),c(-1,-1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
-#' wells_in_direction(c(100,1),c(1,0),data.frame(x=c(99,100,101),y=c(0,0,1)))
-#' wells_in_direction(c(100,1),c(0,1),data.frame(x=c(99,100,101,102),y=c(-1,0,1,2)))
-wells_in_direction <- function(loc, v, wells) {
-  div_line <- c(get_slope_intercept(loc[1],loc[2],m=-v[1]/v[2]),xsign=sign(v[1]),ysign=sign(v[2]))
-  if (abs(div_line$m) != Inf) {
-    keep_wells <- sign(wells$y - wells$x * div_line$m - div_line$b) != div_line$ysign * -1
-  } else {
-    keep_wells <- sign(wells$x - div_line$b) != div_line$xsign * -1
-  }
-  return(keep_wells)
 }
 
 
