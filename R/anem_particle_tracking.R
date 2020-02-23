@@ -97,15 +97,17 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
   i <- 1
   if (sum(abs(v)) > 0) {
     particle_status <- "On path"
+    d_bounds <- get_distance_to_bounds(as.numeric(loc), params$aquifer$bounds)
+    wells_to_keep <- wells_in_direction(loc, v, params$orig_wells)
+    d_wells <- ifelse(wells_to_keep,
+                      sqrt((params$orig_wells$x - loc[1])^2 + (params$orig_wells$y - loc[2])^2),
+                      rep(Inf,length(wells_to_keep)))
   } else {
     particle_status <- "Zero velocity"
+    d_wells <- Inf
+    d_bounds <- Inf
   }
 
-  d_bounds <- get_distance_to_bounds(as.numeric(loc), params$aquifer$bounds)
-  wells_to_keep <- wells_in_direction(loc, v, params$orig_wells)
-  d_wells <- ifelse(wells_to_keep,
-                    sqrt((params$orig_wells$x - loc[1])^2 + (params$orig_wells$y - loc[2])^2),
-                    rep(Inf,length(wells_to_keep)))
 
   # conditions to continue particle tracking:
   # 1. the distance of the particle from all wells and boundaries must be greater than 1 m
@@ -124,7 +126,16 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
     ########################################################
     ########################################################
     # ptm <- proc.time()
-    if (method == "radau1") { # works
+    if (method == "euler") {
+      system.time(gridded <- get_gridded_hydrodynamics(wells,aquifer,head_dim = c(1,1), flow_dim = c(100,100)))
+
+      system.time(fields::interp.surface(gridded$flow %>% dplyr::rename(z=dx), matrix(c(500,700),byrow=TRUE,ncol=2)))
+      # discretize domain & calculate velocity on grid. set velocity outside the grid to be 0 so that the simulation stops
+      # to get particle velocity, use lookup and bilinear interpolation
+      # if particle is close to a well, set velocity directly towards or away from the well
+      # hard code euler method, & allow checks to exit the code
+      # use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
+    } else if (method == "radau1") { # works
       message("Using method: radau1")
       travel_time_guess <- min_dist / sqrt(v[1]^2 + v[2]^2)
       new_times <- seq(last["time"],min(last["time"] + travel_time_guess, t_max),length.out = 50) ### TESTED AND WORKS (BUT SLOWLY)
