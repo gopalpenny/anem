@@ -47,41 +47,17 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   define_wells() %>% generate_image_wells(aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 #'
-#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau1"))
+#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer))
 #' particle_path[nrow(particle_path),]
-#' system.time(particle_path <- track_particle(loc=c(600,500), wells, aquifer,method="radau2"))
-#' particle_path[nrow(particle_path),]
+#'
+#' loc <- data.frame(x=c(600,725,900),y=c(500,825,50))
+#' system.time(particle_path <- track_particle(loc, wells, aquifer))
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y),color="red") +
 #'   coord_equal()
-#'
-#'
-#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau1"))
-#' particle_path[nrow(particle_path),]
-#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="radau2"))
-#' particle_path[nrow(particle_path),]
-#' system.time(particle_path <- track_particle(c(725,825), wells, aquifer,method="rk4"))
-#' particle_path[nrow(particle_path),]
-#' ggplot() +
-#'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
-#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
-#'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
-#'   geom_path(data=particle_path,aes(x,y),color="red") +
-#'   coord_equal()
-#'
-#' particle_path <- track_particle(c(725,825), wells, aquifer, t_max=100)
-#' particle_path[nrow(particle_path),]
-#'
-#' system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
-#' particle_path[nrow(particle_path),]
-#'
-#' ggplot(particle_df) +
-#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
-#'   geom_path(aes(x,y)) +
-#'   geom_point(data=wells,aes(x,y,shape=well_type))
 track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto") {
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
@@ -117,7 +93,7 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
                          function(well,df) df[which.min(sqrt((df$x - well$x)^2 +
                                                                (df$y - well$y)^2))[1],c("x","y")], df=gridvals)) %>%
     mutate(well_cell=TRUE)
-  stop_sim <- gridvals %>% left_join(well_grid_pts) %>%
+  stop_sim <- gridvals %>% dplyr::left_join(well_grid_pts,by=c("x","y")) %>%
     dplyr::mutate(inside_aquifer=check_point_in_aquifer(x,y,aquifer),
                   inside_well=!is.na(well_cell),
                   stop=!inside_aquifer | inside_well,
@@ -133,55 +109,75 @@ track_particle <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE,
   v_y_grid <- matrix(v_grid_m_day$dy,nrow=length(xgrid))
   stop_grid <- matrix(stop_sim$stop_val,nrow=length(xgrid))
 
-  particle <- cbind(time=0,x=loc[1],y=loc[2]) # columns have to be in this order -- it's what is returned by deSolve
-  last <- particle[nrow(particle),]
-  i <- 1
-  stop_val <- 0
+  # get dL
   if (dL=="auto") {
     dL <- min(c(xgrid[2]-xgrid[1],ygrid[2]-ygrid[1]))/2
   }
 
-  # track particle until one of the conditions is reached:
-  while (last["time"] < t_max & v != 0 & stop_val < 25 & i <= 1e5) {
-    # get current velocity
-    v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
-    v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
-    # calculate speed (v) and timestep (dt)
-    v <- sqrt(v_x^2 + v_y^2)
-    dt <- dL / v
-
-    # get particle movement
-    dx <- v_x * dt
-    dy <- v_y * dt
-
-    # update particle location
-    last <- last + c(dt,dx,dy)
-    particle <- rbind(particle,last)
-    stop_val <- akima::bilinear(xgrid,ygrid,stop_grid,x0=last["x"],y0=last["y"])$z
-    i <- i + 1
-  }
-  particle_df <- as.data.frame(particle)
-
-  # get distance to objects
-  d_bounds <- get_distance_to_bounds(as.vector(last[c("x","y")]), params$aquifer$bounds)
-  d_wells <- sqrt((params$terminal_wells$x - last["x"])^2 + (params$terminal_wells$y - last["y"])^2)
-
-  if (v==0) {
-    particle_status <- "Zero velocity"
-  } else if (suppressWarnings(particle[nrow(particle),"time"] >= t_max)) {
-    particle_status <- "Max time reached"
-  } else if (i >= 1e5) {
-    warning("track_particle max iterations (i=1e5) reached.")
-    particle_status <- "Max iterations reached"
-  } else if (min(d_wells) <= min(d_bounds)) {
-    particle_status <- "Reached well"
-  } else if (min(d_wells) > min(d_bounds)) {
-    particle_status <- "Reached boundary"
+  if (any(grepl("data.frame",class(loc)))) {
+    n_particles <- nrow(loc)
+  } else {
+    n_particles <- 1
+    loc <- data.frame(x=loc[1],y=loc[2])
   }
 
-  particle_path <- particle %>% tibble::as_tibble() %>% setNames(c("time","x","y")) %>% dplyr::mutate(status="On path")
-  particle_path$status[nrow(particle_path)] <- particle_status
-  return(particle_path %>% dplyr::rename(time_days=time))
+  for (i in 1:n_particles) {
+    particle_i <- cbind(time=0,x=loc$x[i],y=loc$y[i]) # columns have to be in this order -- it's what is returned by deSolve
+    last <- particle_i[nrow(particle_i),]
+    j <- 0
+    v <- Inf
+    stop_val <- 0
+
+    # track particle_i until one of the conditions is reached:
+    while (last["time"] < t_max & v != 0 & stop_val < 25 & j < 1e5) {
+      j <- j + 1
+      # get current velocity
+      v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
+      v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
+      # calculate speed (v) and timestep (dt)
+      v <- sqrt(v_x^2 + v_y^2)
+      dt <- dL / v
+
+      # get particle_i movement
+      dx <- v_x * dt
+      dy <- v_y * dt
+
+      # update particle_i location
+      last <- last + c(dt,dx,dy)
+      particle_i <- rbind(particle_i,last)
+      stop_val <- akima::bilinear(xgrid,ygrid,stop_grid,x0=last["x"],y0=last["y"])$z
+    }
+    particle_df <- as.data.frame(particle_i)
+
+    # get distance to objects
+    d_bounds <- c(get_distance_to_bounds(as.vector(last[c("x","y")]), aquifer$bounds),Inf)
+    d_wells <- c(sqrt((terminal_wells$x - last["x"])^2 + (terminal_wells$y - last["y"])^2),Inf)
+
+    if (v==0) {
+      particle_status <- "Zero velocity"
+    } else if (suppressWarnings(particle_i[nrow(particle_i),"time"] >= t_max)) {
+      particle_status <- "Max time reached"
+    } else if (j >= 1e5) {
+      warning("track_particle max iterations (j=1e5) reached.")
+      particle_status <- "Max iterations reached"
+    } else if (min(d_wells) <= min(d_bounds)) {
+      particle_status <- "Reached well"
+    } else if (min(d_wells) > min(d_bounds)) {
+      particle_status <- "Reached boundary"
+    }
+
+    particle_i_path <- particle_i %>% tibble::as_tibble() %>% setNames(c("time","x","y")) %>%
+      dplyr::mutate(status="On path",
+                    id=i) %>%
+      dplyr::rename(time_days=time)
+    particle_i_path$status[nrow(particle_i_path)] <- particle_status
+    if (i == 1) {
+      particles <- particle_i_path
+    } else {
+      particles <- rbind(particles,particle_i_path)
+    }
+  }
+  return(particle_path)
 }
 
 
