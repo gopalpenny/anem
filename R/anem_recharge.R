@@ -9,7 +9,7 @@
 #' the user must ensure that the recharge does not conflict with boundaries. For example,
 #' if uniform flow is specified, it will pass through any boundary, including no-flow boundaries.
 #' @param loc Location for evaluating Vector location as c(x,y) or data.frame containing x, y columns
-#' @param Aquifer Aquifer containing containing \code{h0} and \code{recharge$params} (see Details)
+#' @param aquifer Aquifer containing containing \code{h0} and \code{recharge$params} (see Details)
 #' @details
 #' The aquifer and aquifer$recharge must be correctly specified using \code{define_aquifer} and/or \code{define_recharge}.
 #' @export
@@ -203,10 +203,11 @@ get_recharge_divide_potential <- function(loc, aquifer) {
       # Point is on main side (direction of recharge_vector) IF:
       # (a) y_side == main_side_y, OR (b) abs(m) == Inf & sign(x - b) ==
       # Otherwise, the point is on the divide or on the opposite side.
-      y_side <- sign(loc[2] - (params$divide_m * loc[1] + params$divide_b))
-      y_side <- ifelse(is.nan(y_side),Inf,y_side)
-      x_side_Inf <- sign(loc[1] - params$divide_b)
-      main_side <- y_side == params$main_side_y | (x_side_Inf == params$main_side_x & abs(params$divide_m) == Inf)
+      if (abs(params$divide_m)!=Inf) {
+        main_side <- sign(loc[2] - (params$divide_m * loc[1] + params$divide_b)) != -params$main_side_y
+      } else {
+        main_side <- sign(loc[1] - params$divide_b) != -params$main_side_x
+      }
       x_term <- ifelse(main_side, params$x_term_main, params$x_term_opp)
       y_term <- ifelse(main_side, params$y_term_main, params$y_term_opp)
 
@@ -252,5 +253,3 @@ get_recharge_divide_potential <- function(loc, aquifer) {
 
   return(pot)
 }
-
-
