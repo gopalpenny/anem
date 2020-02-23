@@ -790,3 +790,68 @@ get_perpendicular_line <- function(m,x,y) {
   }
   return(list(m=m_perp,b=b_perp))
 }
+
+#' Check point is in bounds
+#'
+#' Check to see if one or more points falls within aquifer boundaries.
+#' @return
+#' Function returns \code{TRUE} if the point is inside aquifer boundaries or on the boundary. If the point is outside
+#'the boundaries, returns \code{FALSE}.
+#' @examples
+#' aquifer <- aquifer_example
+#' x <- 100
+#' y <- 100
+#' x <- seq(0,100,by=50)
+#' y <- seq(0,100,by=50)
+#' check_point_in_aquifer(200,200,aquifer)
+#' check_point_in_aquifer(-200,0,aquifer)
+#' check_point_in_aquifer(seq(0,100,by=50),seq(0,100,by=50),aquifer)
+#' check_point_in_aquifer(seq(0,1000,by=500),seq(0,100,by=500),aquifer)
+#' x <- rep(500,3)
+#' y <- seq(0,1000,by=500)
+#' check_point_in_aquifer(x,yseq(0,1000,by=500),aquifer)
+check_point_in_aquifer <- function(x,y,aquifer) {
+  b_a <- aquifer$bounds %>% dplyr::filter(m==aquifer$bounds$m[1])
+  side_a <- sapply(split(b_a,1:nrow(b_a)),check_point_side_of_line,x=x,y=y)
+
+  b_b <- aquifer$bounds %>% dplyr::anti_join(b_a,by=names(b_a))
+  side_b <- sapply(split(b_b,1:nrow(b_b)),check_point_side_of_line,x=x,y=y)
+
+  if (length(x) == 1) {
+    side_a <- matrix(side_a,nrow=1)
+    side_b <- matrix(side_b,nrow=1)
+  }
+
+  inside_a <- side_a[,1] != side_a[,2] | side_a[,1] == 0 & side_a[,2] == 0
+  inside_b <- side_b[,1] != side_b[,2] | side_b[,1] == 0 & side_b[,2] == 0
+
+  inside_bounds <- inside_a & inside_b
+
+  return(inside_bounds)
+}
+
+#' Check point is in bounds
+#'
+#' @param x x coordinates
+#' @param y y coordinates
+#' @param line list containing m and m
+#' @return
+#' Returns +1 for any point above the line, -1 for any point below the line, and 0 for a point on the line. If
+#' the line is vertical (m=Inf), returns +1 for points to the right of the line and -1 for points to the left of the line.
+#' @examples
+#' x <- 100
+#' y <- 100
+#' line <- list(m=Inf,b=2)
+#' check_point_side_of_line(list(m=Inf,b=2),0,0)
+#' check_point_side_of_line(list(m=Inf,b=2),2,0)
+#' check_point_side_of_line(list(m=Inf,b=2),3,0)
+#' check_point_side_of_line(list(m=1,b=2),0,0)
+#' check_point_side_of_line(list(m=1,b=2),0,2)
+#' check_point_side_of_line(list(m=1,b=2),0,3)
+check_point_side_of_line <- function(line,x,y) {
+  if (line$m != Inf) {
+    return(sign(y - (line$m * x + line$b)))
+  } else {
+    return(sign(x - line$b))
+  }
+}
