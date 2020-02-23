@@ -8,6 +8,9 @@ define_recharge(recharge_params, recharge_type, recharge_vector, aquifer,
   ...)
 }
 \arguments{
+\item{recharge_params}{A list containing any of the named or unnamed (i.e, in \code{...}) input parameters.
+If any named arguments are missing, they will be replaced by items in this list.}
+
 \item{recharge_type}{Type of recharge gradient. One of "F" (uniform flow),
 "H" (head boundaries), or "D" (recharge divide)}
 
@@ -16,15 +19,31 @@ define_recharge(recharge_params, recharge_type, recharge_vector, aquifer,
 \item{aquifer}{Aquifer containing \code{aquifer_type}, \code{Ksat}, and if necessary \code{h0} and \code{z0}}
 
 \item{...}{See details for required and optional parameters}
-
-\item{params}{A list containing any of the named or unnamed (i.e, in \code{...}) input parameters.
-If any named arguments are missing, they will be replaced by items in this list.}
 }
 \value{
-The function returns a list containing two elements:
+The function returns a list containing the elements described in Details.
+The parameters \code{x_term} and \code{y_term} specify the flow direction, and their
+calculation depends on \code{aquifer_type} as follows:
 \describe{
-\item{recharge_params}{A list of all required parameters for recharge_func, as described above in the "Details" section.}
-\item{recharge_func}{A function that takes \code{recharge_params} and {aquifer} as inputs}
+\item{"confined"}{\eqn{x_term, y_term ~ - Q / (Ksat z0)}. They are equivalent to dh/dx and dh/dy.
+Head differential in the x-direction with respect to some x = x0, h = h0 is therefore
+\eqn{h - h0 = (x-x0) x_term}.
+Flow per unit length in the x-direction is \eqn{Qx/L = -x_term Ksat z0}. They are defined as:
+\itemize{
+\item \code{x_term}: -flow * cos(theta) * sign(dx) / (Ksat * z0)
+\item \code{y_term}: -flow * sin(theta) * sign(dy) / (Ksat * z0)
+}
+where sin(theta) * sign(dx) is the component of \code{recharge_vector} in the x direction.
+}
+\item{"unconfined"}{\eqn{x_term, y_term ~ - 2 Q / Ksat}. They are equivalent to dh^2/dx and dh^2/dy.
+Change in discharge potential in the x-direction with respect to some x = x0, h = h0 is therefore
+\eqn{h^2- h0^2 = (x-x0) x_term}. They are defined as:
+\itemize{
+\item \code{x_term}: -2 * flow * cos(theta) * sign(dx) / Ksat
+\item \code{y_term}: -2 * flow * sin(theta) * sign(dy) / Ksat
+}
+where sin(theta) * sign(dx) is the component of \code{recharge_vector} in the x direction.
+}
 }
 }
 \description{
@@ -42,18 +61,13 @@ parameters that must be specified as named arguments in \code{recharge_params} o
 denominator is perpendicular to the recharge vector. This \code{recharge_type} requires parameters:
 \itemize{
 \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
-\item \code{flow}: Flow in cumec
+\item \code{flow}: Flow in cumec, per m (perpendicular to the flow vector)
 }
-}
-\item{Head boundaries, "H"}{NOT YET IMPLEMENTED. This allows the head profile to be specified by 2 or 3 points,
-where the result is steady uniform flow determined by the hydraulic gradient between head at the \code{recharge_vector}
-origin and head at the other 1 (or 2) point(s). Note that \code{aquifer$h0} is ignored with this option.
-This \code{recharge_type} requires parameters:
+The function returns a list of named parameters including:
 \itemize{
-\item \code{h1}: Hydraulic head at \code{x1, y1}
-\item \code{h2}: Hydraulic head at \code{x2, y2}
-\item \code{x3, y3, h3}: Optional coordinate location \code{x3, y3} and hydraulic head \code{h3} at a third point.
-If this is specified, there will be a watershed divide
+\item All of the input parameters
+\item \code{scenario}: A string combining "c" or "u" for aquifer type, and the recharge type
+\item \code{x_term}, \code{y_term}: flow direction. See Value for details.
 }
 }
 \item{Recharge divide, "D"}{This allows a uniform constant flow in opposite directions on
@@ -62,9 +76,19 @@ and is perpendicular to the \code{recharge_vector}. Flow on either side is speci
 denominator is parallel to the to the recharge divide. This \code{recharge_type} requires parameters:
 \itemize{
 \item \code{x0, y0}: Coordinate locations where undisturbed head is equal to \code{aquifer$h0}
-\item \code{flow_main}: Flow in the direction of the \code{recharge_vector}.
-\item \code{flow_opp}: Flow in the opposite direction of the \code{recharge_vector}.
+\item \code{flow_main}: Flow in cumec in the direction of the \code{recharge_vector}, per m.
+\item \code{flow_opp}: Flow in cumec the opposite direction of the \code{recharge_vector}, per m.
 Positive value means flow away from divide.
+}
+The function returns a list of named parameters including:
+\itemize{
+\item All of the input parameters
+\item \code{scenario}: A string combining "c" or "u" for aquifer type, and the recharge type
+\item \code{h0_divide}: Hydraulic head at the divide
+\item \code{divide_m}, \code{divide_b}: Slope and aspect of dividing line
+\item \code{main_side_x}, \code{main_side_y}: Direction (+1 or -1) of flow_main relative to divide
+\item \code{x_term_main}, \code{y_term_main}: \code{x_term} and \code{y_term} for main direction of flow. See Value for details.
+\item \code{x_term_opp}, \code{y_term_opp}: \code{x_term} and \code{y_term} for opposite direction of flow. See Value for details.
 }
 }
 }

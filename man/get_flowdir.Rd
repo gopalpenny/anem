@@ -4,7 +4,7 @@
 \alias{get_flowdir}
 \title{Numerically calculate flow direction}
 \usage{
-get_flowdir(loc, wells, aquifer, show_progress = FALSE, eps = 1e-04)
+get_flowdir(loc, wells, aquifer, show_progress = FALSE, eps = 1e-06)
 }
 \arguments{
 \item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
@@ -22,13 +22,15 @@ wells and locations, then a progress bar will be printed.}
 \value{
 Outputs the flow direction in the x and y directions. If the input \code{loc} is
   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
-  then the output is also a dataframe with columns \code{dx} and \code{dy}. The two values
+  then the output is also a data.frame with columns \code{dx} and \code{dy}. The two values
   indicate the flow direction, and are equivalent to \eqn{-dh/dx}
   and \eqn{-dh/dy}.
 }
 \description{
-Calculates the numerical derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
-  and \eqn{-dh/dy}.
+Calculates the derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
+  and \eqn{-dh/dy}. For confined aquifers, the result is calculated using the sum of the
+  effect of each analytical element, whereas for unconfined aquifers the result is calculated
+  numerically from hydraulic head.
 }
 \examples{
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))

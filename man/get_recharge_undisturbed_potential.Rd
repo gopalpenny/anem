@@ -9,7 +9,7 @@ get_recharge_undisturbed_potential(loc, aquifer)
 \arguments{
 \item{loc}{Location for evaluating Vector location as c(x,y) or data.frame containing x, y columns}
 
-\item{Aquifer}{Aquifer containing containing \code{h0} and \code{recharge$params} (see Details)}
+\item{aquifer}{Aquifer containing containing \code{h0} and \code{recharge$params} (see Details)}
 }
 \value{
 Returns hydraulic potential at the location(s) using helper functions for each recharge_type / aquifer_type.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/anem_potentials.R
 \name{get_potential_differential}
 \alias{get_potential_differential}
-\title{Get cumulative effect of wells at location}
+\title{Get potential differential}
 \usage{
 get_potential_differential(loc, wells, aquifer)
 }
