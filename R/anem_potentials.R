@@ -128,8 +128,10 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 
 #' Numerically calculate flow direction
 #'
-#' Calculates the numerical derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
-#'   and \eqn{-dh/dy}.
+#' Calculates the derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
+#'   and \eqn{-dh/dy}. For confined aquifers, the result is calculated using the sum of the
+#'   effect of each analytical element, whereas for unconfined aquifers the result is calculated
+#'   numerically from hydraulic head.
 #'
 #' @inheritParams get_hydraulic_head
 #' @param show_progress Boolean input parameter. If true and there are >20 combinations of
@@ -137,7 +139,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' @param eps Threshold satisfying numeric derivative
 #' @return Outputs the flow direction in the x and y directions. If the input \code{loc} is
 #'   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
-#'   then the output is also a dataframe with columns \code{dx} and \code{dy}. The two values
+#'   then the output is also a data.frame with columns \code{dx} and \code{dy}. The two values
 #'   indicate the flow direction, and are equivalent to \eqn{-dh/dx}
 #'   and \eqn{-dh/dy}.
 #' @export
@@ -197,42 +199,44 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6) {
 
   loc_class <- class(loc)
   # get change in potential due to wells
-  if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
-    if (aquifer$aquifer_type == "confined") {
-      fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
-    } else if (aquifer$aquifer_type == "unconfined") {
-      fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
-    } else {
-      stop("aquifer_type not specified as confined or unconfined")
-    }
-  } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
-    fd <- data.frame(dx=NULL,dy=NULL)
-    loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
-    n <- length(loc_list)
+  if (aquifer$aquifer_type == "confined") {
+    fd <- get_flowdir_confined(loc,wells,aquifer)
 
-    if (!null_or_missing(wells)) {
-      n_wells <- dim(wells)[1]
-    } else {
-      n_wells <- 1
-    }
-    if (n * n_wells < 20 | !show_progress) { # no progress bar
-      for (i in 1:n) {
-        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method="simple",method.args=list(eps=eps),wells=wells,aquifer=aquifer)
-        fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
-        fd <- rbind(fd,fd_i_df)
+  } else if (aquifer$aquifer_type == "unconfined") {
+    if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
+      fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
+    } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
+      fd <- data.frame(dx=NULL,dy=NULL)
+      loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
+      n <- length(loc_list)
+
+      if (!null_or_missing(wells)) {
+        n_wells <- dim(wells)[1]
+      } else {
+        n_wells <- 1
       }
-    } else { # with progress bar
-      start_time <- Sys.time()
-      cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
-      pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
-      for (i in 1:n) {
-        fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,aquifer=aquifer)
-        fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
-        fd <- rbind(fd,fd_i_df)
-        setTxtProgressBar(pb, i)
+      if (n * n_wells < 20 | !show_progress) { # no progress bar
+        for (i in 1:n) {
+          fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method="simple",method.args=list(eps=eps),wells=wells,aquifer=aquifer)
+          fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
+          fd <- rbind(fd,fd_i_df)
+        }
+      } else { # with progress bar
+        start_time <- Sys.time()
+        cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
+        pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
+        for (i in 1:n) {
+          fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,aquifer=aquifer)
+          fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
+          fd <- rbind(fd,fd_i_df)
+          setTxtProgressBar(pb, i)
+        }
+        cat("\n")
       }
-      cat("\n")
     }
+    # end "unconfined" flow
+  } else {
+    stop("aquifer_type not specified as confined or unconfined")
   }
 
   return(fd)
@@ -339,23 +343,30 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #' get_flowdir(loc=c(5,5),wells,aquifer)
 #' get_flowdir_confined(loc=c(5,5),wells,aquifer)
+#' get_flowdir_confined(loc=c(5,5),NULL,aquifer)
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
-#' a <- get_flowdir(loc=grid_pts,wells,aquifer)
-#' b <- get_flowdir_confined(loc=grid_pts,wells,aquifer)
-#' a-b
+#' get_flowdir(loc=grid_pts,wells,aquifer)
+#' get_flowdir_confined(loc=grid_pts,wells,aquifer)
+#' get_flowdir_confined(loc=grid_pts,NULL,aquifer)
+#'
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1e-3,x0=0,y0=0)
+#' aquifer_norecharge <- define_aquifer("confined",1e-3,h0=0,z0=1)
+#' aquifer_recharge <- define_aquifer("confined",1e-3,h0=0,z0=1,recharge=recharge_params)
+#' (a <- get_flowdir(c(-1,-1),wells,aquifer_recharge))
+#' (b <- get_flowdir(c(-1,-1),wells,aquifer_norecharge))
+#' (d <- get_flowdir(c(-1,-1),NULL,aquifer_recharge))
+#' b + d
+#'
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
+#' aquifer_norecharge <- define_aquifer("confined",1,h0=0,z0=1)
+#' aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+#' loc <- expand.grid(x=9:11,y=9:11)
+#' (a <- get_flowdir(loc,wells,aquifer_recharge))
+#' (b <- get_flowdir(loc,wells,aquifer_norecharge))
+#' (d <- get_flowdir(loc,NULL,aquifer_recharge))
+#' b + d - a
 get_flowdir_confined <- function(loc, wells, aquifer) {
-  if (null_or_missing(wells)) {
-    if (max(grepl("data.frame",class(loc)))) {
-      return(rep(0,nrow(loc)))
-    } else {
-      return(0)
-    }  }
-  x_well <- wells$x
-  y_well <- wells$y
-  R <- wells$R
-  Q <- wells$Q
-  diam_wells <- wells$diam
 
   df_input <- any(grepl("data.frame",class(loc)))
   if (df_input) {
@@ -364,6 +375,20 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
   } else {
     x_loc <- loc[1]
     y_loc <- loc[2]
+  }
+
+  if (!null_or_missing(wells)) {
+    x_well <- wells$x
+    y_well <- wells$y
+    R <- wells$R
+    Q <- wells$Q
+    diam_wells <- wells$diam
+  } else {
+    x_well <- 0
+    y_well <- 0
+    R <- 100
+    Q <- 0
+    diam_wells <- 1
   }
 
   ni <- length(x_well) # number of wells
@@ -379,6 +404,30 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
   Ri <- matrix(rep(R,each=mj),ncol=ni)
   Qi <- matrix(rep(Q,each=mj),ncol=ni)
   di <- matrix(rep(diam_wells,each=mj),ncol=ni)
+
+  if (is.null(aquifer$recharge)) {
+    fd_r_x <- rep(0,mj)
+    fd_r_y <- rep(0,mj)
+  } else {
+    rech <- aquifer$recharge
+    # 1. Recharge type: Flow
+    if (rech$recharge_type == "F") {
+      fd_r_x <- rep(rech$x_term,mj)
+      fd_r_y <- rep(rech$y_term,mj)
+    # 2. Recharge type: Divide
+    } else if (rech$recharge_type == "D") {
+      y_side <- sign(y_loc - (rech$divide_m * x_loc + rech$divide_b))
+      y_side <- ifelse(is.nan(y_side),Inf,y_side)
+      x_side_Inf <- sign(x_loc - params$divide_b)
+      # main side indicates locations on "main" side of divide
+      main_side <- y_side == params$main_side_y | (x_side_Inf == rech$main_side_x & abs(rech$divide_m) == Inf)
+
+      fd_r_x <- rep(rech$x_term_main,mj)
+      fd_r_x[!main_side] <- rech$x_term_opp
+      fd_r_y <- rep(rech$y_term_main,mj)
+      fd_r_y[!main_side] <- rech$y_term_opp
+    }
+  }
 
   # rji is the distance between well i and observation location j, with 2 exceptions
   # 1. set rji to Inf for any well-location distance that exceeds R or
@@ -397,9 +446,9 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
     stop("aquifer_type must be confined for get_flowdir_confined")
   }
   if (df_input) {
-    fd <- data.frame(dx=dx,dy=dy)
+    fd <- data.frame(dx=dx + fd_r_x,dy=dy + fd_r_y)
   } else {
-    fd <- c(dx,dy)
+    fd <- c(dx + fd_r_x, dy + fd_r_y)
   }
 
   return(fd)
