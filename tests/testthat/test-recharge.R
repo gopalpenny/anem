@@ -48,9 +48,22 @@ test_that(paste("get_recharge_undisturbed_potential: df loc and confined aquifer
   expect_equal(round(get_recharge_undisturbed_potential(loc, con_aquifer),4),head_loc)
 })
 
-paste(round(get_recharge_undisturbed_potential(loc, un_aquifer),4),collapse=",")
+# 2a-ii: Confined aquifer - constant flow "D" recharge, m = Inf
+recharge_params <- list(recharge_type="D",recharge_vector=c(1,1,2,1),flow_main=1,flow_opp=2,x0=1,y0=0)
+con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+test_that(paste("get_recharge_undisturbed_potential: numeric loc and confined aquifer, \"D\" recharge, m = Inf"),{
+  expect_equal(get_recharge_undisturbed_potential(c(-0,2), con_aquifer),-2)
+  expect_equal(get_recharge_undisturbed_potential(c(1,0), con_aquifer),0)
+  expect_equal(get_recharge_undisturbed_potential(c(2,0), con_aquifer),-1)
+})
 
-# 2b: Unconfined aquifer - constant flow "D" recharge
+loc <- expand.grid(x=0:2,y=0:2)
+head_loc <- c(-2,0,-1,-2,0,-1,-2,0,-1)
+test_that(paste("get_recharge_undisturbed_potential: df loc and confined aquifer, \"D\" recharge, m = Inf"),{
+  expect_equal(round(get_recharge_undisturbed_potential(loc, con_aquifer),4),head_loc)
+})
+
+# 2b-i: Unconfined aquifer - constant flow "D" recharge
 recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),flow_main=1,flow_opp=2,x0=0,y0=0)
 un_aquifer <- define_aquifer("unconfined",1,h0=50,recharge=recharge_params)
 test_that(paste("get_recharge_undisturbed_potential: numeric loc and unconfined aquifer, \"D\" recharge"),{
@@ -64,5 +77,20 @@ test_that(paste("get_recharge_undisturbed_potential: df loc and unconfined aquif
   expect_equal(round(get_recharge_undisturbed_potential(loc, un_aquifer),4),pot_loc)
 })
 
+
+# 2b-ii: Unconfined aquifer - constant flow "D" recharge with m = Inf
+recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,10),flow_main=1,flow_opp=2,x0=10,y0=0)
+un_aquifer <- define_aquifer("unconfined",1,h0=50,recharge=recharge_params)
+test_that(paste("get_recharge_undisturbed_potential: numeric loc and unconfined aquifer, \"D\" recharge, m = Inf"),{
+  expect_equal(get_recharge_undisturbed_potential(c(11,12), un_aquifer),2498)
+  expect_equal(get_recharge_undisturbed_potential(c(7,-10), un_aquifer),2488)
+  expect_equal(get_recharge_undisturbed_potential(c(10,-10), un_aquifer),2500)
+})
+
+loc <- expand.grid(x=9:11,y=9:11)
+pot_loc <- c(2496,2500,2498,2496,2500,2498,2496,2500,2498)
+test_that(paste("get_recharge_undisturbed_potential: df loc and unconfined aquifer, \"D\" recharge, m = Inf"),{
+  expect_equal(round(get_recharge_undisturbed_potential(loc, un_aquifer),4),pot_loc)
+})
 
 

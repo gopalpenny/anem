@@ -94,6 +94,8 @@ test_that("get_flowdir returns no flow along diagonal line between two pumping w
 })
 
 ### TEST RECHARGE
+
+# uniform flow
 no_wells <- define_wells(Q=0,x=10,y=10,R=10,diam=1)
 recharge_params <- list(recharge_type="F",recharge_vector=c(10,10,11,11),flow=sqrt(2),x0=11,y0=11)
 con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -108,6 +110,7 @@ test_that("get_flowdir works for \"F\" recharge",{
   expect_equal(round(get_flowdir(rech_loc,no_wells,con_aquifer),3),df)
 })
 
+# recharge divide
 recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=sqrt(2),flow_opp=sqrt(2),x0=11,y0=11)
 con_aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 head <- c(0,1,2,1,2,1,2,1,0) #get_hydraulic_head(rech_loc,no_wells,con_aquifer) %>% round(3) %>% paste(collapse=",")
@@ -132,6 +135,12 @@ df <- data.frame(dx=c(-0.1,-0.099,0,-0.099,0,0.099,0,0.099,0.1),
 test_that("get_flowdir works for \"D\" recharge, unconfined",{
   expect_equal(round(get_flowdir(rech_loc,no_wells,un_aquifer),3),df)
 })
+
+# recharge divide with m = Inf
+recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,10),flow_main=1,flow_opp=1,x0=0,y0=0)
+aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
+loc <- expand.grid(x=9:11,y=9:11)
+get_flowdir(loc,NULL,aquifer_recharge)
 ### END TEST RECHARGE
 
 # Create a grid of locations and define aquifer
@@ -157,8 +166,4 @@ constant_head_boundary <- loc %>%
   dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer))
 test_that("get_stream_function accurately models constant-head boundary perpendicular to boundary and intersecting wells",{
   expect_equal(constant_head_boundary %>% dplyr::filter(y==0) %>% purrr::pluck("streamfunction") %>% table() %>% length(),2)
-})
-
-test_that("get_flowdir_confined works for recharge with no wells -- need to set up this test!",{
-  expect_equal(TRUE,FALSE)
 })
