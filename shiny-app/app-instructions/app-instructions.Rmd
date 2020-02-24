@@ -11,7 +11,7 @@ output: html_document
 
 This shiny application is currently in development. It functions when used according to the instructions provided below.
 
-This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer) or "constant head (e.g., a river).
+This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer), "constant head" (e.g., a river), or "open" (i.e., there is no boundary at the edge of the simulation).
 
 The tool is based on the [analytical element method](https://en.wikipedia.org/wiki/Analytic_element_method) for groundwater models. More specifically, it utilizes the method of images, in which boundary behavior reproduced by mirroring wells across the boundaries. This approach is documented in a number of sources (e.g., Strack, 2017). The code underlying the model is contained within the `anem` R package, currently in development and accessible via [github](https://github.com/gopalpenny/anem). Please submit feedback or feature requests to the [github issues](https://github.com/gopalpenny/anem/issues) tab.
 
@@ -30,6 +30,10 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
         + Saturated hydraulic conductivity, Ksat
         + Undisturbed head (for unconfined aquifers, this is the thickness of the water table without pumping)
         + Aquifer thickness (confined aquifers only)
+    + *Define recharge.
+        + Click 2 points to set the direction of recharge. 
+        + Recharge is specified as a constant background flow, in units of cumec (in direction of flow) / meter (perpendicular to flow).
+        + Check "Enable recharge".
 1. Define wells
     + *Set properties of new wells*:
         + Pumping rate, Q: specified as cubic meters per second. It should be negative for pumping (abstraction), and positive for injection.
@@ -39,10 +43,15 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
     + *Add wells.* Click within the aquifer to add wells.
     + *Edit wells.* Any well property can be edited in the table below the map.
         + Clicking a well highlights that well within the table, and allows that well to be deleted.
-1. Define particles
-    + *Add particles.* Click the map to set initial locations for particle tracking.
-    + *Max transit time.* Set the maximum time for determining particle trajectories.
-    + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particle would arrive in less or more time. Furthermore, this analysis would greatly underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
+1. Particle tracking
+    + *Well capture zones*. Particle tracking can either be done by:
+        1. reverse tracking particles from wells (select "Well capture zones"), or
+        1. defining individual particles to track (deselect "Well capture zones")
+    + *Max time.* Set the maximum time for determining particle trajectories.
+    + *Add particles* (Individual particle tracking only). Click the map to set initial locations for individual particle tracking.
+    + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particle would arrive in less or more time. Furthermore, this analysis would underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
+1. Save or upload a scenario
+    + The "File" panel allows you to save a scenario or upload a scenario. 
         
 #### View results
 
