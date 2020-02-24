@@ -156,7 +156,7 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
     last <- particle_i[nrow(particle_i),]
     j <- 0
     v <- Inf
-    status_val <- 0
+    status_val <- akima::bilinear(xgrid,ygrid,status_grid,x0=last["x"],y0=last["y"])$z
     captured_in_source_cell <- FALSE
 
     # track particle_i until one of the conditions is reached:
@@ -186,7 +186,7 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 
       # if inside source cell, check for well capture
       if (status_val < 0) {
-        inside_well_capture <- all(pmax(last["x"] - terminal_wells$x,last["x"] - terminal_wells$y) < dL)
+        inside_well_capture <- all(min(c(pmax(last["x"] - terminal_wells$x,last["x"] - terminal_wells$y),Inf)) < dL)
         if (inside_well_capture) {
           captured_in_source_cell <- TRUE
         }
