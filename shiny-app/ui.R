@@ -84,7 +84,7 @@ ui <- fluidPage(
                             )#,verbatimTextOutput("boundtypes")
                           ),
                           tabPanel(
-                            "Aquifer properties",fluid=TRUE,
+                            "Properties",fluid=TRUE,
                             HTML("<p style=font-size:25%><br></p>"),
                             # conditionalPanel(
                             #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
@@ -99,6 +99,15 @@ ui <- fluidPage(
                             conditionalPanel(
                               condition = "input.aquifer_type == 'confined'",
                               numericInput("z0", "Aquifer thickness, m",10)
+                            )
+                          ),
+                          tabPanel(
+                            "Recharge",fluid=TRUE,
+                            HTML("<p style=font-size:25%><br></p>"),
+                            # conditionalPanel(
+                            #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
+                            # h5("Aquifer type"),
+                            fluidRow(
                             )
                           )
                         )
@@ -169,6 +178,7 @@ ui <- fluidPage(
                       tabPanel(
                         "Particles",value="particles",
                         hr(),
+                        shiny::checkboxInput("wellCapture","Well capture zones",value = FALSE),
                         p("Click map to set initial locations for particle tracking."),
                         hr(),
                         fluidRow(
