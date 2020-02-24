@@ -77,7 +77,8 @@ server <- function(input, output, session) {
   })
 
   particles <- reactiveValues(
-    paths_wgs = NULL,
+    particle_paths_wgs = NULL,
+    capture_paths_wgs = NULL,
     tracking = tibble::tibble(pID=integer(),time_years=numeric(),status=character(),x_end=numeric(),y_end=numeric())
   )
 
@@ -814,66 +815,67 @@ server <- function(input, output, session) {
 
   observeEvent(updateResults$update_particles_now,{
     print("particles 1")
-    if (!is.null(particles_utm()) & !is.null(bounds$bounds_sf) & !is.null(wells_utm())) {
-      # prep for particle tracking
-      print("particles 2")
-      particle_pIDs <- particles_utm() %>% dplyr::pull(pID)
-      particles_matrix <- particles_utm() %>% sf::st_set_geometry(NULL) %>%
-        dplyr::select(x,y) %>% as.matrix()
-      n_progress <- nrow(particles_matrix) + 2
+    if (!is.null(bounds$bounds_sf) & !is.null(wells_utm())) {
+
+      print("input$wellCapture")
+      print(input$wellCapture)
+
+      n_progress <- !is.null(particles_utm()) * 2 + input$wellCapture * 2 + 1
 
       shiny::withProgress(message="Particle tracking",value=0,{
         incProgress(1/n_progress,detail="Getting aquifer properties")
+
         # get aquifer boundaries
         bounds_utm <- bounds$bounds_sf %>%
           dplyr::select(-dplyr::matches('^[mb]$'),-dplyr::matches("[xy][12]")) %>%
           sf::st_transform(anem::utm_zone_to_proj4(utm_zone()))
         aquifer_utm <- aquifer()
         aquifer_utm$bounds <- define_bounds(bounds_utm)
-        print("particles 3")
-
         print(aquifer_utm)
 
-        for (i in 1:nrow(particles_utm())) {
-          print("particles 4")
-          incProgress(1/n_progress,detail=paste0("pID = ",particle_pIDs[i]))
-          loc <- particles_matrix[i,c("x","y")]
-          print("particles 5")
-          particle <- track_particles(loc,wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)  %>%
-            dplyr::mutate(pID=particle_pIDs[i])
-          print("particles 6")
-          if (i == 1) {
-            particle_path_df <- particle
-            particle_endpoint <- particle[nrow(particle),]
-          } else {
-            particle_path_df <- particle_path_df %>% dplyr::bind_rows(particle)
-            particle_endpoint <- particle_endpoint %>% dplyr::bind_rows(particle[nrow(particle),])
-          }
+        if (!is.null(particles_utm())) {
+          # prep for particle tracking
+          # particle_pIDs <- particles_utm() %>% dplyr::pull(pID)
+          particles_df <- particles_utm() %>% sf::st_set_geometry(NULL) %>% tibble::as_tibble()
+
+          incProgress(1/n_progress,detail="Tracking individual particles")
+          particle_paths_df <- track_particles(particles_df,wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)
+          particle_endpoints <- particle_paths_df %>% dplyr::filter(endpoint)
+
+          incProgress(1/n_progress,detail="Generating individual polylines")
+          particles$particle_paths_wgs <- particle_paths_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+            dplyr::group_by(pID) %>% dplyr::summarize(do_union=FALSE) %>%
+            sf::st_cast("MULTILINESTRING") %>%
+            sf::st_transform(crs=4326)
+
+          leafletProxy("resultsmap") %>%
+            clearGroup("particles") %>%
+            addPolylines(data=particles$particle_paths_wgs,color = "red",group = "particles") %>%
+            addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+                             data=mapclicks$particle_locations)
+
+          particle_sf <- particle_endpoints %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+            sf::st_transform(crs=4326)
+          particle_coords_wgs <- particle_sf %>% sf::st_coordinates() %>% tibble::as_tibble()
+          particle_wgs <- particle_sf %>% sf::st_set_geometry(NULL) %>% dplyr::bind_cols(particle_coords_wgs)
+
+          particles$tracking <- particle_wgs %>% dplyr::mutate(time_years=time_days/365) %>%
+            dplyr::select(pID,time_years,status,x_end=X,y_end=Y)
         }
+        if (input$wellCapture) {
+          incProgress(1/n_progress,detail="Well capture zones - tracking")
+          capture_paths_df <- get_capture_zone(wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)
 
-        incProgress(1/n_progress,detail="Generating polylines")
-        particles$paths_wgs <- particle_path_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
-          dplyr::group_by(pID) %>% dplyr::summarize(do_union=FALSE) %>%
-          sf::st_cast("MULTILINESTRING") %>%
-          sf::st_transform(crs=4326)
+          incProgress(1/n_progress,detail="Generating well capture polylines")
+          particles$capture_paths_wgs <- capture_paths_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
+            dplyr::group_by(pID) %>% dplyr::summarize(do_union=FALSE) %>%
+            sf::st_cast("MULTILINESTRING") %>%
+            sf::st_transform(crs=4326)
 
-        print(particles$paths_wgs)
-
-        leafletProxy("resultsmap") %>%
-          clearGroup("particles") %>%
-          addPolylines(data=particles$paths_wgs,color = "red",group = "particles") %>%
-          addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
-                           data=mapclicks$particle_locations)
-
-        particle_sf <- particle_endpoint %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
-          sf::st_transform(crs=4326)
-        particle_coords_wgs <- particle_sf %>% sf::st_coordinates() %>% tibble::as_tibble()
-        particle_wgs <- particle_sf %>% sf::st_set_geometry(NULL) %>% dplyr::bind_cols(particle_coords_wgs)
-
-        particles$tracking <- data.frame(pID=particle_pIDs) %>%
-          dplyr::mutate(time_years=particle_wgs$time_days/365,
-                        status=particle_wgs$status,x_end=particle_wgs$X,
-                        y_end=particle_wgs$Y)
+          leafletProxy("resultsmap") %>%
+            clearGroup("capture_particles") %>%
+            addPolylines(data=particles$capture_paths_wgs,color = "red",group = "capture_particles")
+        }
       })
     }
 
