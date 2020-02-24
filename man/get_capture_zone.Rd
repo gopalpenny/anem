@@ -4,8 +4,8 @@
 \alias{get_capture_zone}
 \title{Get capture zone}
 \usage{
-get_capture_zone(wells, aquifer, wIDs, t_max, n_particles = 8,
-  type = "all")
+get_capture_zone(wells, aquifer, t_max = 365, wIDs = "all",
+  n_particles = 8, buff_m = 20, injection_wells = FALSE, ...)
 }
 \arguments{
 \item{wells}{Wells \code{data.frame} object, containing well images}
@@ -14,26 +14,37 @@ get_capture_zone(wells, aquifer, wIDs, t_max, n_particles = 8,
 
 \item{t_max}{number of days to run particle tracking}
 
-\item{n_particles}{number of particles to initialize for each well}
+\item{wIDs}{wells at which to generate capture zones. Set to "all" or numeric value (or vector) containing wID for wells.}
 
-\item{type}{specifie which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.}
+\item{n_particles}{number of particles to initialize at each well}
 
-\item{wID}{numeric value (or vector) containing wID for wells at which to generate capture zones.}
+\item{buff_m}{buffer radius (m) around each well at which particles are initialized}
+
+\item{injection_wells}{if TRUE, particle tracking from injection wells is allowed. if FALSE, particle tracking from injection wells is prohibited.}
+
+\item{...}{Additional arguments passed to \code{track_particles}}
 }
 \description{
 Get the capture zone for one or more wells
 }
 \details{
-\itemize{
-  \item "all": Returns a list containing all three named objects described below.
-  \item "paths": Returns a data.frame of particle paths
-  \item "endpoints": Returns the end location of each particle after tracking
-  \item "smoothed": Returns a data.frame with smoothed path intersecting the \code{endpoints}
-}
+Tracking particles are initialized radially around each well at a distance of \code{buff_m}. These particles must be
+initialized outside any grid cells that overlap the well, because particle velocities inside this cell will be incorrect.
 }
 \examples{
-aquifer <- aquifer_example
-wells <- define_wells(wells_example[c(3,4,5),]) \%>\% generate_image_wells(aquifer)
-get_capture_zone(wells,aquifer, wIDs = c(1,2))
-ggplot() + geom_point(data=wells,aes(x,y,color=wID))
+bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
+aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
+wells_df_orig <- wells_example
+wells_df_orig[4,"Q"] <- 0.25
+wells <- define_wells(wells_df_orig) \%>\% generate_image_wells(aquifer)
+particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all")
+particle_paths \%>\% dplyr::filter(endpoint)
+
+ggplot() +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
+  geom_path(data=particle_paths,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
+  geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
+  geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
+  scale_shape_manual(values=c(5,4,3,0,1)) +
+  coord_equal()
 }

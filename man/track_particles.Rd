@@ -4,8 +4,8 @@
 \alias{track_particles}
 \title{Track particle in aquifer}
 \usage{
-track_particles(loc, wells, aquifer, t_max = 365 * 10, reverse = FALSE,
-  dL = "auto")
+track_particles(loc, wells, aquifer, t_max = 365, reverse = FALSE,
+  step_dist = "auto", grid_length = 200)
 }
 \arguments{
 \item{loc}{Coordinate vector as \code{c(x, y)} or \code{data.frame} with \code{x} and \code{y} columns}
@@ -18,7 +18,7 @@ track_particles(loc, wells, aquifer, t_max = 365 * 10, reverse = FALSE,
 
 \item{reverse}{If \code{TRUE}, particle tracking will run in reverse. Used for well capture zones}
 
-\item{dL}{Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
+\item{step_dist}{Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
 any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
 than the grid spacing to ensure that particles are captured by wells.}
 }
@@ -32,16 +32,17 @@ aquifer boundary, or outside of the wells ROI. Coordinates must be in meters.
 }
 \details{
 This function numerically integrates particle paths using the Euler method. The time step of integration depends on velocity.
-Each time step is set so that the particle advances by a distance of dL (although there is a maximum time step 1 year).
+Each time step is set so that the particle advances by a distance of step_dist (although there is a maximum time step 1 year).
 Particle tracking continues as long as:
 \itemize{
 \item The particle has not encountered a well or boundary
 \item The particle velocity is greater than 0
 \item The total time is less than \code{t_max}
-\item The particle has travelled less than dL * 1e5
+\item The particle has travelled less than step_dist * 1e5
 }
 The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
-step is calculated using bilinear interpolation.
+step is calculated using bilinear interpolation. If a particle is near a source well (i.e., an injection well if \code{reverse = FALSE},
+or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisely at that location.
 }
 \examples{
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
