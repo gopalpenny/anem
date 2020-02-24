@@ -811,10 +811,15 @@ get_perpendicular_line <- function(m,x,y) {
 #' y <- seq(0,1000,by=500)
 #' check_point_in_aquifer(x,yseq(0,1000,by=500),aquifer)
 check_point_in_aquifer <- function(x,y,aquifer) {
-  b_a <- aquifer$bounds %>% dplyr::filter(m==aquifer$bounds$m[1])
+  if (any(grepl("sf",class(aquifer$bounds)))) {
+    bounds <- aquifer$bounds %>% sf::st_set_geometry(NULL)
+  } else {
+    bounds <- aquifer$bounds
+  }
+  b_a <- bounds %>% dplyr::filter(m==bounds$m[1])
   side_a <- sapply(split(b_a,1:nrow(b_a)),check_point_side_of_line,x=x,y=y)
 
-  b_b <- aquifer$bounds %>% dplyr::anti_join(b_a,by=names(b_a))
+  b_b <- bounds %>% dplyr::anti_join(b_a,by=names(b_a))
   side_b <- sapply(split(b_b,1:nrow(b_b)),check_point_side_of_line,x=x,y=y)
 
   if (length(x) == 1) {
