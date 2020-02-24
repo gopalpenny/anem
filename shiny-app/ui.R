@@ -209,11 +209,11 @@ ui <- fluidPage(
                   # Prepare map
                   column(8,
                          fluidRow(
-                           column(8,h3(textOutput("prepmaptitle"))),
-                           column(2,align='right',
+                           column(6,h3(textOutput("prepmaptitle"))),
+                           column(3,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("clearMap","Clear map",style='font-size:80%')),
-                           column(2,align='right',
+                           column(3,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("resetZoomLink","Zoom to objects",style='font-size:80%'))
                          ),
@@ -260,7 +260,7 @@ ui <- fluidPage(
                            column(9,h3(textOutput("resultsmaptitle"))),
                            column(3,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
-                                  actionLink("resetZoom_results","Zoom to objects",style='font-size:80%'))
+                                  actionLink("resetZoomLink_results","Zoom to objects",style='font-size:80%'))
                          ),
                          leaflet::leafletOutput("resultsmap",height=430) %>% withSpinner(),
                          fluidRow(

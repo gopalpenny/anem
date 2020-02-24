@@ -356,7 +356,7 @@ server <- function(input, output, session) {
            "aquifer" = "Define aquifer",
            "wells" = "Define wells",
            "particles" = "Initiate particles",
-           "files" = "Save or upload scenario")
+           "files" = "Save or upload")
   })
 
   output$resultsmaptitle <- renderText({
@@ -557,9 +557,14 @@ server <- function(input, output, session) {
                                             selected=logical(),stringsAsFactors = FALSE)
     leafletProxy("prepmap") %>%
       clearShapes() %>% clearMarkers()
+    leafletProxy("resultsmap") %>%
+      clearShapes() %>% clearMarkers()
   })
 
   observeEvent(input$resetZoomLink,{
+    updateResults$reset_zoom <- updateResults$reset_zoom + 1
+  })
+  observeEvent(input$resetZoomLink_results,{
     updateResults$reset_zoom <- updateResults$reset_zoom + 1
   })
 
@@ -572,6 +577,8 @@ server <- function(input, output, session) {
     print(mapclicks$well_locations)
     if (all(abs(c(x1, y1, x2, y2)) != Inf)) {
       leafletProxy("prepmap") %>%
+        fitBounds(x1, y1, x2, y2)
+      leafletProxy("resultsmap") %>%
         fitBounds(x1, y1, x2, y2)
     }
   })
