@@ -28,6 +28,18 @@ interpret_map_click <- function(mapClick, clickOperation, mapclicks, ...) {
       mapclicks$bound_vertices <- rbind(mapclicks$bound_vertices,
                                         data.frame(x=x,y=y,bID=newid))
     }
+  } else if (clickOperation == "recharge_vertex") {
+    new_row <- data.frame(x=x,y=y)
+    # only add the point if it is different from existing points
+    if (nrow(base::merge(new_row,mapclicks$recharge_vertices))==0) {
+      newid <- max(c(mapclicks$recharge_vertices$rID,0),na.rm=TRUE) + 1
+      # Clear bound vertices if a click occurs after 4 vertices already set
+      if (dim(mapclicks$recharge_vertices)[1] >= 2) {
+        mapclicks$recharge_vertices <- mapclicks$recharge_vertices[FALSE,]
+      }
+      mapclicks$recharge_vertices <- rbind(mapclicks$recharge_vertices,
+                                        data.frame(x=x,y=y,rID=newid))
+    }
   } else if (clickOperation == "new_well") {
     newid <- max(c(mapclicks$well_locations$wID,0),na.rm=TRUE) + 1
     mapclicks$well_locations <- rbind(mapclicks$well_locations %>% dplyr::mutate(selected=FALSE),

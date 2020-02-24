@@ -13,7 +13,7 @@ source("app-functions/anem_shiny_helpers.R")
 wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE))
 partPal <- colorFactor(palette = c("darkred","red"), domain = c(FALSE, TRUE))
 # opacityFun <- function(x) switch(x+1,0.4,0.8)
-boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
+boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH", "PB"))
 
 server <- function(input, output, session) {
   notification_id <- NULL
@@ -32,12 +32,34 @@ server <- function(input, output, session) {
   mapclicks <- reactiveValues(
     bound_vertices=data.frame(bID=integer(),#bound_type=factor(levels=c("NF","CH")),
                               x=numeric(),y=numeric()),
+    recharge_vertices=data.frame(rID=integer(),x=numeric(),y=numeric()),
     well_locations=data.frame(Q=numeric(),R=numeric(),diam=numeric(),Group=character(),Weight=numeric(),
                               x=numeric(),y=numeric(),wID=integer(),selected=logical(),stringsAsFactors = FALSE),
     particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
                                   selected=logical(),stringsAsFactors = FALSE)
     # well_ROIs=
   )
+
+  recharge_params <- reactive({
+    if (nrow(mapclicks$recharge_vertices) == 2 & !is.null(proj4string_scenario()) & input$enableRecharge) {
+      rv <- mapclicks$recharge_vertices %>%
+        sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
+        sf::st_transform(crs=proj4string_scenario()) %>%
+        dplyr::bind_cols(sf::st_coordinates(.) %>% tibble::as_tibble() %>% setNames(c("x","y"))) %>%
+        sf::st_set_geometry(NULL)
+      recharge_params <- list(recharge_vector=c(rv$x[1],rv$y[1],rv$x[2],rv$y[2]),
+                              x0=rv$x[1], y0=rv$y[1],
+                              recharge_type = "F",
+                              flow = input$rechargeFlow)
+    } else {
+      recharge_params <- NULL
+    }
+    recharge_params
+  })
+
+  output$recharge_df <- renderPrint({
+    print(aquifer())
+  })
 
   bounds <- reactiveValues(
     edges_user = NULL,
@@ -55,7 +77,8 @@ server <- function(input, output, session) {
     Ksat=input$Ksat,
     z0=input$z0,
     n=input$porosity,
-    bounds=bounds$bounds_sf)})
+    bounds=bounds$bounds_sf,
+    recharge=recharge_params())})
 
   wells <- reactiveValues(
     utm_with_images = NULL,
@@ -324,16 +347,18 @@ server <- function(input, output, session) {
       prepmap_marker_equal ~ "marker",
       !prepmap_marker_equal ~ "map")
     clickOperation <- dplyr::case_when(
-      input$usermode=="aquifer" ~ "aquifer_vertex",
+      input$usermode=="aquifer" & input$aquifermode == "boundaries" ~ "aquifer_vertex",
+      input$usermode=="aquifer" & input$aquifermode == "recharge" ~ "recharge_vertex",
       input$usermode=="wells" & clickType=="map" ~ "new_well",
       input$usermode=="particles" & clickType=="map" ~ "new_particle",
-      clickType=="marker" ~ "select_point"
+      clickType=="marker" ~ "select_point",
+      TRUE,"none"
       # input$usermode=="wells" & clickType=="marker" ~ "edit_well",
     )
     well_input <- list(Q=input$Q,R=newwellROI(),diam=input$diam,group=input$well_group,weight=input$well_weight)
     mapclicks <- interpret_map_click(prepmapClick,clickOperation,mapclicks,well_input=well_input)
     # print(mapclicks$well_locations %>% tibble::as_tibble())
-    if (input$usermode == "aquifer") {
+    if (clickOperation == "aquifer_vertex") {
       bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
       leafletProxy("prepmap",data=mapclicks$bound_vertices) %>%
         clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
@@ -357,6 +382,17 @@ server <- function(input, output, session) {
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
                        fillOpacity = 0, opacity = 1, weight = 4,
                        data=bounds$bounds_sf)
+      }
+    } else if (clickOperation == "recharge_vertex") {
+      leafletProxy("prepmap",data=mapclicks$recharge_vertices[1,]) %>%
+        clearGroup("rechargevertices") %>%
+        addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 7)
+      if (nrow(mapclicks$recharge_vertices) > 1) {
+        leafletProxy("prepmap",data=mapclicks$recharge_vertices) %>%
+          addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 2) %>%
+          addPolylines(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.3, weight = 2,
+                       layerId = "rechargevector",fillOpacity = 0)
+
       }
     } else if (clickOperation == "new_well") {
       # leafletProxy("prepmap") %>%
@@ -450,6 +486,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$clearMap,{
     mapclicks$bound_vertices <- data.frame(x=numeric(),y=numeric(),bID=integer())
+    mapclicks$recharge_vertices <- data.frame(rID=integer(),x=numeric(),y=numeric())
     mapclicks$well_locations <- data.frame(Q=numeric(),R=numeric(),diam=numeric(),group=character(),weight=numeric(),
                                            x=numeric(),y=numeric(),wID=integer(),selected=logical())
     mapclicks$particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
@@ -866,12 +903,17 @@ server <- function(input, output, session) {
           incProgress(1/n_progress,detail="Well capture zones - tracking")
           capture_paths_df <- get_capture_zone(wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)
 
+          print("capture_paths_df")
+          print(capture_paths_df)
+
           incProgress(1/n_progress,detail="Generating well capture polylines")
           particles$capture_paths_wgs <- capture_paths_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
-            dplyr::group_by(pID) %>% dplyr::summarize(do_union=FALSE) %>%
+            dplyr::group_by(wID,pID) %>% dplyr::summarize(do_union=FALSE) %>%
             sf::st_cast("MULTILINESTRING") %>%
             sf::st_transform(crs=4326)
 
+          print("particles$capture_paths_wgs")
+          print(particles$capture_paths_wgs)
           leafletProxy("resultsmap") %>%
             clearGroup("capture_particles") %>%
             addPolylines(data=particles$capture_paths_wgs,color = "red",group = "capture_particles")

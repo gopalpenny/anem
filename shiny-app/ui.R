@@ -53,9 +53,10 @@ ui <- fluidPage(
 
                         hr(),
                         tabsetPanel(
+                          id="aquifermode",
                           type="tabs",
                           tabPanel(
-                            "Boundaries",fluid=TRUE,
+                            "Bounds",value="boundaries",fluid=TRUE,
                             HTML("<p style=font-size:45%><br></p>"),
                             #     "Prepare scenario",fluid=TRUE,
                             # conditionalPanel(
@@ -65,26 +66,26 @@ ui <- fluidPage(
                             fluidRow(
                               # column(6,dataTableOutput("edgetable")),
                               column(5,h5("Bound 1:"),align='right'),
-                              column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                              column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH","Open boundary"="PB"),selected = "No flow"))
                             ),
                             fluidRow(
                               # column(6,dataTableOutput("edgetable")),
                               column(5,h5("Bound 2:"),align='right'),
-                              column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                              column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH","Open boundary"="PB"),selected = "No flow"))
                             ),
                             fluidRow(
                               # column(6,dataTableOutput("edgetable")),
                               column(5,h5("Bound 3:"),align='right'),
-                              column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                              column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH","Open boundary"="PB"),selected = "No flow"))
                             ),
                             fluidRow(
                               # column(6,dataTableOutput("edgetable")),
                               column(5,h5("Bound 4:"),align='right'),
-                              column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
+                              column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH","Open boundary"="PB"),selected = "No flow"))
                             )#,verbatimTextOutput("boundtypes")
                           ),
                           tabPanel(
-                            "Properties",fluid=TRUE,
+                            "Properties",value="properties",fluid=TRUE,
                             HTML("<p style=font-size:25%><br></p>"),
                             # conditionalPanel(
                             #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
@@ -102,8 +103,13 @@ ui <- fluidPage(
                             )
                           ),
                           tabPanel(
-                            "Recharge",fluid=TRUE,
+                            "Recharge",value="recharge",fluid=TRUE,
                             HTML("<p style=font-size:25%><br></p>"),
+                            checkboxInput("enableRecharge","Enable recharge",value=FALSE),
+                            p(paste("Click 2 points to set direction of uniform flow.",
+                                    "The origin (larger) point maintains the undisturbed aquifer head, h0.")), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
+                            numericInput("rechargeFlow","Unit flow, cumec/meter",0),
+                            verbatimTextOutput("recharge_df"),
                             # conditionalPanel(
                             #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
                             # h5("Aquifer type"),
