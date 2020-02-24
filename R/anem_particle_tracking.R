@@ -22,21 +22,22 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' @param aquifer Aquifer as an \code{aquifer} object, with \code{Ksat}, porosity, \code{n}, and boundaries (which are used to calculate gridded velocities)
 #' @param t_max Maximum time, in days, for which to calculate travel time
 #' @param reverse If \code{TRUE}, particle tracking will run in reverse. Used for well capture zones
-#' @param dL Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
+#' @param step_dist Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
 #' any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
 #' than the grid spacing to ensure that particles are captured by wells.
 #' @details
 #' This function numerically integrates particle paths using the Euler method. The time step of integration depends on velocity.
-#' Each time step is set so that the particle advances by a distance of dL (although there is a maximum time step 1 year).
+#' Each time step is set so that the particle advances by a distance of step_dist (although there is a maximum time step 1 year).
 #' Particle tracking continues as long as:
 #' \itemize{
 #' \item The particle has not encountered a well or boundary
 #' \item The particle velocity is greater than 0
 #' \item The total time is less than \code{t_max}
-#' \item The particle has travelled less than dL * 1e5
+#' \item The particle has travelled less than step_dist * 1e5
 #' }
 #' The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
-#' step is calculated using bilinear interpolation.
+#' step is calculated using bilinear interpolation. If a particle is near a source well (i.e., an injection well if \code{reverse = FALSE},
+#' or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisely at that location.
 #' @return
 #' Returns a data.frame containing the time and locations of particle. If \code{loc} is a \code{data.frame},
 #' columns in \code{loc} not named x or y are included in results.
@@ -61,7 +62,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y,color=p)) +
 #'   coord_equal()
-track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, dL = "auto", grid_length=200) {
+track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, step_dist = "auto", grid_length=200) {
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
@@ -71,50 +72,76 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, d
   # prep variables
   flow_sign <- ifelse(!reverse,1,-1)
   terminal_well_pumping_sign <- ifelse(!reverse,-1,1)
-  terminal_wells <- wells %>% dplyr::filter(well_image=="Actual", sign(Q)==terminal_well_pumping_sign)
+  grid_wells <- wells %>% dplyr::filter(well_image=="Actual") %>%
+    dplyr::mutate(terminal_val=sign(Q)*terminal_well_pumping_sign,
+                  terminal_type=factor(terminal_val,levels=-1:1,labels=c("source","non-operational","terminal")))
+  terminal_wells <- grid_wells %>% dplyr::filter(terminal_val==1)
 
   # set grid to aquifer bounds, +1 cell on each side
   xgrid <- seq(min(c(aquifer$bounds$x1,aquifer$bounds$x2)),max(c(aquifer$bounds$x1,aquifer$bounds$x2)),length.out=grid_length)
   xgrid <- c(2*xgrid[1]-xgrid[2],xgrid,xgrid[length(xgrid)] + xgrid[2] - xgrid[1])
   ygrid <- seq(min(c(aquifer$bounds$y1,aquifer$bounds$y2)),max(c(aquifer$bounds$y1,aquifer$bounds$y2)),length.out=grid_length)
   ygrid <- c(2*ygrid[1]-ygrid[2],ygrid,ygrid[length(ygrid)] + ygrid[2] - ygrid[1])
-  gridvals <- expand.grid(x=xgrid,y=ygrid)
+  gridvals <- expand.grid(x=xgrid,y=ygrid) %>% tibble::as_tibble()
+
+  velocity_constant <- aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
 
   # get gridded velocities
   if (aquifer$aquifer_type == "confined") {
-    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
+    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
   } else if (aquifer$aquifer_type == "unconfined") {
-    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
+    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
     # head0 <- get_flowdir(gridvals,wells,aquifer)
     # headdx <- get_flowdir(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
     # headdy <- get_flowdir(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
   }
 
   # Identify grid cells (aquifer boundaries & wells) where the simulation should stop
-  well_grid_pts <-
-    do.call(rbind,lapply(split(terminal_wells,1:nrow(terminal_wells)),
+  well_grid_pts_prep <-
+    do.call(rbind,lapply(split(grid_wells,1:nrow(grid_wells)),
                          function(well,df) df[which.min(sqrt((df$x - well$x)^2 +
-                                                               (df$y - well$y)^2))[1],c("x","y")], df=gridvals)) %>%
+                                                               (df$y - well$y)^2))[1],c("x","y")] %>%
+                           tibble::add_column(val=well$terminal_val), df=gridvals)) %>%
     dplyr::mutate(well_cell=TRUE)
-  stop_sim <- gridvals %>% dplyr::left_join(well_grid_pts,by=c("x","y")) %>%
-    dplyr::mutate(inside_aquifer=check_point_in_aquifer(x,y,aquifer),
-                  inside_well=!is.na(well_cell),
-                  stop=!inside_aquifer | inside_well,
-                  stop_val=ifelse(stop,1e3,0))
+  well_grid_pts <- well_grid_pts_prep %>% dplyr::group_by(x,y) %>%
+    dplyr::summarize(well_val=dplyr::case_when(
+      any(val==-1) & any(val==1)~-2,
+      any(val==-1)~-1,
+      any(val==1)~2
+    )) %>% dplyr::group_by()
+  if(shiny_running()) {
+    print("well_grid_pts")
+    print(class(well_grid_pts))
+    print(head(well_grid_pts))
+    print("gridvals")
+    print(class(gridvals))
+    print(head(gridvals))
+  }
+  sim_status <- gridvals %>% dplyr::left_join(well_grid_pts,by=c("x","y")) %>%
+    dplyr::mutate(inside_aquifer_cell=check_point_in_aquifer(x,y,aquifer),
+                  status_val=dplyr::case_when(
+                    is.na(well_val) & !inside_aquifer_cell ~ 1e3,
+                    is.na(well_val) & inside_aquifer_cell ~ 0,
+                    well_val < 0 ~ -4e3,
+                    well_val== 2 ~ 1e3,
+                    TRUE ~ 0
+                  ))
 
   # # mapping / debugging
   # v_map <- cbind(gridvals,v_grid_m_day)
   # ggplot(v_map) + geom_raster(aes(x,y,fill=dx))
-  # ggplot(stop_sim) + geom_raster(aes(x,y,fill=stop_val))
+  # ggplot(sim_status) + geom_raster(aes(x,y,fill=status_val))
 
   # set up the grid for lookup / interpolation of values
   v_x_grid <- matrix(v_grid_m_day$dx,nrow=length(xgrid))
   v_y_grid <- matrix(v_grid_m_day$dy,nrow=length(xgrid))
-  stop_grid <- matrix(stop_sim$stop_val,nrow=length(xgrid))
+  status_grid <- matrix(sim_status$status_val,nrow=length(xgrid))
 
   # get dL
-  if (dL=="auto") {
+  if (step_dist=="auto") {
     dL <- min(c(xgrid[2]-xgrid[1],ygrid[2]-ygrid[1]))/2
+  } else {
+    dL <- step_dist
   }
 
   if (any(grepl("data.frame",class(loc)))) {
@@ -129,14 +156,21 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, d
     last <- particle_i[nrow(particle_i),]
     j <- 0
     v <- Inf
-    stop_val <- 0
+    status_val <- 0
+    captured_in_source_cell <- FALSE
 
     # track particle_i until one of the conditions is reached:
-    while (last["time"] < t_max & v != 0 & stop_val < 25 & j < 1e5) {
+    while (last["time"] < t_max & v != 0 & status_val <= 0 & !captured_in_source_cell & j < 1e5) {
       j <- j + 1
-      # get current velocity
-      v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
-      v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
+      # interpolate current velocity (provided particle is not in a source cell)
+      if (status_val >= 0) {
+        v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
+        v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
+      } else { # if particle is near a source well (status_val < 0), get precise velocity
+        fd <- get_flowdir(last[c("x","y")],wells,aquifer) * velocity_constant
+        v_x <- fd[1]
+        v_y <- fd[2]
+      }
       # calculate speed (v) and timestep (dt)
       v <- sqrt(v_x^2 + v_y^2)
       dt <- min(dL / v, 365)
@@ -148,7 +182,15 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, d
       # update particle_i location
       last <- last + c(dt,dx,dy)
       particle_i <- rbind(particle_i,last)
-      stop_val <- akima::bilinear(xgrid,ygrid,stop_grid,x0=last["x"],y0=last["y"])$z
+      status_val <- akima::bilinear(xgrid,ygrid,status_grid,x0=last["x"],y0=last["y"])$z
+
+      # if inside source cell, check for well capture
+      if (status_val < 0) {
+        inside_well_capture <- all(pmax(last["x"] - terminal_wells$x,last["x"] - terminal_wells$y) < dL)
+        if (inside_well_capture) {
+          captured_in_source_cell <- TRUE
+        }
+      }
     }
     particle_df <- as.data.frame(particle_i)
 
@@ -264,6 +306,9 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #' @param ... Additional arguments passed to \code{track_particles}
 #' @importFrom magrittr %>%
 #' @export
+#' @details
+#' Tracking particles are initialized radially around each well at a distance of \code{buff_m}. These particles must be
+#' initialized outside any grid cells that overlap the well, because particle velocities inside this cell will be incorrect.
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
