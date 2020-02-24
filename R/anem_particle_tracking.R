@@ -61,7 +61,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y,color=p)) +
 #'   coord_equal()
-track_particles <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto", grid_length=200) {
+track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, dL = "auto", grid_length=200) {
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
