@@ -109,7 +109,7 @@ ui <- fluidPage(
                             p(paste("Click 2 points to set direction of uniform flow.",
                                     "The origin (larger) point maintains the undisturbed aquifer head, h0.")), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
                             numericInput("rechargeFlow","Unit flow, cumec/meter",0),
-                            verbatimTextOutput("recharge_df"),
+                            # verbatimTextOutput("recharge_df"),
                             # conditionalPanel(
                             #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
                             # h5("Aquifer type"),
@@ -201,19 +201,19 @@ ui <- fluidPage(
                         hr(),
                         p("Upload a scenario file or download the current scenario. The file should be saved with a .rds extension."),
                         shiny::fileInput("fileUpload","Upload scenario",multiple=FALSE,c(".rds",".Rds",".RDS")),
-                        shiny::downloadButton("fileDownload","Download scenario"),
-                        shiny::verbatimTextOutput("printfile")
+                        shiny::downloadButton("fileDownload","Download scenario")#,
+                        # shiny::verbatimTextOutput("printfile")
                       )
                     )
                   ),
                   # Prepare map
                   column(8,
                          fluidRow(
-                           column(6,h3(textOutput("prepmaptitle"))),
-                           column(3,align='right',
+                           column(8,h3(textOutput("prepmaptitle"))),
+                           column(2,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("clearMap","Clear map",style='font-size:80%')),
-                           column(3,align='right',
+                           column(2,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("resetZoomLink","Zoom to objects",style='font-size:80%'))
                          ),
@@ -252,7 +252,8 @@ ui <- fluidPage(
                          # )
                          hr(),
                          h4("Particle tracking"),
-                         dataTableOutput("particletable_output")
+                         dataTableOutput("particletable_output")#,
+                         # verbatimTextOutput("capture_endpoint")
                   ),
                   column(8,
                          fluidRow(

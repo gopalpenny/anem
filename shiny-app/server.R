@@ -157,6 +157,7 @@ server <- function(input, output, session) {
   particles <- reactiveValues(
     particle_paths_wgs = NULL,
     capture_paths_wgs = NULL,
+    capture_endpoints = NULL,
     tracking = tibble::tibble(pID=integer(),time_years=numeric(),status=character(),x_end=numeric(),y_end=numeric())
   )
 
@@ -354,7 +355,8 @@ server <- function(input, output, session) {
     switch(input$usermode,
            "aquifer" = "Define aquifer",
            "wells" = "Define wells",
-           "particles" = "Initiate particles")
+           "particles" = "Initiate particles",
+           "files" = "Save or upload scenario")
   })
 
   output$resultsmaptitle <- renderText({
@@ -926,7 +928,7 @@ server <- function(input, output, session) {
       print("input$wellCapture")
       print(input$wellCapture)
 
-      n_progress <- !is.null(particles_utm()) * 2 + input$wellCapture * 2 + 1
+      n_progress <- 3 #!is.null(particles_utm()) * 2 + input$wellCapture * 2 + 1
 
       shiny::withProgress(message="Particle tracking",value=0,{
         incProgress(1/n_progress,detail="Getting aquifer properties")
@@ -939,7 +941,7 @@ server <- function(input, output, session) {
         aquifer_utm$bounds <- define_bounds(bounds_utm)
         print(aquifer_utm)
 
-        if (!is.null(particles_utm())) {
+        if (!is.null(particles_utm()) & !input$wellCapture) {
           # prep for particle tracking
           # particle_pIDs <- particles_utm() %>% dplyr::pull(pID)
           particles_df <- particles_utm() %>% sf::st_set_geometry(NULL) %>% tibble::as_tibble()
@@ -981,6 +983,8 @@ server <- function(input, output, session) {
             sf::st_cast("MULTILINESTRING") %>%
             sf::st_transform(crs=4326)
 
+          particles$capture_endpoints <- capture_paths_df %>% dplyr::filter(endpoint)
+
           print("particles$capture_paths_wgs")
           print(particles$capture_paths_wgs)
           leafletProxy("resultsmap") %>%
@@ -992,6 +996,10 @@ server <- function(input, output, session) {
 
     updateCheckboxInput(session,"update_particles",value=FALSE)
     updateCheckboxInput(session,"update_particles_results",value=FALSE)
+  })
+
+  output$capture_endpoint <- renderPrint({
+    print(particles$capture_endpoints)
   })
 
   # observe({
