@@ -18,22 +18,6 @@ boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH
 server <- function(input, output, session) {
   notification_id <- NULL
 
-  fileUp <- reactive({
-    req(input$fileUpload)
-    req(input$file1)
-
-    tryCatch(
-      {
-        params_list <- readRDS(input$file1$datapath)
-      },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        stop(safeError(e))
-      }
-    )
-    params_list
-  })
-
   output$fileDownload <- downloadHandler(
     filename = function() {
       "anem_scenario.rds"
@@ -47,30 +31,46 @@ server <- function(input, output, session) {
     }
   )
 
-  observeEvent(fileUp,{
+  fileUp <- reactive({
+    # print("FILE UPLOAD BEGINS")
+    req(input$fileUpload)
+
+    params_list <- readRDS(input$fileUpload$datapath)
+    params_list
+  })
+
+  output$printfile <- renderPrint({
+    print(fileUp())
+  })
+
+  observeEvent(fileUp(),{
     pl <- fileUp()
-    updateSelectInput(session,"b1_type",pl$b1_type)
-    updateSelectInput(session,"b2_type",pl$b2_type)
-    updateSelectInput(session,"b3_type",pl$b3_type)
-    updateSelectInput(session,"b4_type",pl$b4_type)
-    updateSelectInput(session,"aquifer_type",pl$aquifer_type)
+    updateSelectInput(session,"b1_type",selected=pl$b1_type)
+    updateSelectInput(session,"b2_type",selected=pl$b2_type)
+    updateSelectInput(session,"b3_type",selected=pl$b3_type)
+    updateSelectInput(session,"b4_type",selected=pl$b4_type)
+    updateSelectInput(session,"aquifer_type",selected=pl$aquifer_type)
 
-    updateNumericInput(session,"porosity",pl$porosity)
-    updateNumericInput(session,"Ksat",pl$Ksat)
-    updateNumericInput(session,"h0",pl$h0)
-    updateNumericInput(session,"z0",pl$z0)
-    updateNumericInput(session,"rechargeFlow",pl$rechargeFlow)
-    updateNumericInput(session,"max_tracking_time_years",pl$max_tracking_time_years)
-    updateNumericInput(session,"z0",pl$z0)
+    updateNumericInput(session,"porosity",value=pl$porosity)
+    updateNumericInput(session,"Ksat",value=pl$Ksat)
+    updateNumericInput(session,"h0",value=pl$h0)
+    updateNumericInput(session,"z0",value=pl$z0)
+    updateNumericInput(session,"rechargeFlow",value=pl$rechargeFlow)
+    updateNumericInput(session,"max_tracking_time_years",value=pl$max_tracking_time_years)
+    updateNumericInput(session,"z0",value=pl$z0)
 
-    updateCheckboxInput(session,"enableRecharge",pl$enableRecharge)
+    updateCheckboxInput(session,"enableRecharge",value=pl$enableRecharge)
 
-    mapclicks$bound_vertices <- pl$mapclicks$bound_vertices
-    mapclicks$particle_locations <- pl$mapclicks$particle_locations
-    mapclicks$recharge_vertices <- pl$mapclicks$recharge_vertices
-    mapclicks$well_locations <- pl$mapclicks$well_locations
+    mapclicks$bound_vertices <- pl$bound_vertices
+    mapclicks$particle_locations <- pl$particle_locations
+    mapclicks$recharge_vertices <- pl$recharge_vertices
+    mapclicks$well_locations <- pl$well_locations
 
-    shiny::updateActionButton(session,"resetZoom")
+    print("mapclicks$well_locations")
+    print(mapclicks$well_locations)
+
+    updateResults$reset_zoom <- updateResults$reset_zoom + 1
+    shiny::updateActionButton(session,"resetZoomLink")
   })
 
   # Check when to update results
@@ -80,7 +80,8 @@ server <- function(input, output, session) {
     update_images_now = 0,
     update_head_now = 0,
     # update_particle_tracking
-    update_particles_now = 0
+    update_particles_now = 0,
+    reset_zoom = 0
   )
 
   # Initialize reactive values
@@ -556,26 +557,33 @@ server <- function(input, output, session) {
       clearShapes() %>% clearMarkers()
   })
 
-  observeEvent(input$resetZoom,{
-    x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) - 0.01
-    x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) + 0.01
-    y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) - 0.01
-    y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) + 0.01
+  observeEvent(input$resetZoomLink,{
+    updateResults$reset_zoom <- updateResults$reset_zoom + 1
+  })
+
+  observeEvent(updateResults$reset_zoom,{
+    x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x,Inf)) - 0.01
+    x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x,-Inf)) + 0.01
+    y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y,Inf)) - 0.01
+    y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y,-Inf)) + 0.01
     print(mapclicks$bound_vertices)
     print(mapclicks$well_locations)
-    leafletProxy("prepmap") %>%
-      fitBounds(x1, y1, x2, y2)
+    if (all(abs(c(x1, y1, x2, y2)) != Inf)) {
+      leafletProxy("prepmap") %>%
+        fitBounds(x1, y1, x2, y2)
+    }
   })
-  observeEvent(input$resetZoom_results,{
-    x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) - 0.01
-    x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) + 0.01
-    y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) - 0.01
-    y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) + 0.01
-    print(mapclicks$bound_vertices)
-    print(mapclicks$well_locations)
-    leafletProxy("prepmap") %>%
-      fitBounds(x1, y1, x2, y2)
-  })
+
+  # observeEvent(input$resetZoom_results,{
+  #   x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) - 0.01
+  #   x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) + 0.01
+  #   y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) - 0.01
+  #   y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) + 0.01
+  #   print(mapclicks$bound_vertices)
+  #   print(mapclicks$well_locations)
+  #   leafletProxy("prepmap") %>%
+  #     fitBounds(x1, y1, x2, y2)
+  # })
 
   output$welltable <- renderDataTable(
     datatable(mapclicks$well_locations,

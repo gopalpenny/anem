@@ -199,9 +199,10 @@ ui <- fluidPage(
                       tabPanel(
                         "File",value="files",
                         hr(),
-                        shiny::fileInput("fileUpload","Upload scenario"),
-                        p("Upload a file. The file should be an .rds file saved from a previous session."),
-                        shiny::downloadButton("fileDownload","Download scenario")
+                        p("Upload a scenario file or download the current scenario. The file should be saved with a .rds extension."),
+                        shiny::fileInput("fileUpload","Upload scenario",multiple=FALSE,c(".rds",".Rds",".RDS")),
+                        shiny::downloadButton("fileDownload","Download scenario"),
+                        shiny::verbatimTextOutput("printfile")
                       )
                     )
                   ),
@@ -214,7 +215,7 @@ ui <- fluidPage(
                                   actionLink("clearMap","Clear map",style='font-size:80%')),
                            column(3,align='right',
                                   HTML("<p style=font-size:45%><br><br></p>"),
-                                  actionLink("resetZoom","Zoom to objects",style='font-size:80%'))
+                                  actionLink("resetZoomLink","Zoom to objects",style='font-size:80%'))
                          ),
                          leaflet::leafletOutput("prepmap",height=430),
                          fluidRow(
