@@ -195,6 +195,13 @@ ui <- fluidPage(
                         ),
                         dataTableOutput("particletable"),
                         HTML("<p style=font-size:100%><br></p>"),
+                      ),
+                      tabPanel(
+                        "File",value="files",
+                        hr(),
+                        shiny::fileInput("fileUpload","Upload scenario"),
+                        p("Upload a file. The file should be an .rds file saved from a previous session."),
+                        shiny::downloadButton("fileDownload","Download scenario")
                       )
                     )
                   ),

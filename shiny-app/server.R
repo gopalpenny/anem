@@ -18,6 +18,61 @@ boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH
 server <- function(input, output, session) {
   notification_id <- NULL
 
+  fileUp <- reactive({
+    req(input$fileUpload)
+    req(input$file1)
+
+    tryCatch(
+      {
+        params_list <- readRDS(input$file1$datapath)
+      },
+      error = function(e) {
+        # return a safeError if a parsing error occurs
+        stop(safeError(e))
+      }
+    )
+    params_list
+  })
+
+  output$fileDownload <- downloadHandler(
+    filename = function() {
+      "anem_scenario.rds"
+    },
+    content = function(file) {
+      saveRDS(list(b1_type=input$b1_type,b2_type=input$b2_type,b3_type=input$b3_type,b4_type=input$b4_type,
+                   aquifer_type=input$aquifer_type,porosity=input$porosity,Ksat=input$Ksat,h0=input$h0,z0=input$z0,
+                   enableRecharge=input$enableRecharge,rechargeFlow=input$rechargeFlow,max_tracking_time_years=input$max_tracking_time_years,
+                   bound_vertices=mapclicks$bound_vertices, particle_locations=mapclicks$particle_locations,
+                   recharge_vertices=mapclicks$recharge_vertices, well_locations=mapclicks$well_locations), file)
+    }
+  )
+
+  observeEvent(fileUp,{
+    pl <- fileUp()
+    updateSelectInput(session,"b1_type",pl$b1_type)
+    updateSelectInput(session,"b2_type",pl$b2_type)
+    updateSelectInput(session,"b3_type",pl$b3_type)
+    updateSelectInput(session,"b4_type",pl$b4_type)
+    updateSelectInput(session,"aquifer_type",pl$aquifer_type)
+
+    updateNumericInput(session,"porosity",pl$porosity)
+    updateNumericInput(session,"Ksat",pl$Ksat)
+    updateNumericInput(session,"h0",pl$h0)
+    updateNumericInput(session,"z0",pl$z0)
+    updateNumericInput(session,"rechargeFlow",pl$rechargeFlow)
+    updateNumericInput(session,"max_tracking_time_years",pl$max_tracking_time_years)
+    updateNumericInput(session,"z0",pl$z0)
+
+    updateCheckboxInput(session,"enableRecharge",pl$enableRecharge)
+
+    mapclicks$bound_vertices <- pl$mapclicks$bound_vertices
+    mapclicks$particle_locations <- pl$mapclicks$particle_locations
+    mapclicks$recharge_vertices <- pl$mapclicks$recharge_vertices
+    mapclicks$well_locations <- pl$mapclicks$well_locations
+
+    shiny::updateActionButton(session,"resetZoom")
+  })
+
   # Check when to update results
   updateResults <- reactiveValues(
     wells_next_view=TRUE,
@@ -352,7 +407,7 @@ server <- function(input, output, session) {
       input$usermode=="wells" & clickType=="map" ~ "new_well",
       input$usermode=="particles" & clickType=="map" ~ "new_particle",
       clickType=="marker" ~ "select_point",
-      TRUE,"none"
+      TRUE~"none"
       # input$usermode=="wells" & clickType=="marker" ~ "edit_well",
     )
     well_input <- list(Q=input$Q,R=newwellROI(),diam=input$diam,group=input$well_group,weight=input$well_weight)
