@@ -1,4 +1,3 @@
-# anem_ui.R
 library(leaflet)
 library(anem)
 library(DT)
@@ -15,256 +14,6 @@ wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE)
 partPal <- colorFactor(palette = c("darkred","red"), domain = c(FALSE, TRUE))
 # opacityFun <- function(x) switch(x+1,0.4,0.8)
 boundPal <- colorFactor(palette = c("blue","black"), domain = c("NF", "CH"))
-
-ui <- fluidPage(
-  h4("anem-app (Beta version)"),
-  # tags$style(HTML("
-  #   .tabbable > .nav > li > a                  {background-color: white;  color:blue}
-  #   .tabbable > .nav > li[class=active] > a                  {background-color: blue;  color:white}
-  #   .tabbable > .nav > li > a[data-value='prepare'] {background-color: white;   color:#005A00}
-  #   .tabbable > .nav > li[class=active] > a[data-value='prepare'] {background-color: #005A00; color:white}
-  #   .tabbable > .nav > li > a[data-value='results'] {background-color: white;   color:#005A00}
-  #   .tabbable > .nav > li[class=active] > a[data-value='results'] {background-color: #005A00; color:white}
-  #   .tabbable > .nav > li > a[data-value='Properties'] {background-color: white;   color:#005A00}
-  #   .tabbable > .nav > li[class=active] > a[data-value='Properties'] {background-color: #005A00; color:white}
-  #   .tabbable > .nav > li > a[data-value='Boundaries'] {background-color: white;   color:#005A00}
-  #   .tabbable > .nav > li[class=active] > a[data-value='Boundaries'] {background-color: #005A00; color:white}
-  # ")),
-  tabsetPanel(id="maintabs",
-    type="tabs",
-    tabPanel(
-      "Instructions",value="instructions",fluid=TRUE,
-      includeMarkdown("app-instructions/app-instructions.Rmd")
-    ),
-    tabPanel(
-      "Prepare scenario",value="prepare",fluid=TRUE,
-      fluidRow(
-        # Prepare scenario
-        # hr(),
-        column(
-          4,
-          # hr(),
-          HTML("<p style=font-size:45%><br></p>"),
-          # verbatimTextOutput("utm_zone"),
-
-          tabsetPanel(
-            id="usermode",
-            type="pills",
-            tabPanel(
-              "Aquifer",value="aquifer",
-              # radioButtons("usermode","Entry mode",
-              #              c("Define aquifer" = "aquifer",
-              #                # "Set aquifer bounds" = "bounds",
-              #                "Add or modify wells" = "wells")),
-              # conditionalPanel(
-
-              hr(),
-              tabsetPanel(
-                type="tabs",
-                tabPanel(
-                  "Boundaries",fluid=TRUE,
-                  HTML("<p style=font-size:45%><br></p>"),
-                  #     "Prepare scenario",fluid=TRUE,
-                  # conditionalPanel(
-                  #   condition="input.usermode == 'aquifer' & input.aquifer_input == 'boundaries'",
-                  # h4("Aquifer "),
-                  p("Click 4 points to add rectangular aquifer boundaries."), #bound_type can be \"NF\" (no flow) or \"CH\" (constant head)"),
-                  fluidRow(
-                    # column(6,dataTableOutput("edgetable")),
-                    column(5,h5("Bound 1:"),align='right'),
-                    column(7,selectInput("b1_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                  ),
-                  fluidRow(
-                    # column(6,dataTableOutput("edgetable")),
-                    column(5,h5("Bound 2:"),align='right'),
-                    column(7,selectInput("b2_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                  ),
-                  fluidRow(
-                    # column(6,dataTableOutput("edgetable")),
-                    column(5,h5("Bound 3:"),align='right'),
-                    column(7,selectInput("b3_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                  ),
-                  fluidRow(
-                    # column(6,dataTableOutput("edgetable")),
-                    column(5,h5("Bound 4:"),align='right'),
-                    column(7,selectInput("b4_type",NULL,choices = c("No flow"="NF","Constant head"="CH"),selected = "No flow"))
-                  )#,verbatimTextOutput("boundtypes")
-                ),
-                tabPanel(
-                  "Aquifer properties",fluid=TRUE,
-                  HTML("<p style=font-size:25%><br></p>"),
-                  # conditionalPanel(
-                  #   condition = "input.usermode == 'aquifer' & input.aquifer_input == 'properties'",
-                  # h5("Aquifer type"),
-                  fluidRow(
-                    column(6,selectInput("aquifer_type", "Aquifer type", #"Aquifer type",
-                                          c("Confined" = "confined","Unconfined" = "unconfined"))),
-                    column(6,numericInput("porosity","Aquifer porosity, n",0.35,0,1,0.01))
-                  ),
-                  numericInput("Ksat", "Ksat, m/s^2",value = 0.001),
-                  numericInput("h0", "Undisturbed head, m",value = 50),
-                  conditionalPanel(
-                    condition = "input.aquifer_type == 'confined'",
-                    numericInput("z0", "Aquifer thickness, m",10)
-                  )
-                )
-              )
-            ),
-
-            tabPanel(
-              "Wells",value="wells",
-              hr(),
-              # h5("Instructions"),
-              p("Click a well to edit, or click an empty space to add a well."),
-              HTML("<p style=font-size:45%><br></p>"),
-              tabsetPanel(
-                id="welltab",
-                type="tabs",
-                tabPanel(
-                  "Edit wells",value="newwell",
-                  HTML("<p style=font-size:45%><br></p>"),
-                  HTML("<p><b>New wells:</b> Set Q (-) for abstraction, (+) for injection.</p>"),
-                  fluidRow(
-                    column(6,numericInput("Q","Q (cumec)",-0.1)),
-                    # column(4,numericInput("R","R (m)",9000)),
-                    column(6,numericInput("diam","diam (m)",1))
-                  ),
-                  fluidRow(
-                    column(6,textInput("well_group", "Group",value = "A")),
-                    column(6,numericInput("well_weight","Weight",value = 1))
-                  ),
-                  hr(),
-                  fluidRow(
-                    column(6,actionButton("deleteWell","Delete selected well"),offset=3)
-                  )
-                ),
-                tabPanel(
-                  "Radius of Influence",value="wellROI",
-                  HTML("<p style=font-size:45%><br></p>"),
-                  HTML(paste("<p>A well contributes to drawdown only within its radius of influence.",
-                             "See <a href=http://www.doi.org/10.7343/AS-117-15-0144 target=\"_blank\">Fileccia, 2015</a>.</p>")),
-                  conditionalPanel(
-                    condition="input.aquifer_type == 'confined'",
-                    HTML(paste0("For <b>confined</b> aquifers (current selection), this can be approximated as</p>")),
-                    uiOutput("roi_confined"),
-                    HTML(paste0("<p><font face='consolas'>", # courier
-                                "t: Elapsed time of pumping<br>",
-                                "S: Aquifer storativity</font></p>"))
-                  ),
-                  conditionalPanel(
-                    condition="input.aquifer_type == 'unconfined'",
-                    HTML("<p>For <b>unconfined</b> aquifers (current selection), this can be approximated as</p>"),
-                    uiOutput("roi_unconfined"),
-                    HTML(paste0("<p><font face='consolas'>", # courier
-                                "t: Elapsed time of pumping<br>",
-                                "n: Aquifer porosity</font></p>"))
-                  ),
-                  fluidRow(
-                    column(6,numericInput("pumpingtime_months","t, months",64,0,12*100)),
-                    conditionalPanel(
-                      condition="input.aquifer_type == 'confined'",
-                      column(6,numericInput("storativity","S, unitless",0.35,0,1,0.01))
-                    ),
-                    conditionalPanel(
-                      condition="input.aquifer_type == 'unconfined'",
-                      column(6,numericInput("porosity_roi","Aquifer porosity, n",0.35,0,1,0.01))
-                    )
-                  )
-                )
-              )
-            ),
-            tabPanel(
-              "Particles",value="particles",
-              hr(),
-              p("Click map to set initial locations for particle tracking."),
-              hr(),
-              fluidRow(
-                column(6,numericInput("max_tracking_time_years","Max time, years",value=10,min=0)),
-                column(6,
-                       HTML("<p style=font-size:45%><br></p>"),
-                       actionButton("deleteParticle","Delete particle"))
-              ),
-              dataTableOutput("particletable"),
-              HTML("<p style=font-size:100%><br></p>"),
-            )
-          )
-        ),
-        # Prepare map
-        column(8,
-               fluidRow(
-                 column(8,h3(textOutput("prepmaptitle"))),
-                 # column(4,actionButton("resetMap","Reset map",style='padding:4px; font-size:80%'),offset=4),
-                 column(4,align='right',
-                        HTML("<p style=font-size:45%><br><br></p>"),
-                        actionLink("resetMap","Reset map",style='font-size:80%'))
-               ),
-               leafletOutput("prepmap",height=430),
-               fluidRow(
-                 column(3,checkboxInput("update_images","Well images",FALSE)),
-                 column(3,checkboxInput("update_head","Hydraulic head",FALSE)),
-                 column(3,checkboxInput("update_particles","Particle tracking",FALSE)),
-                 column(3,checkboxInput("linkmaps","Link maps",TRUE))
-               )
-        ),
-      ),
-      hr(),
-      # h4(textOutput("usermode_elements")),
-      fluidRow(
-        column(12,
-               conditionalPanel(
-                 condition="input.usermode == 'wells'",
-                 h4("Wells (double click to edit)"),
-                 dataTableOutput("welltable"))
-        )
-      )#,
-      # verbatimTextOutput("aquifer"),
-      # verbatimTextOutput("bounds"),
-      # verbatimTextOutput("wells")
-
-    ),
-    tabPanel(
-      "View results",value="results",fluid=TRUE,
-      fluidRow(
-        # hr(),
-        column(4,
-               # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
-               # conditionalPanel(condition= 'input.include_gridded_head',
-               #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
-               # )
-               hr(),
-               h4("Particle tracking"),
-               dataTableOutput("particletable_output")
-        ),
-        column(8,
-               fluidRow(
-                 column(12,h3(textOutput("resultsmaptitle")))#,
-                 # column(4,actionButton("donothing","Does nothing",style='padding:4px; font-size:80%'),offset=4)
-               ),
-               leafletOutput("resultsmap",height=430) %>% withSpinner(),
-               fluidRow(
-                 column(3,checkboxInput("update_images_results","Well images",FALSE)),
-                 column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),
-                 column(3,checkboxInput("update_particles_results","Particle tracking",FALSE)),
-                 column(3,checkboxInput("linkmaps_results","Link maps",TRUE))
-               )
-        )
-      ),
-      hr(),
-      # h4(textOutput("usermode_elements")),
-      h4("Wells (double click to edit)"),
-      fluidRow(
-        column(6,
-               dataTableOutput("welltable2")
-        ),
-        column(6,
-               dataTableOutput("welltable_head")
-        )
-      ),
-      tableOutput("drawdowntable")
-    )
-  )
-
-)
 
 server <- function(input, output, session) {
   notification_id <- NULL
@@ -311,8 +60,8 @@ server <- function(input, output, session) {
   wells <- reactiveValues(
     utm_with_images = NULL,
     head=tibble::tibble(wID=NA,
-                    `Head, m`=Inf,
-                    `Drawdown, m`=0),
+                        `Head, m`=Inf,
+                        `Drawdown, m`=0),
     drawdown_relationships=data.frame(var=character(),pot=numeric(),description=character())
   )
 
@@ -605,8 +354,8 @@ server <- function(input, output, session) {
         leafletProxy("prepmap") %>%
           clearGroup("boundvertices") %>%
           addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-                      fillOpacity = 0, opacity = 1, weight = 4,
-                      data=bounds$bounds_sf)
+                       fillOpacity = 0, opacity = 1, weight = 4,
+                       data=bounds$bounds_sf)
       }
     } else if (clickOperation == "new_well") {
       # leafletProxy("prepmap") %>%
@@ -698,14 +447,35 @@ server <- function(input, output, session) {
                        data=mapclicks$particle_locations)
   })
 
-  observeEvent(input$resetMap,{
+  observeEvent(input$clearMap,{
     mapclicks$bound_vertices <- data.frame(x=numeric(),y=numeric(),bID=integer())
     mapclicks$well_locations <- data.frame(Q=numeric(),R=numeric(),diam=numeric(),group=character(),weight=numeric(),
-                              x=numeric(),y=numeric(),wID=integer(),selected=logical())
+                                           x=numeric(),y=numeric(),wID=integer(),selected=logical())
     mapclicks$particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
-                                  selected=logical(),stringsAsFactors = FALSE)
+                                            selected=logical(),stringsAsFactors = FALSE)
     leafletProxy("prepmap") %>%
       clearShapes() %>% clearMarkers()
+  })
+
+  observeEvent(input$resetZoom,{
+    x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) - 0.01
+    x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) + 0.01
+    y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) - 0.01
+    y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) + 0.01
+    print(mapclicks$bound_vertices)
+    print(mapclicks$well_locations)
+    leafletProxy("prepmap") %>%
+      fitBounds(x1, y1, x2, y2)
+  })
+  observeEvent(input$resetZoom_results,{
+    x1 <- min(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) - 0.01
+    x2 <- max(c(mapclicks$bound_vertices$x,mapclicks$well_locations$x)) + 0.01
+    y1 <- min(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) - 0.01
+    y2 <- max(c(mapclicks$bound_vertices$y,mapclicks$well_locations$y)) + 0.01
+    print(mapclicks$bound_vertices)
+    print(mapclicks$well_locations)
+    leafletProxy("prepmap") %>%
+      fitBounds(x1, y1, x2, y2)
   })
 
   output$welltable <- renderDataTable(
@@ -716,8 +486,8 @@ server <- function(input, output, session) {
                              lengthChange=FALSE,
                              autoWidth = TRUE#,
                              # columnDefs = list(list(width = '200px', targets = "_all"))
-                             )
-              ) %>%
+              )
+    ) %>%
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen')))
   )
@@ -842,12 +612,12 @@ server <- function(input, output, session) {
 
     # this is needed to set the map extents equal
     if (input$maintabs == "results" & view_results$first_time) {
-        prepmapbounds <- input$prepmap_bounds
-        leafletProxy("resultsmap") %>%
-          fitBounds(prepmapbounds$west,prepmapbounds$south,
-                    prepmapbounds$east,prepmapbounds$north,
-                    options(animate=FALSE,duration=0))
-        view_results$first_time <- FALSE
+      prepmapbounds <- input$prepmap_bounds
+      leafletProxy("resultsmap") %>%
+        fitBounds(prepmapbounds$west,prepmapbounds$south,
+                  prepmapbounds$east,prepmapbounds$north,
+                  options(animate=FALSE,duration=0))
+      view_results$first_time <- FALSE
     }
   })
 
@@ -1069,7 +839,7 @@ server <- function(input, output, session) {
           incProgress(1/n_progress,detail=paste0("pID = ",particle_pIDs[i]))
           loc <- particles_matrix[i,c("x","y")]
           print("particles 5")
-          particle <- track_particle(loc,wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)  %>%
+          particle <- track_particles(loc,wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)  %>%
             dplyr::mutate(pID=particle_pIDs[i])
           print("particles 6")
           if (i == 1) {
@@ -1092,8 +862,8 @@ server <- function(input, output, session) {
         leafletProxy("resultsmap") %>%
           clearGroup("particles") %>%
           addPolylines(data=particles$paths_wgs,color = "red",group = "particles") %>%
-            addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
-                             data=mapclicks$particle_locations)
+          addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+                           data=mapclicks$particle_locations)
 
         particle_sf <- particle_endpoint %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
           sf::st_transform(crs=4326)
@@ -1134,5 +904,3 @@ server <- function(input, output, session) {
     wells$drawdown_relationships
   })
 }
-
-shinyApp(ui, server)
