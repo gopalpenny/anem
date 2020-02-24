@@ -92,7 +92,6 @@ server <- function(input, output, session) {
                               x=numeric(),y=numeric(),wID=integer(),selected=logical(),stringsAsFactors = FALSE),
     particle_locations=data.frame(pID=integer(),x=numeric(),y=numeric(),
                                   selected=logical(),stringsAsFactors = FALSE)
-    # well_ROIs=
   )
 
   recharge_params <- reactive({
@@ -412,54 +411,7 @@ server <- function(input, output, session) {
     )
     well_input <- list(Q=input$Q,R=newwellROI(),diam=input$diam,group=input$well_group,weight=input$well_weight)
     mapclicks <- interpret_map_click(prepmapClick,clickOperation,mapclicks,well_input=well_input)
-    # print(mapclicks$well_locations %>% tibble::as_tibble())
-    if (clickOperation == "aquifer_vertex") {
-      bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
-      leafletProxy("prepmap",data=mapclicks$bound_vertices) %>%
-        clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
-        addCircleMarkers(~x, ~y, color = "black", group = "boundvertices", opacity = 0.5) %>%
-        addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
-                    layerId = "boundedges",fillOpacity = 0)
-      if (dim(bounds$edges_user)[1]==4) {
-        # print("1")
-        bounds$edges_rectangular <-
-          use_anem_function("get_utm_rectangle",
-                            edges_user=bounds$edges_user) %>%
-          dplyr::mutate(bound_type=bound_types()) %>%
-          dplyr::select(bID,bound_type,dplyr::everything()) %>%
-          dplyr::arrange(bID)
-        # print("2")
-        bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular,crs=4326)
-        # print("3")
-        # print(bounds$bounds_sf)
-        leafletProxy("prepmap") %>%
-          clearGroup("boundvertices") %>%
-          addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
-                       fillOpacity = 0, opacity = 1, weight = 4,
-                       data=bounds$bounds_sf)
-      }
-    } else if (clickOperation == "recharge_vertex") {
-      leafletProxy("prepmap",data=mapclicks$recharge_vertices[1,]) %>%
-        clearGroup("rechargevertices") %>%
-        addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 7)
-      if (nrow(mapclicks$recharge_vertices) > 1) {
-        leafletProxy("prepmap",data=mapclicks$recharge_vertices) %>%
-          addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 2) %>%
-          addPolylines(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.3, weight = 2,
-                       layerId = "rechargevector",fillOpacity = 0)
-
-      }
-    } else if (clickOperation == "new_well") {
-      # leafletProxy("prepmap") %>%
-      #   clearGroup("wells") %>%
-      #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-      #                    data=mapclicks$well_locations)
-    } else if (clickOperation == "new_particle") {
-      # leafletProxy("prepmap") %>%
-      #   clearGroup("wells") %>%
-      #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-      #                    data=mapclicks$well_locations)
-    } else if (clickOperation == "select_point") {
+    if (clickOperation == "select_point") {
       well_dist <- mapclicks$well_locations %>%
         dplyr::mutate(dist=sqrt((x-markerClick$lng)^2 + (y - markerClick$lat)^2)) %>% dplyr::pull(dist) %>% min()
       particle_dist <- mapclicks$particle_locations %>%
@@ -473,29 +425,83 @@ server <- function(input, output, session) {
           dplyr::mutate(dist=sqrt((x-markerClick$lng)^2 + (y - markerClick$lat)^2),
                         selected=dist==min(dist)) %>%
           dplyr::select(-dist)
-        # dist <- which.min(sqrt((mapclicks$well_locations$lng - markerClick$lng)^2 +
-        #                      (mapclicks$well_locations$lat - markerClick$lat)^2))
-        # closest_marker <-
-        # mapclicks$well_locations[closest_well,"selected"] <- TRUE
-        # print("mapclicks$well_locations")
-        # print(mapclicks$well_locations)
-        leafletProxy("prepmap") %>%
-          clearGroup("wells") %>%
-          addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-                           data=mapclicks$well_locations)
       } else if (selectOperation == "edit_particle") {
         updateTabsetPanel(session,"usermode","particles")
         mapclicks$particle_locations <- mapclicks$particle_locations %>%
           dplyr::mutate(dist=sqrt((x-markerClick$lng)^2 + (y - markerClick$lat)^2),
                         selected=dist==min(dist)) %>%
           dplyr::select(-dist)
-        leafletProxy("prepmap") %>%
-          clearGroup("particles") %>%
-          addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
-                           data=mapclicks$particle_locations)
       }
     }
   })
+
+  observeEvent(mapclicks$bound_vertices,{
+    bounds$edges_user <- get_edges_from_vertices(mapclicks$bound_vertices)
+    leafletProxy("prepmap",data=mapclicks$bound_vertices) %>%
+      clearGroup("boundvertices") %>% leaflet::clearGroup("bounds_rectangular") %>%
+      addCircleMarkers(~x, ~y, color = "black", group = "boundvertices", opacity = 0.5) %>%
+      addPolygons(~x, ~y, color = "black", dashArray = "10 10", opacity = 0.3, weight = 2,
+                  layerId = "boundedges",fillOpacity = 0)
+    if (dim(bounds$edges_user)[1]==4) {
+      # print("1")
+      bounds$edges_rectangular <-
+        use_anem_function("get_utm_rectangle",
+                          edges_user=bounds$edges_user) %>%
+        dplyr::mutate(bound_type=bound_types()) %>%
+        dplyr::select(bID,bound_type,dplyr::everything()) %>%
+        dplyr::arrange(bID)
+      # print("2")
+      bounds$bounds_sf <- use_anem_function("bounds_to_sf",bounds$edges_rectangular,crs=4326)
+      # print("3")
+      # print(bounds$bounds_sf)
+      leafletProxy("prepmap") %>%
+        clearGroup("boundvertices") %>%
+        addPolylines(color = ~boundPal(bound_type), group = "bounds_rectangular",
+                     fillOpacity = 0, opacity = 1, weight = 4,
+                     data=bounds$bounds_sf)
+    }
+  })
+
+  observeEvent(mapclicks$recharge_vertices,{
+    leafletProxy("prepmap",data=mapclicks$recharge_vertices[1,]) %>%
+      clearGroup("rechargevertices") %>%
+      addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 7)
+    if (nrow(mapclicks$recharge_vertices) > 1) {
+      leafletProxy("prepmap",data=mapclicks$recharge_vertices) %>%
+        addCircleMarkers(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.5, radius = 2) %>%
+        addPolylines(~x, ~y, color = "blue", group = "rechargevertices", opacity = 0.3, weight = 2,
+                     layerId = "rechargevector",fillOpacity = 0)
+
+    }
+  })
+
+  observeEvent(mapclicks$well_locations,{
+    leafletProxy("prepmap") %>%
+      clearGroup("wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+                       data=mapclicks$well_locations)
+  })
+
+  observeEvent(mapclicks$particle_locations,{
+    leafletProxy("prepmap") %>%
+      clearGroup("particles") %>%
+      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+                       data=mapclicks$particle_locations)
+  })
+    # # print(mapclicks$well_locations %>% tibble::as_tibble())
+    # if (clickOperation == "aquifer_vertex") {
+    # } else if (clickOperation == "recharge_vertex") {
+    # } else if (clickOperation == "new_well") {
+    #   # leafletProxy("prepmap") %>%
+    #   #   clearGroup("wells") %>%
+    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+    #   #                    data=mapclicks$well_locations)
+    # } else if (clickOperation == "new_particle") {
+    #   # leafletProxy("prepmap") %>%
+    #   #   clearGroup("wells") %>%
+    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+    #   #                    data=mapclicks$well_locations)
+    # } else
 
   # # Map marker click (select well)
   # observeEvent(input$map_marker_click,{
