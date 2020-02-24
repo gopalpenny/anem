@@ -61,7 +61,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
 #'   geom_path(data=particle_path,aes(x,y,color=p)) +
 #'   coord_equal()
-track_particles <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto") {
+track_particles <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE, dL = "auto", grid_length=200) {
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
@@ -74,9 +74,9 @@ track_particles <- function(loc, wells, aquifer, t_max = 365*10, reverse = FALSE
   terminal_wells <- wells %>% dplyr::filter(well_image=="Actual", sign(Q)==terminal_well_pumping_sign)
 
   # set grid to aquifer bounds, +1 cell on each side
-  xgrid <- seq(min(c(aquifer$bounds$x1,aquifer$bounds$x2)),max(c(aquifer$bounds$x1,aquifer$bounds$x2)),length.out=200)
+  xgrid <- seq(min(c(aquifer$bounds$x1,aquifer$bounds$x2)),max(c(aquifer$bounds$x1,aquifer$bounds$x2)),length.out=grid_length)
   xgrid <- c(2*xgrid[1]-xgrid[2],xgrid,xgrid[length(xgrid)] + xgrid[2] - xgrid[1])
-  ygrid <- seq(min(c(aquifer$bounds$y1,aquifer$bounds$y2)),max(c(aquifer$bounds$y1,aquifer$bounds$y2)),length.out=200)
+  ygrid <- seq(min(c(aquifer$bounds$y1,aquifer$bounds$y2)),max(c(aquifer$bounds$y1,aquifer$bounds$y2)),length.out=grid_length)
   ygrid <- c(2*ygrid[1]-ygrid[2],ygrid,ygrid[length(ygrid)] + ygrid[2] - ygrid[1])
   gridvals <- expand.grid(x=xgrid,y=ygrid)
 
@@ -254,12 +254,70 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #'
 #' Get the capture zone for one or more wells
 #' @inheritParams track_particles
-#' @param wID numeric value (or vector) containing wID for wells at which to generate capture zones.
+#' @param wIDs wells at which to generate capture zones. Set to "all" or numeric value (or vector) containing wID for wells.
 #' @param t_max number of days to run particle tracking
-#' @param n_particles number of particles to initialize for each well
-#' @param type specifie which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.
+#' @param n_particles number of particles to initialize at each well
+#' @param buff_m buffer radius (m) around each well at which particles are initialized
+#' @param injection_wells if TRUE, particle tracking from injection wells is allowed. if FALSE, particle tracking from injection wells is prohibited.
+#' @param ... Additional arguments passed to \code{track_particles}
 #' @importFrom magrittr %>%
 #' @export
+#' @examples
+#' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
+#' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
+#' wells_df_orig <- wells_example
+#' wells_df_orig[4,"Q"] <- 0.25
+#' wells <- define_wells(wells_df_orig) %>% generate_image_wells(aquifer)
+#' particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all")
+#'
+#' ggplot() +
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
+#'   geom_path(data=particle_paths,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
+#'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
+#'   geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
+#'   scale_shape_manual(values=c(5,4,3,0,1)) +
+#'   coord_equal()
+get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_particles = 8, buff_m = 20, injection_wells = FALSE, ...) {
+  theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
+  if (wIDs=="all") {
+    wIDs <- wells %>% dplyr::filter(well_image=="Actual") %>% dplyr::pull(wID) %>% unique()
+  }
+  pts <- data.frame(dx = cos(theta), dy = sin(theta)) %>% dplyr::mutate(pID = dplyr::row_number())
+  wells_capture <- wells %>%
+    dplyr::filter(wID %in% wIDs)
+  particles_matrix <- wells_capture %>%
+    tidyr::crossing(pts) %>%
+    dplyr::mutate(xp = x + dx * buff_m,
+           yp = y + dy * diam * buff_m) %>%
+    dplyr::select(wID,pID,xp,yp,well_type)
+
+  # run particle tracking on pumping wells
+  particles_matrix_pumping <- particles_matrix %>%
+    dplyr::filter(wID %in% wells_capture$wID[wells_capture$well_type == "Pumping"])
+  if (nrow(particles_matrix_pumping) > 0) {
+    particle_paths_pumping <- track_particles(particles_matrix_pumping %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = 365*1,reverse=TRUE)#, ...)
+  } else {
+    particle_paths_pumping <- tibble::tibble()
+  }
+
+  # run particle tracking on injection wells
+  particles_matrix_injection <- particles_matrix %>%
+    dplyr::filter(wID %in% wells_capture$wID[wells_capture$well_type == "Injection"])
+  if (nrow(particles_matrix_injection) > 0 & injection_wells) {
+    particle_paths_injection <- track_particles(particles_matrix_injection %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = 365*1,reverse=FALSE)#, ...)
+  } else {
+    particle_paths_injection <- tibble::tibble()
+  }
+
+  particle_paths <- dplyr::bind_rows(particle_paths_pumping,particle_paths_injection)
+
+  return(particle_paths)
+}
+
+#' Get capture zone regions
+#'
+#' Get well capture zone regions
+#' @param type specifies which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.
 #' @details
 #' \itemize{
 #'   \item "all": Returns a list containing all three named objects described below.
@@ -267,60 +325,28 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #'   \item "endpoints": Returns the end location of each particle after tracking
 #'   \item "smoothed": Returns a data.frame with smoothed path intersecting the \code{endpoints}
 #' }
-#' @examples
-#' aquifer <- aquifer_example
-#' wells <- define_wells(wells_example[c(3,4,5),]) %>% generate_image_wells(aquifer)
-#' get_capture_zone(wells,aquifer, wIDs = c(1,2))
-#' ggplot() + geom_point(data=wells,aes(x,y,color=wID))
-get_capture_zone <- function(wells, aquifer, wIDs, t_max, n_particles = 8, type="all") {
-  theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
-  pts <- data.frame(dx = cos(theta), dy = sin(theta)) %>% dplyr::mutate(pID = dplyr::row_number())
-  wells_capture <- wells %>%
-    dplyr::filter(wID %in% wIDs)
-  particles_matrix <- wells_capture %>%
-    tidyr::crossing(pts) %>%
-    dplyr::mutate(xp = x + dx * diam * 1.01,
-           yp = y + dy * diam * 1.01) %>%
-    dplyr::select(wID,pID,xp,yp) %>%
-    as.matrix()
+get_capture_zone_regions <- function(particle_paths, aquifer, ...) {
+  stop("Function not yet complete)")
 
-  start <- Sys.time()
-  for (i in 1:nrow(particles_matrix)) {
-    print(i)
-    loc <- particles_matrix[i,c("xp","yp")]
-    particle <- track_particles(loc, wells, aquifer, t_max = 1000, reverse=TRUE, method="radau_tmax") %>%
-      dplyr::mutate(wID=particles_matrix[i,"wID"],pID=particles_matrix[i,"pID"])
-    if (i == 1) {
-      particle_path_df <- particle
-      particle_endpoint <- particle[nrow(particle),]
-    } else {
-      particle_path_df <- particle_path_df %>% dplyr::bind_rows(particle)
-      particle_endpoint <- particle_endpoint %>% dplyr::bind_rows(particle[nrow(particle),])
+  pps <- particle_paths %>% dplyr::mutate(rn=dplyr::row_number()) %>% dplyr::filter(rn %% 3 == 0)
+  xgrid <- seq(min(c(aquifer$bounds$x1,aquifer$bounds$x2)),max(c(aquifer$bounds$x1,aquifer$bounds$x2)),length.out=100)
+  ygrid <- seq(min(c(aquifer$bounds$y1,aquifer$bounds$y2)),max(c(aquifer$bounds$y1,aquifer$bounds$y2)),length.out=100)
+  time_days <- matrix(rep(NA,length(xgrid)*length(ygrid)),nrow=length(xgrid))
+  wID <- matrix(rep(NA,length(xgrid)*length(ygrid)),nrow=length(xgrid))
+  grid <- tidyr::crossing(x=xgrid,y=ygrid) %>% dplyr::mutate(time_days=NA,wID=NA,pID=NA)
+
+  for (i in 1:length(xgrid)) {
+    x <- grid$x[i]
+    for (j in 1:length(ygrid)) {
+      y <- grid$y[j]
+      idx <- which.min((x-pps$x)^2 + (y-pps$y)^2)
+      grid[i,c("time_days","wID","pID")] <- pps[idx,c("time_days","wID","pID")]
+      time_days[i,j] <- grid$time_days[i]
+      wID[i,j] <- grid$wID[i]
     }
-    end <- Sys.time()
-    (elapsed_time <- end-start)
-    print(elapsed_time)
   }
-
-  p_radau_tmax <- ggplot() +
-    geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
-    geom_path(data=particle_path_df,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
-    geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
-    geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
-    scale_shape_manual(values=c(3,4,5,0,1)) +
-    coord_equal() + labs(caption = "radau_tmax method with travel time guess and t_max = 1000 days. elapsed time = 10.2 min")
-  ggsave("figs_test/radau_tmax.png",p_radau_tmax,width=7,height=4)
-
-  particle_endpoint %>% pull(time_days) %>% mean()
-
-  # ggplot(particles) + geom_point(aes(xp,yp))
-
-  # return list of particle endpoints
-  # return list of particle paths
-  # return polygons of capture zone using smoothr
-  return(list(result="function not finished"))
+  return(0)
 }
-
 
 
 #' Get angle from x, y
