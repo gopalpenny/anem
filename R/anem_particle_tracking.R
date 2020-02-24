@@ -343,7 +343,7 @@ get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_partic
   particles_matrix_pumping <- particles_matrix %>%
     dplyr::filter(wID %in% wells_capture$wID[wells_capture$well_type == "Pumping"])
   if (nrow(particles_matrix_pumping) > 0) {
-    particle_paths_pumping <- track_particles(particles_matrix_pumping %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = 365*1,reverse=TRUE)#, ...)
+    particle_paths_pumping <- track_particles(particles_matrix_pumping %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = t_max,reverse=TRUE)#, ...)
   } else {
     particle_paths_pumping <- tibble::tibble()
   }
@@ -352,7 +352,7 @@ get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_partic
   particles_matrix_injection <- particles_matrix %>%
     dplyr::filter(wID %in% wells_capture$wID[wells_capture$well_type == "Injection"])
   if (nrow(particles_matrix_injection) > 0 & injection_wells) {
-    particle_paths_injection <- track_particles(particles_matrix_injection %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = 365*1,reverse=FALSE)#, ...)
+    particle_paths_injection <- track_particles(particles_matrix_injection %>% dplyr::rename(x=xp,y=yp),wells,aquifer, t_max = t_max,reverse=FALSE)#, ...)
   } else {
     particle_paths_injection <- tibble::tibble()
   }
