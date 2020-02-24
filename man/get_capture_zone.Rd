@@ -8,9 +8,9 @@ get_capture_zone(wells, aquifer, wIDs, t_max, n_particles = 8,
   type = "all")
 }
 \arguments{
-\item{wells}{Wells \code{data.frame} object, containing well images.}
+\item{wells}{Wells \code{data.frame} object, containing well images}
 
-\item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat} and porosity, \code{n}}
+\item{aquifer}{Aquifer as an \code{aquifer} object, with \code{Ksat}, porosity, \code{n}, and boundaries (which are used to calculate gridded velocities)}
 
 \item{t_max}{number of days to run particle tracking}
 
