@@ -6,6 +6,7 @@ library(shinycssloaders)
 library(raster)
 library(mapview)
 library(deSolve)
+library(akima)
 # library(tibble)
 
 source("app-functions/anem_shiny_helpers.R")
