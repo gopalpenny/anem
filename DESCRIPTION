@@ -22,4 +22,5 @@ Imports:
     dplyr,
     tidyr,
     magrittr,
+    akima,
     numDeriv
