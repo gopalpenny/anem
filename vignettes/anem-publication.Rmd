@@ -260,7 +260,7 @@ $$\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
 where discharge potential is defined as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potential when $Q=0$.
 
 
-*Radius of influence*
+Although the radius of influence does not affect the shape of the cone of depression, it determines how far it spreads from the well. Multiple approaches for calculating this radius have been proposed for confined and unconfined aquifers. 
 
 **Boundary conditions**
 
@@ -312,11 +312,13 @@ In other words, this framework of drawdown relationships provides simple ways to
 
 **Particle tracking**
 
+Particle tracking is simulated numerically by forward stepping in time using the Euler method. First the aquifer domain is discretized and fluid velocities are calculated on a grid. Instananeous particle velocity is calculated using bilinear interpolation of the grid at the particle location, unless the particle is inside a grid cell adjacent to a well. In this case, the fluid velocity is calculated at the particle location (i.e., without bilinear interpolation) to ensure precision in the vicinity of wells. Time stepping is variable, such that the particle travels a fixed distance each time step. Finally, well capture zones can be calculated by initializing a group of particles around each well and running particle tracking in reverse.
+
 ## Web application
 
 The web application incorporates the essential functionality of the R package, while providing an interactive environment to build and simulate a given scenario. There is a base map to assist with placing wells and aquifer components on the map. Particle tracking is also enabled through point tracking or well capture zones. The results can be interactively updated by changing well or aquifer characteristics.
 
-![Figure 2. Groundwater modeling interface for anem. Separate panels allow the user to define aquifer properties, well, properties, and particle tracking. Additional tabs (not shown) allow the user to toggle between scenario preparation and results.](images/three_rivers_aquifer.png)
+![Figure 2. Groundwater modeling interface for anem. Separate panels allow the user to define aquifer properties, well, properties, and particle tracking. Additional tabs (not shown) allow the user to toggle between scenario preparation and results.](../shiny-app/screenshots/south_bend_aquifer.png)
 
 <!-- **Web application** -->
 
