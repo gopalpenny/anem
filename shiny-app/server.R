@@ -970,7 +970,7 @@ server <- function(input, output, session) {
 
           leafletProxy("resultsmap") %>%
             clearGroup("particles") %>%
-            addPolylines(data=particles$particle_paths_wgs,color = "red",group = "particles") %>%
+            addPolylines(data=particles$particle_paths_wgs,color = "red",group = "particles", weight = 2) %>%
             addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
                              data=mapclicks$particle_locations)
 
@@ -1001,7 +1001,7 @@ server <- function(input, output, session) {
           print(particles$capture_paths_wgs)
           leafletProxy("resultsmap") %>%
             clearGroup("capture_particles") %>%
-            addPolylines(data=particles$capture_paths_wgs,color = "red",group = "capture_particles")
+            addPolylines(data=particles$capture_paths_wgs,color = "red",group = "capture_particles", weight = 2)
         }
       })
     }
