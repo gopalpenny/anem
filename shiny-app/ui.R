@@ -185,6 +185,7 @@ ui <- fluidPage(
                         "Particles",value="particles",
                         hr(),
                         shiny::checkboxInput("wellCapture","Well capture zones",value = FALSE),
+                        shiny::sliderInput("captureParticles","Number of particles per well",value = 8, min=0, max=32, step = 1),
                         p("Click map to set initial locations for particle tracking."),
                         hr(),
                         fluidRow(

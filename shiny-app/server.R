@@ -26,6 +26,7 @@ server <- function(input, output, session) {
     content = function(file) {
       saveRDS(list(b1_type=input$b1_type,b2_type=input$b2_type,b3_type=input$b3_type,b4_type=input$b4_type,
                    aquifer_type=input$aquifer_type,porosity=input$porosity,Ksat=input$Ksat,h0=input$h0,z0=input$z0,
+                   wellCapture=input$wellCapture,captureParticles=input$captureParticles,
                    enableRecharge=input$enableRecharge,rechargeFlow=input$rechargeFlow,max_tracking_time_years=input$max_tracking_time_years,
                    bound_vertices=mapclicks$bound_vertices, particle_locations=mapclicks$particle_locations,
                    recharge_vertices=mapclicks$recharge_vertices, well_locations=mapclicks$well_locations), file)
@@ -59,6 +60,9 @@ server <- function(input, output, session) {
     updateNumericInput(session,"rechargeFlow",value=pl$rechargeFlow)
     updateNumericInput(session,"max_tracking_time_years",value=pl$max_tracking_time_years)
     updateNumericInput(session,"z0",value=pl$z0)
+
+    updateCheckboxInput(session,"wellCapture",value=pl$wellCapture)
+    updateSliderInput(session,"captureParticles",value=pl$captureParticles)
 
     updateCheckboxInput(session,"enableRecharge",value=pl$enableRecharge)
 
@@ -980,7 +984,7 @@ server <- function(input, output, session) {
         }
         if (input$wellCapture) {
           incProgress(1/n_progress,detail="Well capture zones - tracking")
-          capture_paths_df <- get_capture_zone(wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365)
+          capture_paths_df <- get_capture_zone(wells$utm_with_images,aquifer_utm,t_max=input$max_tracking_time_years*365,n_particles = input$captureParticles)
 
           print("capture_paths_df")
           print(capture_paths_df)
