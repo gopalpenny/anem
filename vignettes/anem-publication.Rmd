@@ -334,6 +334,47 @@ The web application incorporates the essential functionality of the R package, w
 
 **Use cases**
 
+The following "use cases" demonstrate how the application might be used by planners, academics, and educators.
+
+### Case 1: Locating the source of urban contamination (web app)
+
+A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of groundwater contamination; the municipality wishes to establish, quickly and inexpensively, the radius of influence around its wells in order to determine the possible points of origin of the contamination. In this example, W1 and W2 are municipal wells; W1 is the contaminated well. Surrounding W1 and W2 are [five?] sources of discharge: D1 and D2, which are injection wells; and D3, D4, and D5, which represent points of known surface discharge. The area of interest is bounded by a no-flow boundaries to the [north, west, and south] and a [river/lake] to the east, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at W1 and W2 and of the constant-head boundary.
+
+![Figure X. Well capture of contamination by a municipal well, as demonstrated by anem-app.](../shiny-app/screenshots/urban_contamination.png)
+
+
+**Education opportunity**
+
+Can you design a plan for capturing the contamination, using the minimum amount of pumping? This will involve adding pumping wells to the map and ensuring none of the lines touch the main city well.
+
+Each well costs \$1000, and the cost of pumping is \$3/cumec/well. 
+
+What about doing this in a random way? i.e., generating random scenarios of contamination and allowing kids to play around with it.
+
+### Case 2: Application for pumping well (web app and R package)
+
+A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, E3, and E4. The area of interest is located near a river bend, depicted here by constant-head boundaries to the north and west and no-flow boundaries to the south and east.
+
+**a Web application -- approval of well**
+
+**b Monte Carlo with R application**
+
+Ability to export data from the web application to R.
+
+**Education opportunity**
+
+How many wells can you add and how much can they pump before no more wells are allowed?
+
+### Case 3: Industrial plant going out of commission
+
+An industrial plant has been operating for over 50 years, but now plans to close. The plant employs over 100 people and uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably concerned about the effect of closing the plant on the water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner uses anem-app to place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
+
+**Education opportunity**
+
+Use scenario in "plant_closure.rds". What happens when the plant closes and how will this affect people in nearby houses? Is there anything you can do to keep this from happening, including the possibility of increasing pumping in the houses or drilling new wells?
+
+
+
 <!-- 1. Pumping tests? -->
 <!-- 1. Well placement? (ie., drawdown relationships for wells at the boundary vs center of the aquifer?) -->
 <!-- 1. Game theory? -->
