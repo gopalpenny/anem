@@ -21,7 +21,7 @@ knitr::opts_knit$set(
 ```{r include = FALSE}
 library(anem)
 library(tidyverse)
-# library(patchwork)
+library(patchwork)
 ```
 
 
@@ -226,25 +226,41 @@ f1_d <- ggplot() +
 <!--     * principle of superposition -->
 <!--     * confined and unconfined flow -->
 
-**Principle of superposition**
+#### Principle of superposition
 
-The analytic element method represents the aquifer domain as the sum of analytical solutions of multiple elements added to the aquifer. We focus on 2-dimensional aquifers that reasonably adhere to the Depuit-Forscheimer assumption, which states that flow is parallel to the bottom of the aquifer.  a  This is possible because the groundwater equations are linear:
+The analytic element method represents the aquifer domain as the sum of analytical solutions of multiple elements added to the aquifer. We focus on 2-dimensional aquifers that reasonably adhere to the Depuit-Forscheimer assumption, which states that flow is parallel to the bottom of the aquifer. For a 2D confined aquifer with uniform thickness, the groundwater continuity equation can be written as
 
 \begin{align}
-\nabla^2 h = 0
+\nabla^2 h = 0,
 \end{align}
 
-This allows for the principle of superposition, where $f(a h_1 + b h_2) = a f(h_1) + b f(h_2)$. In the studies of aquifers, the effect of pumping from multiple wells can be calculated as the sum of the effects from individual wells, which can be estimated separately.
+where $h$ is the hydraulic head. Because this equation is linear for $h$, it allows for the principle of superposition, where $f(a h_1 + b h_2) = a f(h_1) + b f(h_2)$. This means that the effect of pumping on hydraulic head from multiple wells can be calculated as the sum of the effects from individual wells, which can be estimated separately.
 
-*confined* vs *unconfined flow*
+In 2D unconfined aquifers, the groundwater continuity equation can be written as
 
-*background flow*
+\begin{align}
+\nabla^2 \phi = 0,
+\end{align}
 
-**Recharge**
+where $\phi = h^2$ is discharge potential and $h$ is the thickness of the water table. The principle of superposition once again applies because $f(a \phi_1 + b \phi_2) = a f(\phi_1) + b f(\phi_2)$. In this case, the the effect of each analytic element on discharge potential is calculated separately and the results are summed. In this way, the aquifer scenario is represented by the combined effect of recharge, well pumping, and aquifer boundaries.
 
-Uniform constant flow.
+#### Recharge
 
-**Pumping from a single well**
+In steady steady state, recharge can be represented by constant background flow. In confined aquifers, this requires setting a constant flow defined using Darcy's law as $Q_l = -z K_{sat}\partial h/\partial l$, where $l$ is in the direction of flow and $z$ is defined as the thickness of the aquifer $(z_0)$ for confined aquifers or the thickness of the water table $(h)$ for unconfined aquifers. Integrating this equation for unconfined aquifers yields
+
+\begin{align}
+h - h_0 = \frac{Q_l}{K_{sat} z_0}(l_0 - l),
+\end{align}
+
+where $h_0$ and $l_0$ refer to the head and location of some datum. For unconfined aquifers, integration results in terms of discharge potential are
+
+\begin{align}
+\phi - \phi_0 = \frac{2 Q_l}{K_{sat}} (l_0 - l).
+\end{align}
+
+Following the principle of superposition, the effect of recharge on hydraulic head or discharge potential can be calculated independently of other analytic elements.
+
+#### Pumping from a single well
 
 We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-dimensional and parallel to the aquifer bottom, which is horizontal. Generally speaking, this means that the thickness of the aquifer must be considerably less than the lateral extent of the aquifer, and wells must be screened from the bottom to the top of the wetted portion of the aquifer. Flow is governed by Darcy's law which, in the case of radial flow to a well, can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity ($r<R$) of a pumping well:
 
@@ -255,30 +271,33 @@ h - h_0 = -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right)
 
 where $h$ is hydraulic head at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $h_0$ is the undisturbed hydraulic head when $Q=0$, $T$ is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer ($T= K_{sat} z_0$), and $R$ is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping ($h=h_0$). This solution is valid for steady state flow in confined aquifers.
 
-The solution can also be written for unconfined aquifers in terms of *discharge potential*, $\phi$:
+The solution can also be written for unconfined aquifers as:
 $$\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
-where discharge potential is defined as $\phi=h^2$, and $\phi_0$ is the undisturbed discharge potential when $Q=0$.
+where $\phi_0$ is the undisturbed discharge potential when $Q=0$. Although the radius of influence does not affect the shape of the cone of depression, it determines how far it spreads from the well. Multiple approaches for calculating this radius have been proposed for confined and unconfined aquifers (CITES). The package implements the (CITE) approach for confined aquifers and (CITE) approach for unconfined aquifers.
 
+#### Boundary conditions
 
-Although the radius of influence does not affect the shape of the cone of depression, it determines how far it spreads from the well. Multiple approaches for calculating this radius have been proposed for confined and unconfined aquifers. 
-
-**Boundary conditions**
-
-e.g., compare with modflow -- inside the grid.
-
-In the analytic element method, boundaries are mimicked by strategic placement of wells. For instance, two wells with equivalent pumping mimic a no-flow boundary along the line of equal distance, because no flow occurs across this line (Figure 1c, horizontal boundary). Two wells pumping at an equivalent rate but opposite sign mimic a constant head boundary. In this case, the flow lines are perpendicular to the equal distance line meaning that no flow occurs along the boundary and it is of a constant head (Figure 1c, vertical boundary). This approach can be used to exactly reproduce no-flow and constant head boundaries by successively imaging wells across the boundaries.
+In the analytic element method, the effect of boundary realized using strategic placement of wells that reproduce the conditions of the boundary. For instance, two wells with equivalent pumping mimic a no-flow boundary along the line of equal distance, because no flow occurs across this line (Figure 1c, horizontal boundary). Two wells pumping at an equivalent rate but opposite sign mimic a constant head boundary. In this case, the flow lines are perpendicular to the equal distance line meaning that no flow occurs along the boundary and it is of a constant head (Figure 1c, vertical boundary). This approach can be used to exactly reproduce no-flow and constant head boundaries by successively imaging wells across the boundaries.
 
 
 ```{r f1_plot, echo=FALSE, fig.width=10, fig.height=2.2, fig.cap=cap}
-cap <- "Figure 1: Basic functionality of anem R package. (a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Stream goes from gaining to losing."
+cap <- "Figure 1: Basic functionality of anem R package. (a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Note that the stream, flowing from top to bottom, goes from gaining to losing."
 # ggpubr::ggarrange(f1_a,f1_b,f1_c,f1_d,nrow=1,labels=c("(a)","(b)","(c)","(d)"),widths=c(0.32,0.2,0.2,0.32)) %>% 
 # ggpubr::annotate_figure(bottom = "This is the caption.")
 f1_a | f1_b | f1_c | f1_d
 ```
 
+#### Flow direction and velocity
+
+According to Darcy's law, flow occurs in the direction opposite the gradient of the hydraulic head. Because hydraulic head follows the principle of superposition, it follows the the derivative of hydraulic head also follows the principle of super position and that velocity vectors from each of the analytical elements can be added together.
+
+Darcy's law can also be written in terms of discharge potential as $q_l = - K_{sat} / (2h) \times \partial \phi/\partial l$, the derivative of discharge potential also follows the principle of superposition. This means that flow direction can be calculated analytically as the sum of flow direction components from all analytical elements.
+
+Given flow in the direction of $l$, the flow velocity is equal to $v_l = q_l / n$, where $n$ is porosity of the aquifer.
+
 ### Package description
 
-**Simulating groundwater hydraulics**
+#### Simulating groundwater hydraulics
 
 The R package that we have developed applies the method of images in the aquifer scenarios described above. Aquifers are defined by their type (confined or unconfined), saturated hydraulic conductivity ($K_{sat}$), porosity ($n$), undisturbed head (i.e., the hydraulic head without pumping, $h_0$), and thickness ($z_0$, for confined aquifers only). Aquifers can also contain backround flow as a uniform flow field, or as two distince uniform fields on either side of a divide.
 
@@ -300,7 +319,7 @@ Finally the package allows for particle tracking, either by initializing particl
 <!-- 1. particle tracking -->
 <!--     1. well capture zones -->
 
-**Drawdown relationships**
+#### Drawdown relationships
 
 One of the most important advantages of this package is the ability to quickly calculate the relationship between pumping and drawdown relationships among groups of wells. Here we define the drawdown relationship as the average drawdown in a group of wells ($N \ge 1$) due to unit pumping from another group of wells. Results are given in terms of head (m) for confined aquifers or discharge potential (m^2^) for unconfined aquifer. The average drawdown and unit pumping can be weighted to favor certain wells within each group, if desired. This framing of drawdown into a single parameter between groups of wells allows for realistic framing of groundwater within much more complex models. For instance, such a framing was applied by Müller et al. (2018?) in using non-cooperative game theory to simulate cooperation in transboundary aquifers. Additional applications could include dynamical systems, where farmers change their abstraction ($Q_i$) and irrigated crop area ($I_i$) based on water levels within their wells ($h_i$). In this case, water level for user $i$ is the sum of drawdown relationships due to all the other users ($D_{ij}$) times their pumping ($Q_j$). If crops are similar, then we can set $Q_i = c I_i$ and write the following governing equation for the dynamical system:
 
@@ -310,7 +329,7 @@ One of the most important advantages of this package is the ability to quickly c
 
 In other words, this framework of drawdown relationships provides simple ways to incorporate groundater behavior into complex models in a realistic framework, and these relationships are easily estimated with the *anem* package.
 
-**Particle tracking**
+#### Particle tracking
 
 Particle tracking is simulated numerically by forward stepping in time using the Euler method. First the aquifer domain is discretized and fluid velocities are calculated on a grid. Instananeous particle velocity is calculated using bilinear interpolation of the grid at the particle location, unless the particle is inside a grid cell adjacent to a well. In this case, the fluid velocity is calculated at the particle location (i.e., without bilinear interpolation) to ensure precision in the vicinity of wells. Time stepping is variable, such that the particle travels a fixed distance each time step. Finally, well capture zones can be calculated by initializing a group of particles around each well and running particle tracking in reverse.
 
@@ -330,20 +349,16 @@ The web application incorporates the essential functionality of the R package, w
 
 ## Use cases
 
-
-
-**Use cases**
-
 The following "use cases" demonstrate how the application might be used by planners, academics, and educators.
 
 ### Case 1: Locating the source of urban contamination (web app)
 
-A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of groundwater contamination; the municipality wishes to establish, quickly and inexpensively, the radius of influence around its wells in order to determine the possible points of origin of the contamination. In this example, W1 and W2 are municipal wells; W1 is the contaminated well. Surrounding W1 and W2 are [five?] sources of discharge: D1 and D2, which are injection wells; and D3, D4, and D5, which represent points of known surface discharge. The area of interest is bounded by a no-flow boundaries to the [north, west, and south] and a [river/lake] to the east, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at W1 and W2 and of the constant-head boundary.
+A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of groundwater contamination; the municipality wishes to establish, quickly and inexpensively, the radius of influence around its wells in order to determine the possible points of origin of the contamination. In this example, W1, W2, and W3 are municipal wells, each pumping 5 MGD (0.22 cumec); W1 is the contaminated well. Around these wells are [five?] sources of discharge: D1 and D2, which are injection wells which each operate at 0.45 MGD (0.02 cumec); and D3, D4, and D5, which represent points of known surface discharge. The area of interest is bounded by a no-flow boundaries to the [north, west, and south] and a [river/lake] to the east, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at W1 and W2 and of the constant-head boundary.
 
 ![Figure X. Well capture of contamination by a municipal well, as demonstrated by anem-app.](../shiny-app/screenshots/urban_contamination.png)
 
 
-**Education opportunity**
+#### Education opportunity
 
 Can you design a plan for capturing the contamination, using the minimum amount of pumping? This will involve adding pumping wells to the map and ensuring none of the lines touch the main city well.
 
@@ -355,13 +370,13 @@ What about doing this in a random way? i.e., generating random scenarios of cont
 
 A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, E3, and E4. The area of interest is located near a river bend, depicted here by constant-head boundaries to the north and west and no-flow boundaries to the south and east.
 
-**a Web application -- approval of well**
+#### Web application -- approval of well
 
-**b Monte Carlo with R application**
+#### Monte Carlo with R application
 
 Ability to export data from the web application to R.
 
-**Education opportunity**
+#### Education opportunity
 
 How many wells can you add and how much can they pump before no more wells are allowed?
 
@@ -369,7 +384,7 @@ How many wells can you add and how much can they pump before no more wells are a
 
 An industrial plant has been operating for over 50 years, but now plans to close. The plant employs over 100 people and uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably concerned about the effect of closing the plant on the water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner uses anem-app to place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
 
-**Education opportunity**
+#### Education opportunity
 
 Use scenario in "plant_closure.rds". What happens when the plant closes and how will this affect people in nearby houses? Is there anything you can do to keep this from happening, including the possibility of increasing pumping in the houses or drilling new wells?
 
