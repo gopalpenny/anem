@@ -289,11 +289,9 @@ f1_a | f1_b | f1_c | f1_d
 
 #### Flow direction and velocity
 
-According to Darcy's law, flow occurs in the direction opposite the gradient of the hydraulic head. Because hydraulic head follows the principle of superposition, it follows the the derivative of hydraulic head also follows the principle of super position and that velocity vectors from each of the analytical elements can be added together.
+According to Darcy's law, flow occurs in the direction opposite the gradient of the hydraulic head, which can be determined analytically using the analytical element method. Because both hydraulic head and discharge potential follow the principle of superposition, it follows that their derivatives also follows the principle of superposition. Furthermore, using the chain rule, $\partial h/\partial l = 1/(2h) \partial \phi/\partial l$, meaning that the hydraulic gradient can be calculated analytically in confined and unconfined aquifers.
 
-Darcy's law can also be written in terms of discharge potential as $q_l = - K_{sat} / (2h) \times \partial \phi/\partial l$, the derivative of discharge potential also follows the principle of superposition. This means that flow direction can be calculated analytically as the sum of flow direction components from all analytical elements.
-
-Given flow in the direction of $l$, the flow velocity is equal to $v_l = q_l / n$, where $n$ is porosity of the aquifer.
+Flow is then calculated from the hydraulic gratdient using Darcy's law, $q_l = - K_{sat} \partial \phi/\partial l$, and the flow velocity is equal to $v_l = q_l / n$, where $n$ is porosity of the aquifer.
 
 ### Package description
 
@@ -301,9 +299,7 @@ Given flow in the direction of $l$, the flow velocity is equal to $v_l = q_l / n
 
 The R package that we have developed applies the method of images in the aquifer scenarios described above. Aquifers are defined by their type (confined or unconfined), saturated hydraulic conductivity ($K_{sat}$), porosity ($n$), undisturbed head (i.e., the hydraulic head without pumping, $h_0$), and thickness ($z_0$, for confined aquifers only). Aquifers can also contain backround flow as a uniform flow field, or as two distince uniform fields on either side of a divide.
 
-Wells are defined by a location, pumping rate, diameter, and radius of influence, and imaged across the aquifer borders contained within the radius of influence. The package allows users to calculate hydraulic head and flow direction at any number of locations with a single function call. The effect of each well on hydraulic head is calculated individually using the equations above, and the results are summed. Flow is calculated as the numerical derivative of hydraulic head at any given location. 
-
-Finally the package allows for particle tracking, either by initializing particles at a user-specified location or calculating capture zones around pumping wells.
+Wells are defined by a location, pumping rate, diameter, and radius of influence, and imaged across the aquifer borders contained within the radius of influence. The package allows users to calculate hydraulic head and flow direction at any number of locations with a single function call. The effect of each well on hydraulic head is calculated individually using the equations above, and the results are summed. Flow direction is calculated as the derivative of hydraulic head at any given location, proceeding analytically for confined aquifers and numerically for unconfined aquifers.
 
 <!-- Basic functionality of the package -->
 
@@ -331,11 +327,11 @@ In other words, this framework of drawdown relationships provides simple ways to
 
 #### Particle tracking
 
-Particle tracking is simulated numerically by forward stepping in time using the Euler method. First the aquifer domain is discretized and fluid velocities are calculated on a grid. Instananeous particle velocity is calculated using bilinear interpolation of the grid at the particle location, unless the particle is inside a grid cell adjacent to a well. In this case, the fluid velocity is calculated at the particle location (i.e., without bilinear interpolation) to ensure precision in the vicinity of wells. Time stepping is variable, such that the particle travels a fixed distance each time step. Finally, well capture zones can be calculated by initializing a group of particles around each well and running particle tracking in reverse.
+The package allows for particle tracking, either by initializing particles at a user-specified location or calculating capture zones around pumping wells. Particle tracking is simulated numerically by forward stepping in time using the Euler method. First the aquifer domain is discretized and fluid velocities are calculated on a grid. Instananeous particle velocity is calculated using bilinear interpolation of the grid at the particle location, unless the particle is inside a grid cell adjacent to a well. In this case, the fluid velocity is calculated at the particle location (i.e., without bilinear interpolation) to ensure precision in the vicinity of wells. Time stepping is variable, such that the particle travels a fixed distance each time step. Finally, well capture zones can be calculated by initializing a group of particles around each well and running particle tracking in reverse.
 
 ## Web application
 
-The web application incorporates the essential functionality of the R package, while providing an interactive environment to build and simulate a given scenario. There is a base map to assist with placing wells and aquifer components on the map. Particle tracking is also enabled through point tracking or well capture zones. The results can be interactively updated by changing well or aquifer characteristics.
+The web application incorporates the essential functionality of the R package, while providing an interactive environment to build and simulate a given scenario. There is a base map to assist with placing wells and aquifer components on the map. Particle tracking is also enabled through point tracking or well capture zones. The results can be interactively updated by changing well or aquifer characteristics. Finally, scenarios can downloaded from the application as R data files. These files can then be shared and uploaded to the application, allowing for reproducability and collaboration on the same scenarios.
 
 ![Figure 2. Groundwater modeling interface for anem. Separate panels allow the user to define aquifer properties, well, properties, and particle tracking. Additional tabs (not shown) allow the user to toggle between scenario preparation and results.](../shiny-app/screenshots/south_bend_aquifer.png)
 
@@ -351,26 +347,28 @@ The web application incorporates the essential functionality of the R package, w
 
 The following "use cases" demonstrate how the application might be used by planners, academics, and educators.
 
-### Case 1: Locating the source of urban contamination (web app)
+### Case 1: Locating the source of urban contamination
 
-A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of groundwater contamination; the municipality wishes to establish, quickly and inexpensively, the radius of influence around its wells in order to determine the possible points of origin of the contamination. In this example, W1, W2, and W3 are municipal wells, each pumping 5 MGD (0.22 cumec); W1 is the contaminated well. Around these wells are [five?] sources of discharge: D1 and D2, which are injection wells which each operate at 0.45 MGD (0.02 cumec); and D3, D4, and D5, which represent points of known surface discharge. The area of interest is bounded by a no-flow boundaries to the [north, west, and south] and a [river/lake] to the east, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at W1 and W2 and of the constant-head boundary.
+#### Web application
 
-![Figure X. Well capture of contamination by a municipal well, as demonstrated by anem-app.](../shiny-app/screenshots/urban_contamination.png)
+A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of groundwater contamination; the municipality wishes to establish, quickly and inexpensively, the radius of influence around its wells in order to determine the possible points of origin of the contamination. In this example, W1, W2, and W3 are municipal wells, each pumping 5 MGD (0.22 cumec); W1 is the contaminated well. Around these wells are [five?] sources of discharge: D1 and D2, which are injection wells which each operate at 0.45 MGD (0.02 cumec); and D3, D4, and D5, which represent points of known surface discharge. The area of interest is bounded by a [river/lake] to the northeast, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at the municipal abstraction wells and of the constant-head boundary, but has can make a reasonable estimate of the lateral flow toward the river.
+
+We implemented this imaginary scenario in the web application as an aquifer bounded on one side with a  constant head boundary, later recharge flowing towards the river, and both the pumping and injection wells (Figure XX). Well capture zones were simulated for a maximum of 10 years, after which all particle terminated at one of the boundaries or an injection well. The contaminated well draws water from all of the injection wells and one of the surface contamination sites, meaning there are four possible sources that could contaminate the well in question. However, the suspected sites can be reduced further given that the three injection wells are captured by multiple wells. No contamination has appeared at either of the other municipal pumping sites, which indicates that D1, D2, and D3 can be elimated from consideration. The municipality can begin by investigating the most likely source of contamination, S1.
+
+![Figure X. Well capture of contamination by a municipal well, as demonstrated by anem-app. The image is a screenshot of the web application overlaid with the well IDs.](../shiny-app/screenshots/urban_contamination.png)
 
 
 #### Education opportunity
 
-Can you design a plan for capturing the contamination, using the minimum amount of pumping? This will involve adding pumping wells to the map and ensuring none of the lines touch the main city well.
+In addition to the practical application described above, this scenario could be used as an educational opportunity. For instance, consider the following game in which students must design a plan for capturing the contamination, using the minimum amount of pumping. This will involve adding pumping wells to the map and ensuring none of the lines touch the main city well. Each well costs \$1000, and the cost of pumping is \$3/cumec/well.
 
-Each well costs \$1000, and the cost of pumping is \$3/cumec/well. 
+The scenario as implemented is available online. However, educators could generate multiple random scenarios using the R package and allow students to upload multiple instances as a way to play the game under different conditions.
 
-What about doing this in a random way? i.e., generating random scenarios of contamination and allowing kids to play around with it.
-
-### Case 2: Application for pumping well (web app and R package)
+### Case 2: Application for pumping well
 
 A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, E3, and E4. The area of interest is located near a river bend, depicted here by constant-head boundaries to the north and west and no-flow boundaries to the south and east.
 
-#### Web application -- approval of well
+#### Web application
 
 #### Monte Carlo with R application
 
