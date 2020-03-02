@@ -11,7 +11,9 @@ library(akima)
 
 source("app-functions/anem_shiny_helpers.R")
 
+well_group_vals <- LETTERS[1:5]
 wellPal <- colorFactor(palette = c("darkgreen","green"), domain = c(FALSE, TRUE))
+wellPal2 <- colorFactor(palette = colorspace::rainbow_hcl(n=5,c=100,l=65), domain = well_group_vals)
 partPal <- colorFactor(palette = c("darkred","red"), domain = c(FALSE, TRUE))
 # opacityFun <- function(x) switch(x+1,0.4,0.8)
 boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH", "PB"))
@@ -486,8 +488,10 @@ server <- function(input, output, session) {
   observeEvent(mapclicks$well_locations,{
     leafletProxy("prepmap") %>%
       clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-                       data=mapclicks$well_locations)
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+                       data=mapclicks$well_locations) %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected))
   })
 
   observeEvent(mapclicks$particle_locations,{
@@ -523,8 +527,10 @@ server <- function(input, output, session) {
     leafletProxy("prepmap") %>%
       clearGroup("wells") %>%
       addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",stroke=FALSE, group = "wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
-                       data=mapclicks$well_locations)
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+                       data=mapclicks$well_locations) %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected))
   })
 
   observeEvent(particles_utm(),{
@@ -540,8 +546,10 @@ server <- function(input, output, session) {
       dplyr::filter(!selected)
     leafletProxy("prepmap") %>%
       clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
-                       data=mapclicks$well_locations)
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells",
+                       data=mapclicks$well_locations) %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected))
   })
 
   observeEvent(input$deleteParticle,{
@@ -610,7 +618,7 @@ server <- function(input, output, session) {
               )
     ) %>%
       formatStyle('selected',target='row',
-                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen')))
+                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgray')))
   )
 
   output$welltable2 <- renderDataTable(
@@ -623,7 +631,7 @@ server <- function(input, output, session) {
                              columnDefs = list(list(width = '200px', targets = "_all")))
     ) %>%
       formatStyle('selected',target='row',
-                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgreen')))
+                  backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgray')))
   )
 
   output$particletable <- renderDataTable(
@@ -679,7 +687,17 @@ server <- function(input, output, session) {
     i = info$row
     j = info$col + 1  # column index offset by 1
     v = info$value
-    mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    new_value <- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    if (names(mapclicks$well_locations)[j] != "Group") {
+      mapclicks$well_locations[i, j] <<- new_value
+    } else if (names(mapclicks$well_locations)[j] == "Group" & new_value %in% well_group_vals) {
+      mapclicks$well_locations[i, j] <<- new_value
+    } else {
+      print(paste("Attempted to assign well group value of",new_value))
+      err_msg <- paste("Well Group value must be one of",
+                       paste(well_group_vals,collapse=", "))
+      showNotification(err_msg,duration = 10,type="warning")
+    }
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
     replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
     # if (j %in% c(6,7)) { # update map if x or y change
@@ -838,8 +856,10 @@ server <- function(input, output, session) {
         print('images 4')
         leafletProxy("resultsmap") %>%
           clearGroup("wells") %>%
-          addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
-                           data=mapclicks$well_locations)
+          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+                           data=mapclicks$well_locations) %>%
+          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
+                           data=mapclicks$well_locations %>% filter(selected))
         # print("7")
       }
     })

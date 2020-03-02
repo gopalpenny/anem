@@ -138,7 +138,7 @@ ui <- fluidPage(
                               column(6,numericInput("diam","diam (m)",1))
                             ),
                             fluidRow(
-                              column(6,textInput("well_group", "Group",value = "A")),
+                              column(6,selectInput("well_group", "Group",choices=LETTERS[1:5],selected = "A")),
                               column(6,numericInput("well_weight","Weight",value = 1))
                             ),
                             hr(),
