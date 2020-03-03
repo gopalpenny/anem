@@ -45,12 +45,15 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' @export
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-#' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
-#' wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) %>%
+#' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=20,z0=20,bounds=bounds_df)
+#' uncon_aquifer <- define_aquifer(aquifer_type="unconfined",Ksat=0.001,n=0.4,h0=20,bounds=bounds_df)
+#' wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600)) %>%
 #'   define_wells() %>% generate_image_wells(aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 #'
-#' system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer))
+#' system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2))
+#' particle_path[nrow(particle_path),]
+#' system.time(particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2))
 #' particle_path[nrow(particle_path),]
 #'
 #' loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700)) %>% dplyr::mutate(p=letters[row_number()])
@@ -86,15 +89,15 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 
   velocity_constant <- aquifer$Ksat / aquifer$n * 3600 * 24 * flow_sign
 
-  # get gridded velocities
-  if (aquifer$aquifer_type == "confined") {
-    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
-  } else if (aquifer$aquifer_type == "unconfined") {
-    v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
-    # head0 <- get_flowdir(gridvals,wells,aquifer)
-    # headdx <- get_flowdir(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
-    # headdy <- get_flowdir(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
-  }
+  # # get gridded velocities
+  # if (aquifer$aquifer_type == "confined") {
+  v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
+  # } else if (aquifer$aquifer_type == "unconfined") {
+  #   v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
+  #   # head0 <- get_flowdir(gridvals,wells,aquifer)
+  #   # headdx <- get_flowdir(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
+  #   # headdy <- get_flowdir(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
+  # }
 
   # Identify grid cells (aquifer boundaries & wells) where the simulation should stop
   well_grid_pts_prep <-
@@ -152,9 +155,6 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
   }
 
   for (i in 1:n_particles) {
-    if (loc$pID[i] %in% c(15,18)) {
-      foo <- "bar"
-    }
     particle_i <- cbind(time=0,x=loc$x[i],y=loc$y[i]) # columns have to be in this order -- it's what is returned by deSolve
     last <- particle_i[nrow(particle_i),]
     j <- 0

@@ -52,24 +52,40 @@ test_that("track_particle works for data.frame loc input",{
 
 
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
+aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=50,z0=50,bounds=bounds_df)
 wells_df_orig <- wells_example[c(1:4),]
 wells_df_orig[4,"Q"] <- 0.25
 wells <- define_wells(wells_df_orig) %>% generate_image_wells(aquifer)
 particle_paths <- get_capture_zone(wells, aquifer, t_max = 365, n_particles = 4, wIDs = "all")
 endpoints <- particle_paths %>% dplyr::filter(endpoint)
-df <- tibble::tibble(time_days=c(218, 365, 367, 366, 27, 107, 198, 127, 267, 370, 39, 128),
-                 status=c("Reached well", "Max time reached", "Max time reached", "Max time reached", "Reached well", "Reached boundary", "Reached well", "Reached boundary", "Reached well", "Max time reached", "Reached well", "Reached boundary"),
+# endpoints %>% dplyr::mutate_if(is.numeric,round) %>% ggp::print_data_frame_for_entry()
+df <- tibble::tibble(time_days=c(366, 367, 366, 367, 67, 268, 375, 318, 367, 372, 98, 319),
+                 status=c("Max time reached", "Max time reached", "Max time reached", "Max time reached", "Reached well", "Reached boundary", "Max time reached", "Reached boundary", "Max time reached", "Max time reached", "Reached well", "Reached boundary"),
                  endpoint=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
-                 i=c(1:12),
+                 i=as.integer(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)),
                  wID=c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3),
-                 pID=c(3, 4, 2, 1, 3, 4, 2, 1, 3, 4, 2, 1) %>% as.integer())
-test_that("get_capture_zone works for simple scenario",{
+                 pID=as.integer(c(3, 4, 2, 1, 3, 4, 2, 1, 3, 4, 2, 1)))
+test_that("get_capture_zone works for simple confined scenario",{
   expect_equal(endpoints %>% dplyr::select(-x,-y,-well_type) %>% dplyr::mutate(time_days=round(time_days)),
                df)
 })
 
+un_aquifer <- define_aquifer(aquifer_type="unconfined",Ksat=0.001,n=0.4,h0=50,bounds=bounds_df)
+particle_paths_un <- get_capture_zone(wells, un_aquifer, t_max = 365, n_particles = 4, wIDs = "all")
+endpoints_un <- particle_paths_un %>% dplyr::filter(endpoint)
+# endpoints_un %>% dplyr::mutate_if(is.numeric,round) %>% ggp::print_data_frame_for_entry()
+df_un <- tibble::tibble(time_days=c(366, 367, 366, 367, 62, 259, 369, 310, 366, 377, 91, 303),
+                 status=c("Max time reached", "Max time reached", "Max time reached", "Max time reached", "Reached well", "Reached boundary", "Max time reached", "Reached boundary", "Max time reached", "Max time reached", "Reached well", "Reached boundary"),
+                 endpoint=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
+                 i=as.integer(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)),
+                 wID=c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3),
+                 pID=as.integer(c(3, 4, 2, 1, 3, 4, 2, 1, 3, 4, 2, 1)))
+test_that("get_capture_zone works for simple unconfined scenario",{
+  expect_equal(endpoints_un %>% dplyr::select(-x,-y,-well_type) %>% dplyr::mutate(time_days=round(time_days)),
+               df_un)
+})
 
+# endpoints %>% dplyr::select(time_days,status) %>% dplyr::bind_cols(endpoints_un %>% dplyr::select(time_days,status))
 
 
 
