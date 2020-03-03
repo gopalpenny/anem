@@ -152,6 +152,9 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
   }
 
   for (i in 1:n_particles) {
+    if (loc$pID[i] %in% c(15,18)) {
+      foo <- "bar"
+    }
     particle_i <- cbind(time=0,x=loc$x[i],y=loc$y[i]) # columns have to be in this order -- it's what is returned by deSolve
     last <- particle_i[nrow(particle_i),]
     j <- 0
@@ -186,7 +189,7 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 
       # if inside source cell, check for well capture
       if (status_val < 0) {
-        inside_well_capture <- all(min(c(pmax(last["x"] - terminal_wells$x,last["x"] - terminal_wells$y),Inf)) < dL)
+        inside_well_capture <- all(min(c(pmax(abs(last["x"] - terminal_wells$x),abs(last["x"] - terminal_wells$y)),Inf)) < dL)
         if (inside_well_capture) {
           captured_in_source_cell <- TRUE
         }
@@ -271,7 +274,6 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 
   for (i in 1:dim(wells_orig)[1]) {
     well_i <- wells_orig[2,]
-
 
     a <- cl0 %>% dplyr::group_by(level,line) %>%
       dplyr::mutate(i=dplyr::row_number(),
