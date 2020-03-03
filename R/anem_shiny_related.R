@@ -11,17 +11,29 @@ run_shiny <- function(shiny_app,display.mode="auto") {
 #'
 #' Import rds output from anem-app
 #' @param path Path to rds file downloaded from web
+#' @param params List objected loaded from the rds files
+#' @param gen_well_images Boolean value. If \code{TRUE}, output \code{wells} includes well images.
 #' @details
 #' The rds files downloaded from the web application contain the raw data and map
 #' click information needed for the app. This function converts those raw values
 #' to UTM coordinates for processing with the R package.
+#'
+#' Either \code{path} or \code{params} should be supplied to the function. If both
+#' are specified, only \code{path} will be used.
 #' @return
 #' Returns a list containing \code{aquifer}, \code{wells}, and \code{particles} that
 #' were input into the web application.
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' # using path
 #' app <- import_app_rds("~/Downloads/anem_scenario.rds")
+#'
+#' # using params
+#' params <- readRDS("~/Downloads/anem_scenario.rds")
+#' app <- import_app_rds(params=params)
+#'
+#' # view the data
 #' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80))
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
@@ -29,9 +41,15 @@ run_shiny <- function(shiny_app,display.mode="auto") {
 #'                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
 #'   coord_equal()
-import_app_rds <- function(path) {
+import_app_rds <- function(path, params = NULL, gen_well_images = TRUE) {
   # Import rds file
-  aa <- readRDS(path)
+  if (!missing(path)) {
+    aa <- readRDS(path)
+  } else if (!is.null(params)) {
+    aa <- params
+  } else {
+    stop("Must supply either path or params as input.")
+  }
 
   # Get proj4string in UTM coordinates
   if (nrow(aa$bound_vertices) > 0) {
@@ -102,8 +120,11 @@ import_app_rds <- function(path) {
     wells_utm <- aa$well_locations %>%
       sf::st_as_sf(coords=c("x","y"),crs=4326) %>%
       sf::st_transform(crs=p4s) %>%
-      define_wells() %>%
-      generate_image_wells(aquifer)
+      define_wells()
+    if (gen_well_images) {
+      wells_utm <- wells_utm %>%
+        generate_image_wells(aquifer_utm)
+    }
     message("Wells imported.")
   } else {
     message("No wells imported.")
