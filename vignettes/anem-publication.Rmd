@@ -246,33 +246,52 @@ where $\phi = h^2$ is discharge potential and $h$ is the thickness of the water 
 
 #### Recharge
 
-In steady steady state, recharge can be represented by constant background flow. In confined aquifers, this requires setting a constant flow defined using Darcy's law as $Q_l = -z K_{sat}\partial h/\partial l$, where $l$ is in the direction of flow and $z$ is defined as the thickness of the aquifer $(z_0)$ for confined aquifers or the thickness of the water table $(h)$ for unconfined aquifers. Integrating this equation for unconfined aquifers yields
+In steady steady state, recharge can be represented by constant background flow. In confined aquifers, this requires setting a constant flow defined using Darcy's law as $Q = -z K_{sat} \nabla h$, where $z$ is defined as the thickness of the aquifer $(z_0)$ for confined aquifers or the thickness of the water table $(h)$ for unconfined aquifers. Integrating this equation for confined aquifers in the x-direction yields
 
 \begin{align}
-h - h_0 = \frac{Q_l}{K_{sat} z_0}(l_0 - l),
+h - h_0 = \frac{Q_x}{K_{sat} z_0}(x_0 - x),
 \end{align}
 
-where $h_0$ and $l_0$ refer to the head and location of some datum. For unconfined aquifers, integration results in terms of discharge potential are
+where $h_0$ and $x_0$ refer to the head at some datum. The head gradient can be written as
+
 
 \begin{align}
-\phi - \phi_0 = \frac{2 Q_l}{K_{sat}} (l_0 - l).
+\frac{\partial h}{\partial x} &= -\frac{Q_x}{ K_{sat} z_0}
+\end{align}
+
+
+For unconfined aquifers, integration results in terms of discharge potential are
+
+\begin{align}
+\phi - \phi_0 &= \frac{2 Q_x}{K_{sat}} (x_0 - x), \\ 
+\frac{\partial \phi}{\partial x} &= -\frac{2 Q_x}{K_{sat}}.
 \end{align}
 
 Following the principle of superposition, the effect of recharge on hydraulic head or discharge potential can be calculated independently of other analytic elements.
 
 #### Pumping from a single well
 
-We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-dimensional and parallel to the aquifer bottom, which is horizontal. Generally speaking, this means that the thickness of the aquifer must be considerably less than the lateral extent of the aquifer, and wells must be screened from the bottom to the top of the wetted portion of the aquifer. Flow is governed by Darcy's law which, in the case of radial flow to a well, can be integrated to obtain the Thiem solution describing steady state hydraulic head and flow in the vicinity ($r<R$) of a pumping well:
+We assume that all flow within the aquifer follows the Depuit-Forschheimer assumption such that all flow is 2-dimensional and parallel to the aquifer bottom, which is horizontal. Generally speaking, this means that the thickness of the aquifer must be considerably less than the lateral extent of the aquifer, and wells must be screened from the bottom to the top of the wetted portion of the aquifer. Flow is governed by Darcy's law which, in the case of radial flow to a well, can be integrated to obtain the Thiem solution describing steady state hydraulic head in the vicinity ($r \le R$) of a pumping well:
 
 \begin{align}
-h - h_0 = -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right)
+h - h_0 &= -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right) \\
+\frac{\partial h}{\partial r} &= -\frac{Q}{2 \pi T r}
 \label{eq:thiemunconfined}
 \end{align}
 
-where $h$ is hydraulic head at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $h_0$ is the undisturbed hydraulic head when $Q=0$, $T$ is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer ($T= K_{sat} z_0$), and $R$ is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping ($h=h_0$). This solution is valid for steady state flow in confined aquifers.
+where $h$ is hydraulic head at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $h_0$ is the undisturbed hydraulic head when $Q=0$, $T$ is the transmissivity of the confined aquifer defined as saturated hydraulic conductivity multiplied by the thickness of the aquifer ($T= K_{sat} z_0$), and $R$ is the radius of influence of the pumping well, outside of which the hydraulic head is undisturbed by pumping ($h=h_0$). This solution is valid for steady state flow in confined aquifers. The head gradient in this case, focusing on the x-direction, is:
 
-The solution can also be written for unconfined aquifers as:
-$$\phi - \phi_0 = -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right),$$
+\begin{align}
+\frac{\partial h}{\partial x} &= -\frac{Q}{2 \pi T} \frac{x-x_i}{r^2},
+\end{align}
+
+where $x$ is the observation location and $x_i$ is the location of the well. The solution can also be written for unconfined aquifers as:
+
+\begin{align}
+\phi - \phi_0 &= -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right) \\
+\frac{\partial \phi}{\partial x} &= -\frac{Q}{\pi K_{sat}} \frac{x-x_i}{r^2}
+\end{align}
+
 where $\phi_0$ is the undisturbed discharge potential when $Q=0$. Although the radius of influence does not affect the shape of the cone of depression, it determines how far it spreads from the well. Multiple approaches for calculating this radius have been proposed for confined and unconfined aquifers (CITES). The package implements the (CITE) approach for confined aquifers and (CITE) approach for unconfined aquifers.
 
 #### Boundary conditions
@@ -299,7 +318,7 @@ Flow is then calculated from the hydraulic gratdient using Darcy's law, $q_l = -
 
 The R package that we have developed applies the method of images in the aquifer scenarios described above. Aquifers are defined by their type (confined or unconfined), saturated hydraulic conductivity ($K_{sat}$), porosity ($n$), undisturbed head (i.e., the hydraulic head without pumping, $h_0$), and thickness ($z_0$, for confined aquifers only). Aquifers can also contain backround flow as a uniform flow field, or as two distince uniform fields on either side of a divide.
 
-Wells are defined by a location, pumping rate, diameter, and radius of influence, and imaged across the aquifer borders contained within the radius of influence. The package allows users to calculate hydraulic head and flow direction at any number of locations with a single function call. The effect of each well on hydraulic head is calculated individually using the equations above, and the results are summed. Flow direction is calculated as the derivative of hydraulic head at any given location, proceeding analytically for confined aquifers and numerically for unconfined aquifers.
+Wells are defined by a location, pumping rate, diameter, and radius of influence, and imaged across the aquifer borders contained within the radius of influence. The package allows users to calculate hydraulic head and flow direction at any number of locations with a single function call. The effect of each well on hydraulic head is calculated individually using the equations above, and the results are summed. Flow direction is calculated as the derivative of hydraulic head at any given location, proceeding analytically for both confined and unconfined aquifers.
 
 <!-- Basic functionality of the package -->
 
@@ -351,11 +370,11 @@ The following "use cases" demonstrate how the application might be used by plann
 
 #### Web application
 
-A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of contamination of the confined source aquifer below the city; the municipality wishes to establish, quickly and inexpensively, possible points of origin of the contamination. In this example, W1, W2, and W3 are municipal wells, each pumping 5 MGD (0.22 cumec); W1 is the contaminated well. Around these wells are three sources of discharge: D1, D2, and D3, which are injection wells which each operate at 0.45 MGD (0.02 cumec); and S1 and S2 represent points of known surface discharge. The area of interest is bounded by a river to the northeast, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at the municipal abstraction wells and of the constant-head boundary, but has can make a reasonable estimate of the lateral flow toward the river.
+A municipality receives complaints about the quality of its municipal water supply. Testing data suggests the possibility of contamination of the unconfined source aquifer below the city; the municipality wishes to establish, quickly and inexpensively, possible points of origin of the contamination. In this example, W1, W2, and W3 are municipal wells, each pumping 5 MGD (0.22 cumec); W1 is the contaminated well. Around these wells are three sources of discharge: D1, D2, and D3, which are injection wells which each operate at 0.45 MGD (0.02 cumec); and S1 and S2 represent points of known surface discharge. The area of interest is bounded by a river to the northeast, represented by a constant-head boundary. Notice that several of the discharge points are between the features of interest in the model (the municipal wells and the constant-head boundary) such that the municipality, at the outset, is plausibly uncertain as to the relative effects of pumping at the municipal abstraction wells and of the constant-head boundary, but has can make a reasonable estimate of the lateral flow toward the river.
 
 We implemented this imaginary scenario in the web application as an aquifer bounded on one side with a  constant head boundary, later recharge flowing towards the river, and both the pumping and injection wells (Figure XX). Well capture zones were simulated for a maximum of 10 years, after which all particle terminated at one of the boundaries or an injection well. The contaminated well draws water from all of the injection wells and one of the surface contamination sites, meaning there are four possible sources that could contaminate the well in question. However, the suspected sites can be reduced further given that the three injection wells are captured by multiple wells. No contamination has appeared at either of the other municipal pumping sites, which indicates that D1, D2, and D3 can be elimated from consideration. The municipality can begin by investigating the most likely source of contamination, S1.
 
-![Figure X. Well capture of contamination by a municipal well, as demonstrated by anem-app. The image is a screenshot of the web application overlaid with the well IDs.](../shiny-app/screenshots/urban_contamination.png)
+![Figure X. Well capture of contamination by a municipal well in an unconfined aquifer, as demonstrated by anem-app. The image is a screenshot of the web application overlaid with the well IDs. NOTE: STILL NEED TO LABEL WELLS](../shiny-app/screenshots/urban_contamination.png)
 
 
 #### Education opportunity
