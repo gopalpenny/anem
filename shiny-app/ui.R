@@ -218,7 +218,7 @@ ui <- fluidPage(
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("resetZoomLink","Zoom to objects",style='font-size:80%'))
                          ),
-                         leaflet::leafletOutput("prepmap",height=430),
+                         leaflet::leafletOutput("prepmap",height=450),
                          fluidRow(
                            column(3,checkboxInput("update_images","Well images",FALSE)),
                            column(3,checkboxInput("update_head","Hydraulic head",FALSE)),
@@ -263,7 +263,7 @@ ui <- fluidPage(
                                   HTML("<p style=font-size:45%><br><br></p>"),
                                   actionLink("resetZoomLink_results","Zoom to objects",style='font-size:80%'))
                          ),
-                         leaflet::leafletOutput("resultsmap",height=430) %>% withSpinner(),
+                         leaflet::leafletOutput("resultsmap",height=450) %>% withSpinner(),
                          fluidRow(
                            column(3,checkboxInput("update_images_results","Well images",FALSE)),
                            column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),

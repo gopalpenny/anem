@@ -244,9 +244,9 @@ server <- function(input, output, session) {
       updateCheckboxInput(session,"update_images",value=TRUE)
       updateCheckboxInput(session,"update_head",value=TRUE)
     }
-    if (!is.null(particles_utm())) {
-      updateCheckboxInput(session,"update_particles",value=TRUE)
-    }
+    # if (!is.null(particles_utm()) | input$wellCapture) {
+    #   updateCheckboxInput(session,"update_particles",value=TRUE)
+    # }
   })
   observeEvent(mapclicks$well_locations,{
     if (input$maintabs=="prepare") {
@@ -259,7 +259,20 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$max_tracking_time_years,{
-    if (!is.null(particles_utm())) {
+    if (!is.null(particles_utm()) | input$wellCapture) {
+      updateCheckboxInput(session,"update_particles",value=TRUE)
+    }
+  })
+  observeEvent(input$wellCapture,{
+    if (input$wellCapture) {
+      updateCheckboxInput(session,"update_particles",value=TRUE)
+    } else if (is.null(particles_utm())) {
+      updateCheckboxInput(session,"update_particles",value=FALSE)
+    }
+  })
+
+  observeEvent(input$captureParticles,{
+    if (input$wellCapture) {
       updateCheckboxInput(session,"update_particles",value=TRUE)
     }
   })
@@ -269,7 +282,7 @@ server <- function(input, output, session) {
       # don't update images -- unless bounds_sf is changed
       updateCheckboxInput(session,"update_head",value=TRUE)
     }
-    if (!is.null(particles_utm())) {
+    if (!is.null(particles_utm()) | input$wellCapture) {
       updateCheckboxInput(session,"update_particles",value=TRUE)
     }
   })
@@ -280,6 +293,9 @@ server <- function(input, output, session) {
   })
   observeEvent(input$update_head,{
     updateCheckboxInput(session,"update_head_results",value=input$update_head)
+    if (!is.null(particles_utm()) | input$wellCapture) {
+      updateCheckboxInput(session,"update_particles",value=input$update_head)
+    }
   })
   observeEvent(input$update_particles,{
     updateCheckboxInput(session,"update_particles_results",value=input$update_particles)
@@ -487,8 +503,7 @@ server <- function(input, output, session) {
 
   observeEvent(mapclicks$well_locations,{
     leafletProxy("prepmap") %>%
-      clearGroup("Wells") %>% clearControls()
-    leafletProxy("prepmap")%>%
+      clearGroup("Wells") %>% clearControls() %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations) %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
@@ -936,7 +951,7 @@ server <- function(input, output, session) {
         headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
         leafletProxy("resultsmap") %>%
           clearGroup("Head") %>%
-          # clearControls() %>%
+          clearControls() %>%
           addPolylines(color=~headPal(level),opacity=1,weight=3, group="Head",# label=~as.character(head_label),
                        data=cl_wgs) %>% # %>%
           # addPolygons(data=head_sf_wgs,stroke=FALSE,fillOpacity = 0,label=~as.character(head_label)) %>%
