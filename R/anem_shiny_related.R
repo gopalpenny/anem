@@ -22,7 +22,7 @@ run_shiny <- function(shiny_app,display.mode="auto") {
 #' @export
 #' @examples
 #' app <- import_app_rds("~/Downloads/anem_scenario.rds")
-#' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer)
+#' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80))
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
