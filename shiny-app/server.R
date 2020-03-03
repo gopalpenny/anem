@@ -20,6 +20,7 @@ boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH
 
 server <- function(input, output, session) {
   notification_id <- NULL
+  note_id_R_diam <- NULL
 
   output$fileDownload <- downloadHandler(
     filename = function() {
@@ -502,6 +503,16 @@ server <- function(input, output, session) {
   })
 
   observeEvent(mapclicks$well_locations,{
+    if (!is.null(note_id_R_diam)) {
+      removeNotification(note_id_R_diam)
+      note_id_R_diam <<- NULL
+    }
+    if ((any(mapclicks$well_locations$R) <= 0 |
+        any(mapclicks$well_locations$diam <= 0) |
+        any(mapclicks$well_locations$R <= mapclicks$well_locations$diam)) & nrow(mapclicks$well_locations) > 0) {
+      id <- showNotification("For each well, R and diam must be nonzero with R > diam.",type="warning",duration = 20)
+      note_id_R_diam <<- id
+    }
     leafletProxy("prepmap") %>%
       clearGroup("Wells") %>% clearControls() %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
