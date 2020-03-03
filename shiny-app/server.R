@@ -487,11 +487,12 @@ server <- function(input, output, session) {
 
   observeEvent(mapclicks$well_locations,{
     leafletProxy("prepmap") %>%
-      clearGroup("Wells") %>% clearControls() %>%
+      clearGroup("Wells") %>% clearControls()
+    leafletProxy("prepmap")%>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations) %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected)) %>%
+                       data=mapclicks$well_locations %>% dplyr::filter(selected)) %>%
       addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations,position="bottomright")
   })
 
@@ -531,7 +532,7 @@ server <- function(input, output, session) {
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations) %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected)) %>%
+                       data=mapclicks$well_locations %>% dplyr::filter(selected)) %>%
       addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright") #%>%
     # addLayersControl(baseGroups = c("Map","Satellite"),
     #                  overlayGroups = c("Wells"),
@@ -555,7 +556,7 @@ server <- function(input, output, session) {
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells",
                        data=mapclicks$well_locations) %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected)) %>%
+                       data=mapclicks$well_locations %>% dplyr::filter(selected)) %>%
       addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright")
   })
 
@@ -866,7 +867,7 @@ server <- function(input, output, session) {
           addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                            data=mapclicks$well_locations) %>%
           addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
-                           data=mapclicks$well_locations %>% filter(selected))
+                           data=mapclicks$well_locations %>% dplyr::filter(selected))
         # print("7")
       }
     })
@@ -967,7 +968,6 @@ server <- function(input, output, session) {
   observeEvent(updateResults$update_particles_now,{
     print("particles 1")
     if (!is.null(bounds$bounds_sf) & !is.null(wells_utm())) {
-
       print("input$wellCapture")
       print(input$wellCapture)
 
