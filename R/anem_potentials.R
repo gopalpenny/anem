@@ -154,8 +154,10 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' # Injection and pumping well along diagonal line
 #' wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-#' aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
-#' fd2 <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
+#' aquifer_unconfined <- define_aquifer(aquifer_type="unconfined",Ksat=0.00001,h0=20)
+#' fd2_a <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
+#' fd2_b <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined,numderiv=TRUE)
+#' fd2_a - fd2_b
 #'
 #' # Two pumping wells along diagonal line
 #' wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
@@ -194,15 +196,26 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' loc <- expand.grid(x=9:11,y=9:11)
 #' get_flowdir(loc,wells,aquifer)
 #' get_flowdir(loc,wells,aquifer)
-get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6) {
+get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6,numderiv=FALSE) {
   cAquifer <- check_aquifer(aquifer)
 
   loc_class <- class(loc)
   # get change in potential due to wells
   if (aquifer$aquifer_type == "confined") {
-    fd <- get_flowdir_confined(loc,wells,aquifer)
+    fd <- get_flowdir_raw(loc,wells,aquifer) / (2 * aquifer$z0)
 
-  } else if (aquifer$aquifer_type == "unconfined") {
+  } else if (aquifer$aquifer_type == "unconfined" & !numderiv) {
+    h <- get_hydraulic_head(loc,wells,aquifer)
+
+    if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
+      fd <- get_flowdir_raw(loc,wells,aquifer) / (2 * h)
+
+    } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
+      fd <- get_flowdir_raw(loc,wells,aquifer)
+      fd$dx <- fd$dx / (2 * h)
+      fd$dy <- fd$dy / (2 * h)
+    }
+  } else if (aquifer$aquifer_type == "unconfined" & numderiv) {
     if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
       fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
     } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
@@ -342,13 +355,13 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #' get_flowdir(loc=c(5,5),wells,aquifer)
-#' get_flowdir_confined(loc=c(5,5),wells,aquifer)
-#' get_flowdir_confined(loc=c(5,5),NULL,aquifer)
+#' get_flowdir_raw(loc=c(5,5),wells,aquifer)
+#' get_flowdir_raw(loc=c(5,5),NULL,aquifer)
 #'
 #' grid_pts <- expand.grid(x=seq(0,10,by=5),y=seq(0,10,by=5))
 #' get_flowdir(loc=grid_pts,wells,aquifer)
-#' get_flowdir_confined(loc=grid_pts,wells,aquifer)
-#' get_flowdir_confined(loc=grid_pts,NULL,aquifer)
+#' get_flowdir_raw(loc=grid_pts,wells,aquifer)
+#' get_flowdir_raw(loc=grid_pts,NULL,aquifer)
 #'
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1e-3,x0=0,y0=0)
 #' aquifer_norecharge <- define_aquifer("confined",1e-3,h0=0,z0=1)
@@ -373,7 +386,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #' loc <- expand.grid(x=9:11,y=9:11)
 #' (d <- get_flowdir(loc,NULL,aquifer_recharge))
 #' cbind(loc,d)
-get_flowdir_confined <- function(loc, wells, aquifer) {
+get_flowdir_raw <- function(loc, wells, aquifer) {
 
   df_input <- any(grepl("data.frame",class(loc)))
   if (df_input) {
@@ -396,6 +409,12 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
     R <- 100
     Q <- 0
     diam_wells <- 1
+  }
+
+  if (aquifer$aquifer_type=="confined") { # check for z0
+    if(is.na(aquifer$z0)) {
+      stop("need to set z0 for confined aquifer")
+    }
   }
 
   ni <- length(x_well) # number of wells
@@ -434,6 +453,11 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
       fd_r_y <- rep(rech$y_term_main,mj)
       fd_r_y[!main_side] <- rech$y_term_opp
     }
+    if (aquifer$aquifer_type=="confined") {
+      fd_r_x <- fd_r_x * 2 * aquifer$z0
+      fd_r_y <- fd_r_y * 2 * aquifer$z0
+    } else {
+    }
   }
 
   # rji is the distance between well i and observation location j, with 2 exceptions
@@ -443,15 +467,11 @@ get_flowdir_confined <- function(loc, wells, aquifer) {
   rji[rji <= di/2 | rji > Ri] <- Inf
 
   # calculate the potential differential
-  if (aquifer$aquifer_type=="confined") { # as a differential hydraulic head
-    if(is.na(aquifer$z0)) {
-      stop("need to set z0 for confined aquifer")
-    }
-    dx <- rowSums(Qi/(2*pi*aquifer$Ksat * aquifer$z0) * 1/rji^2 * (xj - xi))
-    dy <- rowSums(Qi/(2*pi*aquifer$Ksat * aquifer$z0) * 1/rji^2 * (yj - yi))
-  } else { # as a differential discharge potential
-    stop("aquifer_type must be confined for get_flowdir_confined")
-  }
+  dx <- rowSums(Qi/(pi*aquifer$Ksat) * (xj - xi)/rji^2)
+  dy <- rowSums(Qi/(pi*aquifer$Ksat) * (yj - yi)/rji^2)
+  # dx <- rowSums(Qi/(2*pi*aquifer$Ksat * aquifer$z0) * 1/rji^2 * (xj - xi)) ## OLD
+  # dy <- rowSums(Qi/(2*pi*aquifer$Ksat * aquifer$z0) * 1/rji^2 * (yj - yi)) ## OLD
+
   if (df_input) {
     fd <- data.frame(dx=dx - fd_r_x,dy=dy - fd_r_y)
   } else {
