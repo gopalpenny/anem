@@ -487,17 +487,18 @@ server <- function(input, output, session) {
 
   observeEvent(mapclicks$well_locations,{
     leafletProxy("prepmap") %>%
-      clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+      clearGroup("Wells") %>% clearControls() %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations) %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected))
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected)) %>%
+      addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations,position="bottomright")
   })
 
   observeEvent(mapclicks$particle_locations,{
     leafletProxy("prepmap") %>%
-      clearGroup("particles") %>%
-      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+      clearGroup("Particles") %>%
+      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "Particles", opacity = 1, radius = 5,
                        data=mapclicks$particle_locations)
   })
     # # print(mapclicks$well_locations %>% tibble::as_tibble())
@@ -505,13 +506,13 @@ server <- function(input, output, session) {
     # } else if (clickOperation == "recharge_vertex") {
     # } else if (clickOperation == "new_well") {
     #   # leafletProxy("prepmap") %>%
-    #   #   clearGroup("wells") %>%
-    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+    #   #   clearGroup("Wells") %>%
+    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "Wells", opacity = 1, radius = 5,
     #   #                    data=mapclicks$well_locations)
     # } else if (clickOperation == "new_particle") {
     #   # leafletProxy("prepmap") %>%
-    #   #   clearGroup("wells") %>%
-    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells", opacity = 1, radius = 5,
+    #   #   clearGroup("Wells") %>%
+    #   #   addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "Wells", opacity = 1, radius = 5,
     #   #                    data=mapclicks$well_locations)
     # } else
 
@@ -525,19 +526,23 @@ server <- function(input, output, session) {
     print('hello')
     print(wells_roi())
     leafletProxy("prepmap") %>%
-      clearGroup("wells") %>%
-      addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",stroke=FALSE, group = "wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+      clearGroup("Wells") %>% clearControls() %>%
+      addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",fillOpacity = 0.07,opacity=0.4,stroke=TRUE,color="#888888", weight=1, group = "Wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                        data=mapclicks$well_locations) %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected))
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected)) %>%
+      addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright") #%>%
+    # addLayersControl(baseGroups = c("Map","Satellite"),
+    #                  overlayGroups = c("Wells"),
+    #                  options = layersControlOptions(collapsed=FALSE))
   })
 
   observeEvent(particles_utm(),{
     print('particles_utm')
     leafletProxy("prepmap") %>%
-      clearGroup("particles") %>%
-      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+      clearGroup("Particles") %>%
+      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "Particles", opacity = 1, radius = 5,
                        data=mapclicks$particle_locations)
   })
 
@@ -545,19 +550,21 @@ server <- function(input, output, session) {
     mapclicks$well_locations <- mapclicks$well_locations %>%
       dplyr::filter(!selected)
     leafletProxy("prepmap") %>%
-      clearGroup("wells") %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells",
+      clearGroup("Wells") %>% clearControls() %>%
+      addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",fillOpacity = 0.07,opacity=0.4,stroke=TRUE,color="#888888", weight=1, group = "Wells") %>%
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells",
                        data=mapclicks$well_locations) %>%
-      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
-                       data=mapclicks$well_locations %>% filter(selected))
+      addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
+                       data=mapclicks$well_locations %>% filter(selected)) %>%
+      addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright")
   })
 
   observeEvent(input$deleteParticle,{
     mapclicks$particle_locations <- mapclicks$particle_locations %>%
       dplyr::filter(!selected)
     leafletProxy("prepmap") %>%
-      clearGroup("particles") %>%
-      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
+      clearGroup("Particles") %>%
+      addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "Particles", opacity = 1, radius = 5,
                        data=mapclicks$particle_locations)
   })
 
@@ -702,8 +709,8 @@ server <- function(input, output, session) {
     replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
     # if (j %in% c(6,7)) { # update map if x or y change
     #   leafletProxy("prepmap") %>%
-    #     clearGroup("wells") %>%
-    #     addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "wells",
+    #     clearGroup("Wells") %>%
+    #     addCircleMarkers(~x, ~y, color = ~wellPal(selected), group = "Wells",
     #                      data=mapclicks$well_locations)
     # }
   })
@@ -786,8 +793,8 @@ server <- function(input, output, session) {
     print(nrow(mapclicks$well_locations))
 
     leafletProxy("resultsmap") %>%
-      clearGroup("wells") %>%
-      clearGroup("head_cl") %>%
+      clearGroup("Wells") %>%
+      clearGroup("Head") %>%
       clearControls()
 
     print("images 1")
@@ -855,10 +862,10 @@ server <- function(input, output, session) {
         incProgress(1/n_progress,detail="Mapping the wells")
         print('images 4')
         leafletProxy("resultsmap") %>%
-          clearGroup("wells") %>%
-          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 1, radius = 5,
+          clearGroup("Wells") %>%
+          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                            data=mapclicks$well_locations) %>%
-          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "wells", opacity = 0.5, radius = 10,
+          addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
                            data=mapclicks$well_locations %>% filter(selected))
         # print("7")
       }
@@ -920,21 +927,25 @@ server <- function(input, output, session) {
         cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
                                type="sf",crs=proj4string_scenario())
         cl <- cl %>% sf::st_intersection(bounds_polygon)
+        cl_wgs <- cl %>% sf::st_transform(crs=4326)
 
         # head_range <- c(min(gridded$h$head_m),max(gridded$h$head_m))
         incProgress(1/n_progress,detail="Mapping results")
         headPal <- colorNumeric(palette = "Blues",domain=cl$level, reverse=TRUE)
         headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
         leafletProxy("resultsmap") %>%
-          clearGroup("head_cl") %>%
-          clearControls() %>%
-          addPolylines(color=~headPal(level),opacity=1,weight=3, group="head_cl",# label=~as.character(head_label),
-                       data=cl %>% sf::st_transform(crs=4326)) %>% # %>%
+          clearGroup("Head") %>%
+          # clearControls() %>%
+          addPolylines(color=~headPal(level),opacity=1,weight=3, group="Head",# label=~as.character(head_label),
+                       data=cl_wgs) %>% # %>%
           # addPolygons(data=head_sf_wgs,stroke=FALSE,fillOpacity = 0,label=~as.character(head_label)) %>%
-          addLegend("bottomright", pal = headPal_rev, values = ~level, group="head_cl",
+          addLegend("bottomright", pal = headPal_rev, values = ~level, group="Head",
                     title = "Head, m", data=cl,
                     labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
-                    opacity = 1 )
+                    opacity = 1 ) %>%
+          addLayersControl(baseGroups = c("Map","Satellite"),
+                           overlayGroups = c("Head"),
+                           options = layersControlOptions(collapsed=FALSE))
 
         wells$drawdown_relationships <- get_drawdown_relationships(wells$utm_with_images,aquifer(),group_column = Group, weights_column = Weight)
 
@@ -989,10 +1000,14 @@ server <- function(input, output, session) {
             sf::st_transform(crs=4326)
 
           leafletProxy("resultsmap") %>%
-            clearGroup("particles") %>%
-            addPolylines(data=particles$particle_paths_wgs,color = "red",group = "particles", weight = 2) %>%
-            addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "particles", opacity = 1, radius = 5,
-                             data=mapclicks$particle_locations)
+            clearGroup("Particles") %>%
+            clearGroup("Well capture") %>%
+            addPolylines(data=particles$particle_paths_wgs,color = "red",group = "Particles", weight = 2) %>%
+            addCircleMarkers(~x, ~y, color = ~partPal(selected), group = "Particles", opacity = 1, radius = 5,
+                             data=mapclicks$particle_locations) %>%
+            addLayersControl(baseGroups = c("Map","Satellite"),
+                             overlayGroups = c("Head","Particles"),
+                             options = layersControlOptions(collapsed=FALSE))
 
           particle_sf <- particle_endpoints %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
             sf::st_transform(crs=4326)
@@ -1020,8 +1035,13 @@ server <- function(input, output, session) {
           print("particles$capture_paths_wgs")
           print(particles$capture_paths_wgs)
           leafletProxy("resultsmap") %>%
-            clearGroup("capture_particles") %>%
-            addPolylines(data=particles$capture_paths_wgs,color = "red",group = "capture_particles", weight = 2)
+            clearGroup("Particles") %>%
+            clearGroup("Well Capture") %>%
+            addPolylines(data=particles$capture_paths_wgs,color = "red",group = "Well capture", weight = 2) %>%
+            addLayersControl(baseGroups = c("Map","Satellite"),
+                             overlayGroups = c("Head","Well capture"),
+                             options = layersControlOptions(collapsed=FALSE))
+
         }
       })
     }
