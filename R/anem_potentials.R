@@ -126,17 +126,18 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
   return(h)
 }
 
-#' Numerically calculate flow direction
+#' Calculate the flow direction
 #'
 #' Calculates the derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
 #'   and \eqn{-dh/dy}. For confined aquifers, the result is calculated using the sum of the
-#'   effect of each analytical element, whereas for unconfined aquifers the result is calculated
-#'   numerically from hydraulic head.
+#'   effect of each analytical element, whereas for unconfined aquifers the result can be calculated
+#'   analytically or numerically from hydraulic head.
 #'
 #' @inheritParams get_hydraulic_head
 #' @param show_progress Boolean input parameter. If true and there are >20 combinations of
 #' wells and locations, then a progress bar will be printed.
 #' @param eps Threshold satisfying numeric derivative
+#' @param numderiv Boolean that determines whether unconfined aquifers are calculated analytically or numerically
 #' @return Outputs the flow direction in the x and y directions. If the input \code{loc} is
 #'   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
 #'   then the output is also a data.frame with columns \code{dx} and \code{dy}. The two values
@@ -206,6 +207,9 @@ get_flowdir <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6,numderiv=
 
   } else if (aquifer$aquifer_type == "unconfined" & !numderiv) {
     h <- get_hydraulic_head(loc,wells,aquifer)
+    if (any(h==0)) {
+      warning("In some locations head is equal to 0. Aquifer fully depleted and results unreliable.")
+    }
 
     if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
       fd <- get_flowdir_raw(loc,wells,aquifer) / (2 * h)
