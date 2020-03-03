@@ -1062,7 +1062,7 @@ server <- function(input, output, session) {
           print(particles$capture_paths_wgs)
           leafletProxy("resultsmap") %>%
             clearGroup("Particles") %>%
-            clearGroup("Well Capture") %>%
+            clearGroup("Well capture") %>%
             addPolylines(data=particles$capture_paths_wgs,color = "red",group = "Well capture", weight = 2) %>%
             addLayersControl(baseGroups = c("Map","Satellite"),
                              overlayGroups = c("Head","Well capture"),
