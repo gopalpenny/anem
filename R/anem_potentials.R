@@ -3,7 +3,7 @@
 
 #' Estimate the radius of influence of a well
 #'
-#' @param ... Variable parameters, depending on the method used
+#' @param ... Variable parameters, depending on the method used. Single numbers or vectors (of equal length)
 #' @param method String containing the name of the desired method
 #' @return A numeric value indicating the horizontal radius of influence of the
 #'   well.
@@ -30,6 +30,7 @@
 #'     \item Ksat = saturated hydraulic conductivity [m/s]
 #'     \item s = drawdown in the borehole [m]
 #'   }
+#' These inputs can be single numbers or vectors of equal length.
 #' @export
 #' @examples
 #' get_ROI(Tr=0.01,t=3600*12,S=1,method="cooper-jacob")

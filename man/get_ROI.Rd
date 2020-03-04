@@ -7,7 +7,7 @@
 get_ROI(..., method)
 }
 \arguments{
-\item{...}{Variable parameters, depending on the method used}
+\item{...}{Variable parameters, depending on the method used. Single numbers or vectors (of equal length)}
 
 \item{method}{String containing the name of the desired method}
 }
@@ -42,6 +42,7 @@ Estimate the radius of influence of a well
     \item Ksat = saturated hydraulic conductivity [m/s]
     \item s = drawdown in the borehole [m]
   }
+These inputs can be single numbers or vectors of equal length.
 }
 
 \examples{
