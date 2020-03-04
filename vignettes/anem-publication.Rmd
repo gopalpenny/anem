@@ -385,9 +385,20 @@ The scenario as implemented is available online. However, educators could genera
 
 ### Case 2: Application for pumping well
 
-A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, E3, and E4. The area of interest is located near a river bend, depicted here by constant-head boundaries to the north and west and no-flow boundaries to the south and east.
-
 #### Web application
+
+A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, and E3. The area of interest is located near a river, depicted here by a constant-head boundary to the southwest and no-flow boundaries to the northwest and southeast.
+
+![Figure X. Well capture of contamination by a municipal well in an unconfined aquifer, as demonstrated by anem-app. The image is a screenshot of the web application overlaid with the well IDs. NOTE: STILL NEED TO LABEL WELLS](../shiny-app/screenshots/groundwater_agency_application.png)
+
+```{r echo=FALSE}
+case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),Baseline=c(48.571,47.656,48.805,49.064),
+                        `With well`=c(47.773,46.412,45.923,48.768)) %>%
+  dplyr::mutate(`% change`=round((Baseline-`With well`)/Baseline * 100,2)) %>%
+  dplyr::arrange(Well)
+case3 %>% knitr::kable() %>% kableExtra::kable_styling()
+```
+
 
 #### Monte Carlo with R application
 
