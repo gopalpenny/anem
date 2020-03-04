@@ -1,6 +1,8 @@
 ---
-title: "An R package and web application for simple groundwater modeling"
+title: "Reviving the method of images in the R programming language"
 output: 
+  pdf_document: 
+    keep_tex: yes
   html_notebook:
     toc: true
     fig_caption: yes
@@ -28,16 +30,15 @@ library(patchwork)
 ### Abstract 
 
 Numerous tools exist for simulating groundwater flow via finite element models (e.g., MODFLOW) or analytic element models (e.g., gflow).
-These tools allow for analysis of complex groundwater behavior, but such functionality that may not be necessary in projects that demand simple groundwater models combined with (1) ease of use or (2) advanced statistical or theoretical analysis.
-We address each of these needs through the development of a web application and an R package that simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
-Both tools can be used independent of the computer platform, and offer functionality for defining aquifers and pumping wells, determining hydraulic head and lateral flow, calculating drawdown relationships among groups of wells, and estimating travel times for particles.
+These tools allow for analysis of complex groundwater behavior, but such functionality that may not be necessary in projects that demand simple groundwater models combined with (a) ease of use or (b) advanced statistical or theoretical analysis.
+We address each of these needs through the development of a web application and R package that simulate 2-dimensional, steady-state groundwater flow in confined and unconfined aquifers with rectangular boundaries using analytic elements and the method of well images.
+These platform-independent toosl offer functionality for defining aquifers and pumping wells, determining hydraulic head and lateral flow, calculating drawdown relationships among groups of wells, and evaluating particle transport.
 The ease of use of the web application should be especially valuabe in low-budget applications, such as small water management agencies or educational settings.
 Integration of groundwater models with R can provide numerous benefits for quickly simulating and analyzing groundwater hydrology problems.
-Such simulation can serve as a precursor to more complex groundwater modeling, or be used to simulate synthetic scenarios as a way to explore variability and uncertainty.
-Because R is a functional programming language, the outputs from this package can be easily analyzed, mapped, and incorporated into more complex models in R.
+Simulation of idealized aquifer scenarios can serve as a quick-and-dirty first-cut analysis or be used to simulate synthetic scenarios as a way to explore variability and uncertainty.
+The functionality of the R package can be easily analyzed, mapped, and incorporated into more complex models in R.
 Indeed, the linear behavior of groundwater flow and principle of superposition means that physically plausible groundwater dynamics can be incorporated into more complex models of hydrology and coupled human-natural systems.
-We validate the code and describe multiple scenarios in which the web application and R package might be used.
-
+We validate these tools and describe multiple scenarios in which the web application and R package might be used.
 
 <!-- **[Feo et al, 2018](https://ngwa.onlinelibrary.wiley.com/doi/abs/10.1111/gwat.12588)** -->
 
@@ -54,14 +55,15 @@ We validate the code and describe multiple scenarios in which the web applicatio
 
 ## Introduction
 
-Groundwater plays an essential role in environmental and water resources management. In various contexts it may serve as a resource, hazard, or transport medium. As such, groundwater modeling is ubiquitous for a variety of applications in industry, academia, and policy, with applications ranging from abstraction economics to environmental remediation. The fundamental principles of groundwater dynamics are mathematically simple and commonly taught in civil and environmental engineering courses. However, there remains an uncessary learning curve to bridge the divide between the simplicity of groundwater equations and the tools available to model groundwater.
+Groundwater plays an essential role in environmental and water resources management. In various contexts it may serve as a resource, hazard, or transport medium. As such, groundwater modeling is ubiquitous for a variety of applications in industry, academia, and policy. The fundamental principles of groundwater dynamics are mathematically simple and commonly taught in civil and environmental engineering courses. However, there remains an uncessary learning curve to bridge the divide between the simplicity of groundwater equations and the available tools for modeling groundwater.
 
-Groundwater models can be broadly categorized into numerical and analytical approaches. Numerical models simulate groundwater behavior using a finite-element representation of Richard's equation. Groundwater hydraulics are simulated on a discrete grid by stepping forward through time such that each time step solves the discrete version of Richard's equation. The most common numerical, MODFLOW, is freely available, can be implemented across platforms, and has become widely adopted as computational efficiency has improved to make the necessary computational resources more widely available. 
+Groundwater models can be broadly categorized into numerical and analytical approaches. Numerical models simulate groundwater behavior using a finite-element representation of Richard's equation. Groundwater hydraulics are simulated on a discrete grid by stepping forward through time such that each time step solves the discrete version of Richard's equation. The most common numerical modeling platform, MODFLOW, is freely available and runf on both Windows and Unix operating systems.
 
-Analytical models utilize the analytical element method, whereby two-dimensonal, steady-state versions of the groundwater equations are combined to reproduce groundwater behavior under simplifying assumptions. This approach is aptly named as groundwater dynamics depend on sum of analytical solutions due to one or more elements in the groundwater scenario. This approach is viable because the groundwater equations are linear, meaning that the solution to a number of elements is identical to the sum of the solution to each of the elements.
+Analytical groundwater models utilize the analytical element method, whereby two-dimensonal, steady-state versions of the groundwater equations are combined to reproduce groundwater behavior under simplifying assumptions. Groundwater dynamics depend on the sum of analytical solutions to groundwater scenarios containing individual elements.
 
-Although existing tools offer a variety options for modeling groundwater behavior, they exhibit shortcomings. Although MODFLOW can run on Windows or Unix systems, the avilable graphical user interface (GUI) only runs on Windows. Most of freely available analytical element models are also built for Windows and not mac. 
-Existing modeling tools suffice when the stakes are high or sufficient resources are available. One exception is the python package by Bakker (timml). 
+The tools described here fill a missing gap in the available options for groundwater modeling. Existing modeling tools should suffice when the stakes are high or sufficient resources are available, but may not be appropriate for scenarios requiring inexpensive first-cut solutions. For instance, graphical setup in MODFLOW is currently only available on Windows systems. A recently deployed tool, MAGNET4Water offers online access and potential applications across platforms. Of the freely-available analytical models, gflow, XX, and ;lkj operate only on Windows operating systems. The web app provides an easy-to-use interface for quick-and-dirty modeling on any computing platform with web browsers and internet access.
+
+Another requirement is the applications of complex analysis of aquifers. One exception is the python package by Bakker (timml). The R package we provide provides groundwater modeling in R coupled with the vast analytical tools within R.
 
 We present two related platforms for groundwater modeling that offer additional flexibility and make groundwater modeling more readily accessible for simple scenarios. The first is an R package, anem, which models simple groundwater scenarios. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain. It provides speicific functionality to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells.
 
@@ -381,8 +383,6 @@ We implemented this imaginary scenario in the web application as an aquifer boun
 
 In addition to the practical application described above, this scenario could be used as an educational opportunity. For instance, consider the following game in which students must design a plan for capturing the contamination, using the minimum amount of pumping. This will involve adding pumping wells to the map and ensuring none of the lines touch the main city well. Each well costs \$1000, and the cost of pumping is \$3/cumec/well.
 
-The scenario as implemented is available online. However, educators could generate multiple random scenarios using the R package and allow students to upload multiple instances as a way to play the game under different conditions.
-
 ### Case 2: Application for pumping well
 
 A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells C1, C2, and C3. The area of interest is located near a river with the wells extracting a from a long but narrow confined aquifer connected to the stream.
@@ -416,7 +416,9 @@ The scenario prepared using the web application can be exported to Rdata file an
 
 #### Education opportunity
 
-An industrial plant has been operating for over 50 years, but now plans to close. The plant employs over 100 people and uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably concerned about the effect of closing the plant on the water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner uses anem-app to place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
+An industrial plant has been operating for over 50 years but now plans to close. The plant uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably wonder about the effect of closing the plant on the local water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner wants to use anem-app to conduct an initial assessment of the sitation. 
+
+place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
 
 Use scenario in "plant_closure.rds". What happens when the plant closes and how will this affect people in nearby houses? Is there anything you can do to keep this from happening, including the possibility of increasing pumping in the houses or drilling new wells?
 
