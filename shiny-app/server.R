@@ -513,9 +513,11 @@ server <- function(input, output, session) {
       id <- showNotification("For each well, R and diam must be nonzero with R > diam.",type="warning",duration = 20)
       note_id_R_diam <<- id
     }
+    leafletProxy("prepmap") %>%
+      clearGroup("Wells") %>%
+      clearControls()
     if (nrow(mapclicks$well_locations) > 0) {
       leafletProxy("prepmap") %>%
-        clearGroup("Wells") %>% clearControls() %>%
         addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                          data=mapclicks$well_locations) %>%
         addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
