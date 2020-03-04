@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Recharge
+
+Recharge in a given direction is calculated most straightforward through Darcy's law, where z is the thickness of the aquifer.
+
+<!-- \begin{align} -->
+<!-- h - h_0 &= \frac{Q_l}{K_{sat} z_0}(l_0 - l) -->
+<!-- \end{align} -->
+
+For a confined aquifer, this looks like:
+
+\begin{align}
+z_0 q_x = Q_x &=  - K_{sat} z_0 \frac{\partial h}{\partial x} \\
+\frac{\partial h}{\partial x} &= -\frac{Q_x}{ K_{sat} z_0} \\
+2 z_0 \frac{\partial h}{\partial x} &= -\frac{2 Q_x}{ K_{sat}}
+\end{align}
+
+For an unconfined aquifer, this looks like:
+
+
+\begin{align}
+h q_x = Q_x &=  - K_{sat} h \frac{\partial h}{\partial x} = - \frac{K_{sat}}{2} \frac{\partial h^2}{\partial x} \\
+\frac{\partial \phi}{\partial x}  = \frac{\partial h^2}{\partial x} &= -\frac{2 Q_x}{K_{sat}}
+\end{align}
+
+## Wells
+
+This is a proof showing the derivative of hydraulic head, where $r = \sqrt{(x-x_i)^2+(y-y_i)^2}$.
+
+Hydraulic head near a well.
+
+\begin{align}
+h - h_0 &= -\frac{Q}{2 \pi T} \log \left( \frac{r}{R} \right)
+\end{align}
+
+Hydraulic head gradient near a well.
+
+\begin{align}
+\frac{\partial h}{\partial x} &= \frac{\partial}{\partial x} \left[ -\frac{Q}{2 \pi T}  \log \left( \frac{r}{R} \right)  \right]  \\
+&=  -\frac{Q}{2 \pi T} \frac{\partial}{\partial x} \left[ \log r - \log R \right] \\
+&= -\frac{Q}{2 \pi T} \frac{\partial}{\partial x} \left[  \log \left( \sqrt{(x-x_i)^2+(y-y_i)^2} \right)  \right] \\
+&= -\frac{Q}{2 \pi T} \frac{1}{ \sqrt{(x-x_i)^2+(y-y_i)^2}}  \frac{\partial}{\partial x} \left[ \sqrt{(x-x_i)^2+(y-y_i)^2}  \right] \\
+&= -\frac{Q}{2 \pi T} \frac{1}{ \sqrt{(x-x_i)^2+(y-y_i)^2}}  \frac{x-x_i}{\sqrt{(x-x_i)^2+(y-y_i)^2}} \\
+&= -\frac{Q}{2 \pi T} \frac{x-x_i}{r^2}
+\end{align}
+
+Discharge potential near a well.
+
+
+\begin{align}
+\phi - \phi_0 &= -\frac{Q}{\pi K_{sat}} \log \left( \frac{r}{R} \right)
+\end{align}
+
+Discharge potential gradient near a well.
+
+\begin{align}
+\frac{\partial \phi}{\partial x} &= \frac{\partial}{\partial x} \left[ -\frac{Q}{\pi K_{sat}}  \log \left( \frac{r}{R} \right)  \right]  \\
+&=  -\frac{Q}{\pi K_{sat}} \frac{\partial}{\partial x} \left[ \log r - \log R \right] \\
+&= -\frac{Q}{\pi K_{sat}} \frac{\partial}{\partial x} \left[  \log \left( \sqrt{(x-x_i)^2+(y-y_i)^2} \right)  \right] \\
+&= -\frac{Q}{\pi K_{sat}} \frac{x-x_i}{(x-x_i)^2+(y-y_i)^2} \\
+\frac{\partial \phi}{\partial x} &= -\frac{Q}{\pi K_{sat}} \frac{x-x_i}{r^2}, 
+\frac{\partial \phi}{\partial y} = -\frac{Q}{\pi K_{sat}} \frac{y-y_i}{r^2}
+\end{align}
+
+So, in order to calculate the flow direction for each well, we calculate:
+
+\begin{align}
+2 z_0 \frac{\partial h}{\partial x} &= \frac{\partial \phi}{\partial x} = -\frac{Q}{\pi K_{sat}} \frac{x-x_i}{r^2} = f_x' \\
+2 z_0 \frac{\partial h}{\partial y} &= \frac{\partial \phi}{\partial y} = -\frac{Q}{\pi K_{sat}} \frac{y-y_i}{r^2} = f_y' \\
+\end{align}
+
+Then, to get the gradient of hydraulic head for confined aquifers:
+
+\begin{align}
+\frac{\partial h}{\partial x} &= \frac{f_x'}{2 z_0} \\
+\frac{\partial h}{\partial y} &= \frac{f_y'}{2 z_0}
+\end{align}
+
+
+And for unconfined aquifers, remember $\partial \phi/\partial x = 2 h \partial h / \partial x$.
+
+\begin{align}
+\frac{\partial h}{\partial x} &= \frac{f_x'}{2 h} \\
+\frac{\partial h}{\partial y} &= \frac{f_y'}{2 h}
+\end{align}
