@@ -2,9 +2,10 @@
 % Please edit documentation in R/anem_potentials.R
 \name{get_flowdir}
 \alias{get_flowdir}
-\title{Numerically calculate flow direction}
+\title{Calculate the flow direction}
 \usage{
-get_flowdir(loc, wells, aquifer, show_progress = FALSE, eps = 1e-06)
+get_flowdir(loc, wells, aquifer, show_progress = FALSE, eps = 1e-06,
+  numderiv = FALSE)
 }
 \arguments{
 \item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
@@ -18,6 +19,8 @@ radius of influence R [m], & coordinates x [m], y [m]}
 wells and locations, then a progress bar will be printed.}
 
 \item{eps}{Threshold satisfying numeric derivative}
+
+\item{numderiv}{Boolean that determines whether unconfined aquifers are calculated analytically or numerically}
 }
 \value{
 Outputs the flow direction in the x and y directions. If the input \code{loc} is
@@ -29,8 +32,8 @@ Outputs the flow direction in the x and y directions. If the input \code{loc} is
 \description{
 Calculates the derivative of hydraulic head in x and y directions, returning \eqn{-dh/dx}
   and \eqn{-dh/dy}. For confined aquifers, the result is calculated using the sum of the
-  effect of each analytical element, whereas for unconfined aquifers the result is calculated
-  numerically from hydraulic head.
+  effect of each analytical element, whereas for unconfined aquifers the result can be calculated
+  analytically or numerically from hydraulic head.
 }
 \examples{
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
@@ -43,8 +46,10 @@ get_flowdir(loc=grid_pts,wells,aquifer)
 # Injection and pumping well along diagonal line
 wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
-aquifer_unconfined <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
-fd2 <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
+aquifer_unconfined <- define_aquifer(aquifer_type="unconfined",Ksat=0.00001,h0=20)
+fd2_a <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined)
+fd2_b <- get_flowdir(loc=grid_pts2,wells2,aquifer_unconfined,numderiv=TRUE)
+fd2_a - fd2_b
 
 # Two pumping wells along diagonal line
 wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
