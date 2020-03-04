@@ -385,11 +385,13 @@ The scenario as implemented is available online. However, educators could genera
 
 ### Case 2: Application for pumping well
 
+A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells C1, C2, and C3. The area of interest is located near a river with the wells extracting a from a long but narrow confined aquifer connected to the stream.
+
 #### Web application
 
-A groundwater management agency has received an application to drill a new well at site W. The agency’s mandate prohibits new wells from withdrawing quantities of water that will “materially impair” the withdrawals of existing wells, which the agency interprets as a diminution of more than 5% from a known baseline. The agency wishes to determine roughly how much water can be withdrawn at W without impairing withdrawals at existing wells E1, E2, and E3. The area of interest is located near a river, depicted here by a constant-head boundary to the southwest and no-flow boundaries to the northwest and southeast.
+The boundaries, aquifer, and wells are prepared in the web application (Figure Xa), with a constant-head boundary mimicking the river and no-flow parallel boundaries on either side. Hydraulic heads with and without the new well are calculated at each of the exisint wells, and the percent reduction is recorded. At the existing wells, the maximum reduction is 2.6%, and the well can be approved. If the agency has uncertainty about the parameters, they can adjust them manually in the app and check the results.
 
-![Figure X. Well capture of contamination by a municipal well in an unconfined aquifer, as demonstrated by anem-app. The image is a screenshot of the web application overlaid with the well IDs. NOTE: STILL NEED TO LABEL WELLS](../shiny-app/screenshots/groundwater_agency_application.png)
+![Figure X. Well capture of contamination by a municipal well in an unconfined aquifer. a) Screenshot of the web application with well D in blue. b) Smoothed density plot of maximum decline in existing well yield for different pumping rates. c) Empirical Cumuladive Distribution Function, equivalent to probability of compliance for a maximum reduction in yield.](images/groundwater_agency.png)
 
 ```{r echo=FALSE}
 case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),Baseline=c(48.571,47.656,48.805,49.064),
@@ -402,17 +404,19 @@ case3 %>% knitr::kable() %>% kableExtra::kable_styling()
 
 #### Monte Carlo with R application
 
-Ability to export data from the web application to R.
+Some applications in industry or academia may demand a more complete analysis of uncertainty. In this case, let's assume there is uncertainty regarding saturated hyraulic conducitivity, $(K_{sat})$, aquifer thickness, $(z_0)$, and porosity $(n)$. In this synthetic scenario, we assume uniform distrubtions for each property, with $K_{sat}$ in the range $[1\times10^{-4},2\times10^{-3}]$ m/s, $z_0$ in $[10, 20]$ m, and $n$ in $[0.35,0.4]$. 
 
-#### Education opportunity
+The scenario prepared using the web application can be exported to Rdata file and imported into R for analysis. Monte carlo analysis was conducted with N = 1000 aquifers with randomly generated parameters. Uncertainty in the radius of influence of each well was accounted for by using the randomly generated parameters to re-calculate this radius using Cooper and Jacob () for each random realization. Pumping in existing wells was set to zero. For each random scenario, the maximum decline in head in existing wells was calculated and compared to the head without pumping from well D. The likelihood of of greater reduction in head increases with increasing pumping (Figure Xb), and the probability of compliance decreases (Figure Xc).
 
-How many wells can you add and how much can they pump before no more wells are allowed?
+<!-- #### Education opportunity -->
+
+<!-- How many wells can you add and how much can they pump before no more wells are allowed? -->
 
 ### Case 3: Industrial plant going out of commission
 
-An industrial plant has been operating for over 50 years, but now plans to close. The plant employs over 100 people and uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably concerned about the effect of closing the plant on the water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner uses anem-app to place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
-
 #### Education opportunity
+
+An industrial plant has been operating for over 50 years, but now plans to close. The plant employs over 100 people and uses considerable amount of water. Because the plant is in a rural area, their water must be pumped directly from the ground. A local manager might reasonably concerned about the effect of closing the plant on the water table. In some cases, closing of large industrial operations has caused flooding in nearby houses because the cessation of abstraction causes an increase in the local water table. To assess the situation, a planner uses anem-app to place an abstraction well to represent the plant and a number of observation wells (with zero pumping rate) in locations of the nearest houses. 
 
 Use scenario in "plant_closure.rds". What happens when the plant closes and how will this affect people in nearby houses? Is there anything you can do to keep this from happening, including the possibility of increasing pumping in the houses or drilling new wells?
 
