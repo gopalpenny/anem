@@ -1,17 +1,7 @@
+
+library(magick)
+
 aa <- import_app_rds("shiny-app/example_scenarios/groundwater_agency_scenario2.rds",gen_well_images = FALSE)
-
-particles <- anem::get_capture_zone(aa$wells,aa$aquifer,365*10,wID=2,n_particles = 20)
-particles <- particles %>%
-  dplyr::mutate(select=pID %in% c(15,18))
-
-particles %>% dplyr::filter(endpoint) %>% dplyr::arrange(pID)
-
-ggplot() +
-  geom_point(data=aa$wells %>% dplyr::filter(well_image=="Actual"),
-             aes(x,y,shape=Group)) +
-  geom_segment(data=aa$aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
-  # geom_path(data=particles,aes(x,y,group=i,color=as.factor(select))) +
-  coord_equal()
 
 wells <- aa$wells %>% sf::st_set_geometry(NULL)
 
@@ -58,26 +48,54 @@ well_head_drawdown <- well_head_random %>%
                 ecdf=dplyr::row_number()/dplyr::n()) %>%
   dplyr::group_by()
 
-ggplot() +
-  geom_histogram(data=well_head_drawdown %>% dplyr::filter(selected),aes(pct_reduction),bins=25) +
-  facet_wrap(~Q_name,ncol=1, strip.position = "right")
+q_colors <- colorspace::heat_hcl(5,h=c(90,350),l=c(80,40),c=c(100,80))
+# colorspace::swatchplot(q_colors)
 drawdown_quantiles <- well_head_drawdown %>%
   dplyr::group_by(Q,Q_name,selected) %>%
   dplyr::summarize(median=quantile(pct_reduction,0.5))
 drawdown_percentiles <- well_head_drawdown %>%
   dplyr::group_by(Q,Q_name,selected) %>%
   dplyr::summarize(pct5=sum((pct_reduction < 5)*1)/dplyr::n())
-ggplot() +
-  geom_line(data=well_head_drawdown %>% dplyr::filter(selected),aes(pct_reduction,ecdf,color=Q_name)) +
-  # geom_segment(data=drawdown_quantiles %>% dplyr::filter(selected),aes(x=median,xend=median,y=0,yend=0.5,color=Q_name),linetype="dashed") +
-  geom_segment(data=drawdown_percentiles %>% dplyr::filter(selected),aes(x=0,xend=5,y=pct5,yend=pct5,color=Q_name),linetype="dashed") +
-  # geom_point(data=drawdown_quantiles %>% dplyr::filter(selected),aes(x=median,y=0.5,color=Q_name)) +
-  geom_point(data=drawdown_percentiles %>% dplyr::filter(selected),aes(x=5,y=pct5,color=Q_name)) +
-  # geom_vline(xintercept = 5,alpha=0.5) +
-  geom_abline(slope=0,intercept=0.5,alpha=0.5,linetype="dashed") +
+p_density <- ggplot() +
+  geom_density(data=well_head_drawdown %>% dplyr::filter(selected),aes(pct_reduction,color=Q_name),size=1) +
+  coord_cartesian(xlim=c(0,15)) +
+  scale_color_manual("Pumping rate",values = q_colors) +
+  labs(x="Percent reduction",y="Density") +
+  theme_bw() %+replace% theme(panel.grid = element_blank(),
+                              legend.position = 'none')# c(0.7,0.7))
+p_ecdf <- ggplot() +
+  geom_line(data=well_head_drawdown %>% dplyr::filter(selected),aes(pct_reduction,ecdf,color=Q_name),size=1) +
+  geom_segment(data=drawdown_percentiles %>% dplyr::filter(selected),aes(x=0,xend=5,y=pct5,yend=pct5,color=Q_name),linetype="dashed",size=0.75) +
+  geom_point(data=drawdown_percentiles %>% dplyr::filter(selected),aes(x=5,y=pct5,color=Q_name),show.legend = FALSE,size=2) +
+  geom_point(data=drawdown_percentiles %>% dplyr::filter(selected),aes(x=0,y=pct5,color=Q_name),show.legend = FALSE,size=2) +
+  scale_color_manual("Pumping rate",values=q_colors) +
   xlab("Percent reduction") + ylab("ECDF") +
-  coord_cartesian(xlim=c(0,10)) +
-  theme_bw() %+replace% theme(panel.grid = element_blank())
+  coord_cartesian(xlim=c(0,15)) +
+  theme_bw() %+replace% theme(panel.grid = element_blank(),
+                              # legend.margin = margin(1,0,1,0,unit="cm"),
+                              legend.justification = c(0,1))
+
+gw_image <- image_read("shiny-app/screenshots/groundwater_agency_application.png")
+tiff_file <- tempfile()
+image_write(gw_image,path=tiff_file,format="tiff")
+gw_raster <- raster::brick(tiff_file)
+p <- raster::plotRGB(gw_raster)
+gg_gw <- RStoolbox::ggRGB(gw_raster,r=1,g=2,b=3) +
+  xlim(15,310) + ylim(20,390) +
+  theme(axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank(),
+        panel.border = element_blank())
+
+pdf(file.path("vignettes","images","groundwater_agency.pdf"),width=6.5,height=3)
+gg_gw + p_density / p_ecdf +
+  patchwork::plot_annotation(tag_levels = "a")
+dev.off()
+
+png(file.path("vignettes","images","groundwater_agency.png"),width=600,height=300)
+gg_gw + p_density / p_ecdf +
+  patchwork::plot_annotation(tag_levels = "a")
+dev.off()
 
 # for (i in 1:1000)
 # randomly generate Ksat, z0, n
