@@ -46,12 +46,15 @@ or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisel
 }
 \examples{
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
-wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
+aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=20,z0=20,bounds=bounds_df)
+uncon_aquifer <- define_aquifer(aquifer_type="unconfined",Ksat=0.001,n=0.4,h0=20,bounds=bounds_df)
+wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
   define_wells() \%>\% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 
-system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer))
+system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2))
+particle_path[nrow(particle_path),]
+system.time(particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2))
 particle_path[nrow(particle_path),]
 
 loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700)) \%>\% dplyr::mutate(p=letters[row_number()])

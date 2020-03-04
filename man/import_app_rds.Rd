@@ -4,12 +4,14 @@
 \alias{import_app_rds}
 \title{Import app rds}
 \usage{
-import_app_rds(path, params = NULL)
+import_app_rds(path, params = NULL, gen_well_images = TRUE)
 }
 \arguments{
 \item{path}{Path to rds file downloaded from web}
 
 \item{params}{List objected loaded from the rds files}
+
+\item{gen_well_images}{Boolean value. If \code{TRUE}, output \code{wells} includes well images.}
 }
 \value{
 Returns a list containing \code{aquifer}, \code{wells}, and \code{particles} that
