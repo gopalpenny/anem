@@ -56,7 +56,7 @@ get_segments_behavior <- function(wells,segments,aquifer,length.out=100,eps=1e-1
     dplyr::left_join(segments %>% dplyr::select(sID,x_unit_norm,y_unit_norm),by="sID")
 
   head <- get_hydraulic_head(segments_seq,wells,aquifer)
-  flowdir <- get_flowdir(segments_seq,wells,aquifer,eps=eps)
+  flowdir <- get_flow_direction(segments_seq,wells,aquifer,eps=eps)
 
   bounds_seq <- segments_seq %>%
     dplyr::mutate(head=head,

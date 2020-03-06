@@ -9,7 +9,7 @@
 #' @return
 #' Returns the velocity of the particle in m/day
 particle_velocity_m_day <- function(t, loc, params) {
-  loc <- get_flowdir(loc,params$wells,params$aquifer) * params$aquifer$Ksat / params$n * 3600 * 24 * params$direction
+  loc <- get_flow_direction(loc,params$wells,params$aquifer) * params$aquifer$Ksat / params$n * 3600 * 24 * params$direction
   return(list(loc))
 }
 
@@ -91,12 +91,12 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 
   # # get gridded velocities
   # if (aquifer$aquifer_type == "confined") {
-  v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
+  v_grid_m_day <- get_flow_direction(gridvals,wells,aquifer) * velocity_constant
   # } else if (aquifer$aquifer_type == "unconfined") {
-  #   v_grid_m_day <- get_flowdir(gridvals,wells,aquifer) * velocity_constant
-  #   # head0 <- get_flowdir(gridvals,wells,aquifer)
-  #   # headdx <- get_flowdir(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
-  #   # headdy <- get_flowdir(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
+  #   v_grid_m_day <- get_flow_direction(gridvals,wells,aquifer) * velocity_constant
+  #   # head0 <- get_flow_direction(gridvals,wells,aquifer)
+  #   # headdx <- get_flow_direction(gridvals %>% dplyr::mutate(x=x+1e-6),wells,aquifer)
+  #   # headdy <- get_flow_direction(gridvals %>% dplyr::mutate(y=y+1e-6),wells,aquifer)
   # }
 
   # Identify grid cells (aquifer boundaries & wells) where the simulation should stop
@@ -170,7 +170,7 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
         v_x <- akima::bilinear(xgrid,ygrid,v_x_grid,x0=last["x"],y0=last["y"])$z
         v_y <- akima::bilinear(xgrid,ygrid,v_y_grid,x0=last["x"],y0=last["y"])$z
       } else { # if particle is near a source well (status_val < 0), get precise velocity
-        fd <- get_flowdir(last[c("x","y")],wells,aquifer) * velocity_constant
+        fd <- get_flow_direction(last[c("x","y")],wells,aquifer) * velocity_constant
         v_x <- fd[1]
         v_y <- fd[2]
       }

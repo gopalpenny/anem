@@ -203,10 +203,10 @@ ggplot() +
 
 ### Get flow direction
 
-Getting flow direction is similar to getting hydraulic head -- the function `get_flowdir()` is a wrapper
+Getting flow direction is similar to getting hydraulic head -- the function `get_flow_direction()` is a wrapper
 around `get_hydraulic_head()` that incorporates a numeric derivative from the package `numDeriv`. Similar
 to before, define set of coordinates of evenly spaced points. Then, use
-these points and the `well_images` to generate hydraulic head using `get_flowdir()`.
+these points and the `well_images` to generate hydraulic head using `get_flow_direction()`.
 
 ## Calculate Dii, Dij
 

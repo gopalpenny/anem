@@ -204,7 +204,7 @@ get_gridded_hydrodynamics <- function(wells,aquifer,head_dim=c(20,20),flow_dim=c
   flow_grid_dy <- flow_y_seq[2] - flow_y_seq[1]
   grid_spacing <- min(flow_grid_dx,flow_grid_dy)
   grid_pts_flowdir <- tidyr::crossing(x=flow_x_seq,y=flow_y_seq)
-  flow_dir <- get_flowdir(grid_pts_flowdir,wells,aquifer)
+  flow_dir <- get_flow_direction(grid_pts_flowdir,wells,aquifer)
   # the dx_norm and dy_norm are used to make the arrows visible in the plot that follows.
   flow_dir_df <- grid_pts_flowdir %>% dplyr::bind_cols(flow_dir) %>%
     dplyr::mutate(angle=atan(dy/dx),
