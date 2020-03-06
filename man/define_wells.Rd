@@ -33,7 +33,7 @@ These columns are followed by any other columns desired for the wells.
 Define wells in the aquifer with required parameters.
 }
 \examples{
-define_wells(Q=rep(0,3))
+define_wells(data.frame(wID=c(3,NA,9)),Q=rep(0,3))
 
 wells_df <- data.frame(x=1:3,y=1:3,Q=11:13,diam=0.5,id=1001:1003)
 wells <- define_wells(wells_df)

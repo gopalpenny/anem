@@ -37,7 +37,7 @@ test_that("mirror_across_bounds generates error if slopes are not equal", {
 })
 
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
-well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1,wID=2)
 wells <- define_wells(dplyr::bind_rows(well1,well2))
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
 bounds <- define_bounds(bounds_df) %>% dplyr::filter(m==Inf)
@@ -62,7 +62,7 @@ paste(mirror_across_bounds(wells,bounds)$well_image,collapse="\",\"")
 
 # generate_image_wells testing
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
-well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1,wID=2)
 wells <- define_wells(dplyr::bind_rows(well1,well2))
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
@@ -120,7 +120,7 @@ test_that("generate_image_wells returns original wells for PB type boundary on 4
 
 
 well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
-well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)
+well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1,wID=2)
 wells <- define_wells(dplyr::bind_rows(well1,well2))
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>%
   define_bounds()

@@ -75,8 +75,13 @@ define_wells <- function(wells_df=NULL,...) {
   # Generate wells tibble
   wells_prep <- dplyr::bind_rows(wells_df,columns)
   wells_prep2 <- wells_prep[,!(names(wells_prep) %in% names(params))] %>%
-    dplyr::bind_cols(params)
-  if (any(is.na(wells_prep2$wID))) {
+    dplyr::bind_cols(params) %>%
+    dplyr::mutate(wID=as.integer(wID)) # ensure wID is an integer before checking for duplicates
+  # Set wID
+  if (any(duplicated(wells_prep2$wID[!is.na(wells_prep2$wID)]))) {
+    warning("Some wIDs are duplicates. Replacing all wIDs with row_number")
+    wells_prep2$wID <- 1:nrow(wells_prep2)
+  } else if (any(is.na(wells_prep2$wID))) {
     for (i in 1:nrow(wells_prep2)) {
       if (is.na(wells_prep2$wID[i])) {
         wells_prep2$wID[i] <- max(c(0,wells_prep2$wID),na.rm=TRUE) + 1
@@ -84,7 +89,8 @@ define_wells <- function(wells_df=NULL,...) {
     }
   }
   wells <- wells_prep2 %>%
-    dplyr::mutate(well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection")),
+    dplyr::mutate(wID=as.integer(wID),
+                  well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection")),
                   well_image="Actual") %>%
     dplyr::select(wID,Q,R,diam,x,y,well_type,well_image,dplyr::everything()) %>% tibble::as_tibble()
 
