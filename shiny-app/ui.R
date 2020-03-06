@@ -277,7 +277,7 @@ ui <- fluidPage(
                 h4("Wells (double click to edit)"),
                 fluidRow(
                   column(6,
-                         dataTableOutput("welltable2")
+                         dataTableOutput("welltableres")
                   ),
                   column(6,
                          dataTableOutput("welltable_head")

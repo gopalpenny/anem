@@ -507,7 +507,7 @@ server <- function(input, output, session) {
       removeNotification(note_id_R_diam)
       note_id_R_diam <<- NULL
     }
-    if ((any(mapclicks$well_locations$R) <= 0 |
+    if ((any(mapclicks$well_locations$R <= 0) |
         any(mapclicks$well_locations$diam <= 0) |
         any(mapclicks$well_locations$R <= mapclicks$well_locations$diam)) & nrow(mapclicks$well_locations) > 0) {
       id <- showNotification("For each well, R and diam must be nonzero with R > diam.",type="warning",duration = 20)
@@ -659,7 +659,7 @@ server <- function(input, output, session) {
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgray')))
   )
 
-  output$welltable2 <- renderDataTable(
+  output$welltableres <- renderDataTable(
     datatable(mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected),
               editable=T,rownames=F,
               options = list(searching=FALSE,
@@ -715,7 +715,7 @@ server <- function(input, output, session) {
   # output$wellDT <- renderDT(mapclicks$well_locations, selection = 'none', rownames = T, editable = T)
   #
   proxy_welltable <- dataTableProxy('welltable')
-  proxy_welltable2 <- dataTableProxy('welltable2')
+  proxy_welltableres <- dataTableProxy('welltableres')
   proxy_welltable_head <- dataTableProxy('welltable_head')
   # proxy_edgetable <- dataTableProxy('edgetable')
 
@@ -737,7 +737,7 @@ server <- function(input, output, session) {
       showNotification(err_msg,duration = 10,type="warning")
     }
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
-    replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
+    replaceData(proxy_welltableres, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
     # if (j %in% c(6,7)) { # update map if x or y change
     #   leafletProxy("prepmap") %>%
     #     clearGroup("Wells") %>%
@@ -746,31 +746,57 @@ server <- function(input, output, session) {
     # }
   })
 
-  observeEvent(input$welltable2_cell_edit, {
-    info = input$welltable2_cell_edit
+  observeEvent(input$welltableres_cell_edit, {
+    info = input$welltableres_cell_edit
     # str(info)
     i = info$row
     # print("info$col")
     # print(info$col)
     j_click = info$col + 1  # column index offset by 1
     v = info$value
-    j <- switch(j_click,1,3,4)
-    mapclicks$well_locations[i, j] <<- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    j <- switch(j_click,1,3,4,9)
+    updated_table <- FALSE
+    new_value <- DT::coerceValue(v, mapclicks$well_locations[i, j])
+    print(paste('new_value =',new_value))
+    column_name <- names(mapclicks$well_locations)[j]
+    print(paste('column_name =',column_name))
+    if (column_name == "Q") {
+      mapclicks$well_locations[i, j] <<- new_value
+      updated_table <- TRUE
+    # } else if (column_name == "Group") {
+      # if (new_value %in% well_group_vals) {
+      #   mapclicks$well_locations[i, j] <<- new_value
+      #   updated_table <- TRUE
+      # } else {
+      #   print(paste("Attempted to assign well group value of",new_value))
+      #   err_msg <- paste("Well Group value must be one of",
+      #                    paste(well_group_vals,collapse=", "))
+      #   showNotification(err_msg,duration = 10,type="warning")
+      # }
+    } else {
+      print(paste("Can only assign Q values in welltableres_cell_edit"))
+      err_msg <- paste("Can only assign Q values in this table")
+      showNotification(err_msg,duration = 10,type="warning")
+    }
     replaceData(proxy_welltable, mapclicks$well_locations, resetPaging = FALSE, rownames = F)
-    replaceData(proxy_welltable2, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
+    replaceData(proxy_welltableres, mapclicks$well_locations %>% dplyr::select(Q,diam,Group,selected), resetPaging = FALSE, rownames = F)
 
-    # Update all image wells
-    wID <- mapclicks$well_locations$wID[i]
-    # print("wells$utm_with_images")
-    # print(wells$utm_with_images)
-    wells$utm_with_images$Q[wells$utm_with_images$wID==wID] <- mapclicks$well_locations[i, j]
-    wells$utm_with_images <- anem::reconstruct_image_pumping(wells$utm_with_images)
-    # print(wells$utm_with_images)
+    if (updated_table) {
+      print('updating tables')
 
-    # update results
-    updateResults$update_head_now <- updateResults$update_head_now + 1
-    updateCheckboxInput(session,"update_head",value=FALSE)
-    updateCheckboxInput(session,"update_head_results",value=FALSE)
+      # Update all image wells
+      wID <- mapclicks$well_locations$wID[i]
+      # print("wells$utm_with_images")
+      # print(wells$utm_with_images)
+      wells$utm_with_images[wells$utm_with_images$wID==wID,column_name] <- mapclicks$well_locations[i, j]
+      wells$utm_with_images <- anem::reconstruct_image_pumping(wells$utm_with_images)
+      # print(wells$utm_with_images)
+
+      # update results
+      updateResults$update_head_now <- updateResults$update_head_now + 1
+      updateCheckboxInput(session,"update_head",value=FALSE)
+      updateCheckboxInput(session,"update_head_results",value=FALSE)
+    }
   })
 
   view_results <- reactiveValues(
@@ -930,10 +956,17 @@ server <- function(input, output, session) {
         head_wells <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
           anem::get_hydraulic_head(wells$utm_with_images,aquifer_utm)
         # print(head_wells)
-        wells$head <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
+
+        wells_head_temp <- wells$utm_with_images %>% dplyr::filter(wID==orig_wID) %>%
           dplyr::select(wID) %>% sf::st_set_geometry(NULL) %>%
           dplyr::mutate(`Head, m`=round(head_wells,3),
                         `Drawdown, m`=round(input$h0-`Head, m`,3))
+
+        # left join with mapclicks$well_locations to ensure the same order as in welltableres
+        wells$head <- mapclicks$well_locations %>%
+          dplyr::select(wID) %>%
+          dplyr::left_join(wells_head_temp,by="wID")
+
         # print("wells$head")
         # print(wells$head)
         replaceData(proxy_welltable_head, wells$head, resetPaging = FALSE, rownames = F)
