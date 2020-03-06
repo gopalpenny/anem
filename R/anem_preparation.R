@@ -25,7 +25,7 @@
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' define_wells(Q=rep(0,3))
+#' define_wells(data.frame(wID=c(3,NA,9)),Q=rep(0,3))
 #'
 #' wells_df <- data.frame(x=1:3,y=1:3,Q=11:13,diam=0.5,id=1001:1003)
 #' wells <- define_wells(wells_df)
@@ -73,11 +73,18 @@ define_wells <- function(wells_df=NULL,...) {
   }
 
   # Generate wells tibble
-  wells <- dplyr::bind_rows(wells_df,columns)
-  wells <- wells[,!(names(wells) %in% names(params))] %>%
-    dplyr::bind_cols(params) %>%
-    dplyr::mutate(wID=dplyr::row_number(),
-                  well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection")),
+  wells_prep <- dplyr::bind_rows(wells_df,columns)
+  wells_prep2 <- wells_prep[,!(names(wells_prep) %in% names(params))] %>%
+    dplyr::bind_cols(params)
+  if (any(is.na(wells_prep2$wID))) {
+    for (i in 1:nrow(wells_prep2)) {
+      if (is.na(wells_prep2$wID[i])) {
+        wells_prep2$wID[i] <- max(c(0,wells_prep2$wID),na.rm=TRUE) + 1
+      }
+    }
+  }
+  wells <- wells_prep2 %>%
+    dplyr::mutate(well_type=factor(sign(Q),levels=-1:1,labels=c("Pumping","Non-operational","Injection")),
                   well_image="Actual") %>%
     dplyr::select(wID,Q,R,diam,x,y,well_type,well_image,dplyr::everything()) %>% tibble::as_tibble()
 
