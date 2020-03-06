@@ -1,3 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^data-raw$
+^shiny-app$
+^figs_test$
+^inst$
+^images$
