@@ -394,10 +394,22 @@ The boundaries, aquifer, and wells are prepared in the web application (Figure X
 ![Figure X. Well capture of contamination by a municipal well in an unconfined aquifer. a) Screenshot of the web application with well D in blue. b) Smoothed density plot of maximum decline in existing well yield for different pumping rates. c) Empirical Cumuladive Distribution Function, equivalent to probability of compliance for a maximum reduction in yield.](images/groundwater_agency.png)
 
 ```{r echo=FALSE}
-case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),Baseline=c(48.571,47.656,48.805,49.064),
-                        `With well`=c(47.773,46.412,45.923,48.768)) %>%
-  dplyr::mutate(`% change`=round((Baseline-`With well`)/Baseline * 100,2)) %>%
-  dplyr::arrange(Well)
+# MGD to cumec... L / s
+q_mgd <- 1 # * 1M * m^3/gal / 24 hr/day / 3600 sec / hr
+q_mgd * 5e5 * 0.00378541 / 24 / 3600
+
+# L / s to cumec -- > /1000
+
+case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),
+                        Baseline=c(48.305,46.666,48.39,48.967)) %>%
+  dplyr::mutate(Minimum=Baseline* 0.95,
+                `Head (Q = -4)`=c(47.241,45.006,44.548,48.572),
+                `Head (Q = -5)`=c(46.975,44.592,43.588,48.473),
+                `Head (Q = -6)`=c(46.708,44.177,42.627,48.374)) %>%
+  dplyr::mutate(`% change (Q = -4)`=round((Baseline-`Head (Q = -4)`)/Baseline * 100,2),
+                `% change (Q = -5)`=round((Baseline-`Head (Q = -5)`)/Baseline * 100,2),
+                `% change (Q = -6)`=round((Baseline-`Head (Q = -6)`)/Baseline * 100,2)) %>%
+  dplyr::arrange(Well) %>% dplyr::filter(!grepl("D",Well)) %>% select(-contains("Q = -4"),-contains("Head"))
 case3 %>% knitr::kable() %>% kableExtra::kable_styling()
 ```
 
