@@ -51,7 +51,8 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
     + *Add particles* (Individual particle tracking only). Click the map to set initial locations for individual particle tracking.
     + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particle would arrive in less or more time. Furthermore, this analysis would underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
 1. Save or upload a scenario
-    + The "File" panel allows you to save a scenario or upload a scenario. 
+    + The "File" panel allows you to save a scenario as an RDS file or upload a scenario that has been downloaded. The RDS file contains an R `list` object that contains the parameters and map clicks needed for the app. 
+    + The R package `anem` (on [github](https://github.com/gopalpenny/anem)) has a helper function, `import_app_rds`, that imports the file and prepares it for simulation using the `anem` package.
         
 #### View results
 
