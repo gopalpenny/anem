@@ -191,7 +191,7 @@ bounds_behavior$table %>%
 ```
 
 
-### Defining recharege / background flow
+### Defining recharge / background flow
 
 Background flow is parameterized by defining "recharge" in the aquifer. Recharge can be defined as a constant flow (F) or a recharge divide (D). In both cases, flow is defined as m^3^ / m-s, in the direction of the recharge vector. Recharge is therefore defined by specifying:
 
@@ -226,3 +226,10 @@ ggplot() +
   coord_equal()
 ```
 
+### Particle tracking
+
+The package implements particle tracking in two ways: (1) tracking individual particles using `track_particles` and (2) estimating capture zones of wells using `get_capture_zone`, which initializes particles in the vicinity of wells and tracks them in reverse. See the help files for each function for more details.
+
+### Integrating with anem-app
+
+The basic functionality of this package is implemented online in a Shiny application, [anem-app](https://gopalpenny.shinyapps.io/anem-app/). The Shiny application provides an GUI for setting aquifer properties, drawing boundaries, defining recharge, adding wells, and tracking particles. It also displays results directly in the app. You can also download scenarios created on anem-app and import them into R. To do so, check out `?import_app_rds` from this package to learn more.
