@@ -245,41 +245,59 @@ ui <- fluidPage(
               tabPanel(
                 "View results",value="results",fluid=TRUE,
                 fluidRow(
-                  # hr(),
-                  column(4,
-                         # hr(),
-                         # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
-                         # conditionalPanel(condition= 'input.include_gridded_head',
-                         #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
-                         # )
-                         HTML("<p style=font-size:45%><br><br></p>"),
-                         fluidRow(
-                           column(6,
-                                  sliderInput("headNlevels","# Contours",min=5,max=25,value = 10)
-                           ),
-                           column(6,
-                                  sliderInput("headNgrid","Grid dimensions",min=100,max=500,value = 100,step=50)
-                           )
-                         ),
-                         h4("Particle tracking"),
-                         dataTableOutput("particletable_output")#,
-                         # verbatimTextOutput("capture_endpoint")
-                  ),
-                  column(8,
-                         fluidRow(
-                           column(9,h3(textOutput("resultsmaptitle"))),
-                           column(3,align='right',
-                                  HTML("<p style=font-size:45%><br><br></p>"),
-                                  actionLink("resetZoomLink_results","Zoom to objects",style='font-size:80%'))
-                         ),
-                         leaflet::leafletOutput("resultsmap",height=450) %>% withSpinner(),
-                         fluidRow(
-                           column(3,checkboxInput("update_images_results","Well images",FALSE)),
-                           column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),
-                           column(3,checkboxInput("update_particles_results","Particle tracking",FALSE)),
-                           column(3,checkboxInput("linkmaps_results","Link maps",TRUE))
-                         )
-                  )
+                      column(4,
+                             HTML("<p style=font-size:45%><br></p>"),
+                             tabsetPanel(
+                               id="resultsmode",
+                               type="pills",
+                               tabPanel(
+                                 "Head",value="resultshead",
+                                 hr(),
+                                 # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
+                                 # conditionalPanel(condition= 'input.include_gridded_head',
+                                 #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
+                                 # )
+                                 p(paste("Head contours are interpolated from an N x N grid.",
+                                         "Below, set the number of contours as well as the grid dimension N.")),
+                                 fluidRow(
+                                   column(6,
+                                          sliderInput("headNlevels","# Contours",min=5,max=25,value = 10)
+                                   ),
+                                   column(6,
+                                          sliderInput("headNgrid","Grid dimension, N",min=100, max=200, value = 100,step=25)
+                                   )
+                                 ),
+                                 conditionalPanel(
+                                   condition = "input.headNlevels == 17 & input.headNgrid == 125",
+                                   h4("Secret panel"),
+                                   shiny::numericInput("headNupgrade","Increase max grid N to",value=200,min=0,max=1000),
+                                   p("Warning: increasing grid N will increase memory usage. App timeouts can occur.")
+                                 )
+                               ),
+                               tabPanel(
+                                 "Particles",value="resultsparticles",
+                                 hr(),
+                                 # h4("Particle tracking"),
+                                 dataTableOutput("particletable_output")#,
+                                 # verbatimTextOutput("capture_endpoint")
+                               )
+                             )
+                      ),
+                      column(8,
+                             fluidRow(
+                               column(9,h3(textOutput("resultsmaptitle"))),
+                               column(3,align='right',
+                                      HTML("<p style=font-size:45%><br><br></p>"),
+                                      actionLink("resetZoomLink_results","Zoom to objects",style='font-size:80%'))
+                             ),
+                             leaflet::leafletOutput("resultsmap",height=450) %>% withSpinner(),
+                             fluidRow(
+                               column(3,checkboxInput("update_images_results","Well images",FALSE)),
+                               column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),
+                               column(3,checkboxInput("update_particles_results","Particle tracking",FALSE)),
+                               column(3,checkboxInput("linkmaps_results","Link maps",TRUE))
+                             )
+                      )
                 ),
                 hr(),
                 # h4(textOutput("usermode_elements")),

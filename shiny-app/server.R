@@ -17,6 +17,9 @@ wellPal2 <- colorFactor(palette = colorspace::rainbow_hcl(n=5,c=100,l=65), domai
 partPal <- colorFactor(palette = c("darkred","red"), domain = c(FALSE, TRUE))
 # opacityFun <- function(x) switch(x+1,0.4,0.8)
 boundPal <- colorFactor(palette = c("blue","black","gray"), domain = c("NF", "CH", "PB"))
+obj_size <- function(x) {
+  format(object.size(x),units="MB")
+}
 
 server <- function(input, output, session) {
   notification_id <- NULL
@@ -75,8 +78,8 @@ server <- function(input, output, session) {
     mapclicks$recharge_vertices <- pl$recharge_vertices
     mapclicks$well_locations <- pl$well_locations
 
-    updateSliderInput(session,"headNlevels",value=pl$captureParticles)
-    updateSliderInput(session,"headNgrid",value=pl$captureParticles)
+    updateSliderInput(session,"headNlevels",value=pl$headNlevels)
+    updateSliderInput(session,"headNgrid",value=pl$headNgrid)
 
     print("mapclicks$well_locations")
     print(mapclicks$well_locations)
@@ -586,13 +589,16 @@ server <- function(input, output, session) {
     mapclicks$well_locations <- mapclicks$well_locations %>%
       dplyr::filter(!selected)
     leafletProxy("prepmap") %>%
-      clearGroup("Wells") %>% clearControls() %>%
+      clearGroup("Wells") %>% clearControls()
+    if (nrow( mapclicks$well_locations)>0) {
+      leafletProxy("prepmap") %>%
       addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",fillOpacity = 0.07,opacity=0.4,stroke=TRUE,color="#888888", weight=1, group = "Wells") %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells",
                        data=mapclicks$well_locations) %>%
       addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
                        data=mapclicks$well_locations %>% dplyr::filter(selected)) %>%
-      addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright")
+        addLegend(pal = wellPal2, values= ~Group, group = "Wells", data=mapclicks$well_locations, position="bottomright")
+    }
   })
 
   observeEvent(input$deleteParticle,{
@@ -941,11 +947,13 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$headNlevels,{
-    # a <- input$headNlevels
     updateResults$update_head_now <- updateResults$update_head_now + 1
   })
   observeEvent(input$headNgrid,{
     updateResults$update_head_now <- updateResults$update_head_now + 1
+  })
+  observeEvent(input$headNupgrade,{
+    updateSliderInput(session,"headNgrid",max = input$headNupgrade)
   })
 
   observeEvent(updateResults$update_head_now,{
@@ -1006,6 +1014,9 @@ server <- function(input, output, session) {
         incProgress(1/n_progress,detail="Getting head contours")
         cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m), nlevels=input$headNlevels,
                                type="sf",crs=proj4string_scenario())
+
+        print("head object size")
+        print(obj_size(gridded$h$head))
         cl <- cl %>% sf::st_intersection(bounds_polygon)
         cl_wgs <- cl %>% sf::st_transform(crs=4326) %>% dplyr::mutate(head_label=paste0("Head: ",round(level,2)," m"))
 
@@ -1014,7 +1025,11 @@ server <- function(input, output, session) {
         headPal <- colorNumeric(palette = "Blues",domain=cl$level, reverse=TRUE)
         headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
         print('cl_wgs')
-        print(cl_wgs)
+        print(obj_size(cl_wgs))
+        print('memory profile')
+        print(memory.profile())
+        print('gc')
+        print(gc())
         leafletProxy("resultsmap") %>%
           clearGroup("Head") %>%
           clearControls() %>%
