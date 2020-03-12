@@ -258,7 +258,7 @@ ui <- fluidPage(
                                   sliderInput("headNlevels","# Contours",min=5,max=25,value = 10)
                            ),
                            column(6,
-                                  sliderInput("headNgrid","Grid dimensions",min=100,max=400,value = 100,step=50)
+                                  sliderInput("headNgrid","Grid dimensions",min=100,max=500,value = 100,step=50)
                            )
                          ),
                          h4("Particle tracking"),

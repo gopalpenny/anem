@@ -31,6 +31,7 @@ server <- function(input, output, session) {
                    aquifer_type=input$aquifer_type,porosity=input$porosity,Ksat=input$Ksat,h0=input$h0,z0=input$z0,
                    wellCapture=input$wellCapture,captureParticles=input$captureParticles,
                    enableRecharge=input$enableRecharge,rechargeFlow=input$rechargeFlow,max_tracking_time_years=input$max_tracking_time_years,
+                   headNlevels=input$headNlevels,headNgrid=input$headNgrid,
                    bound_vertices=mapclicks$bound_vertices, particle_locations=mapclicks$particle_locations,
                    recharge_vertices=mapclicks$recharge_vertices, well_locations=mapclicks$well_locations), file)
     }
@@ -73,6 +74,9 @@ server <- function(input, output, session) {
     mapclicks$particle_locations <- pl$particle_locations
     mapclicks$recharge_vertices <- pl$recharge_vertices
     mapclicks$well_locations <- pl$well_locations
+
+    updateSliderInput(session,"headNlevels",value=pl$captureParticles)
+    updateSliderInput(session,"headNgrid",value=pl$captureParticles)
 
     print("mapclicks$well_locations")
     print(mapclicks$well_locations)
