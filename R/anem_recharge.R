@@ -124,7 +124,7 @@ get_recharge_flow_potential <- function(loc, aquifer) {
 
   # 1b Unconfined flow
   } else if (aquifer$aquifer_type=="unconfined") {
-    if (class(loc) == "numeric") {
+    if (identical(class(loc),"numeric") | identical(class(loc),"integer")) {
       pot <- aquifer$h0^2 + params$x_term * (loc[1] - params$x0) + params$y_term * (loc[2] - params$y0)
     } else if (any(grepl("data.frame",class(loc)))) {
       pot <- aquifer$h0^2 + params$x_term * (loc$x - params$x0) + params$y_term * (loc$y - params$y0)
