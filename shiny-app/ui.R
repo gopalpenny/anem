@@ -247,11 +247,20 @@ ui <- fluidPage(
                 fluidRow(
                   # hr(),
                   column(4,
+                         # hr(),
                          # checkboxInput("include_gridded_head","Gridded head, m",FALSE),
                          # conditionalPanel(condition= 'input.include_gridded_head',
                          #                  sliderInput("head_opacity","Opacity",min=0,max=100,value=100)
                          # )
-                         hr(),
+                         HTML("<p style=font-size:45%><br><br></p>"),
+                         fluidRow(
+                           column(6,
+                                  sliderInput("headNlevels","# Contours",min=5,max=25,value = 10)
+                           ),
+                           column(6,
+                                  sliderInput("headNgrid","Grid dimensions",min=100,max=400,value = 100,step=50)
+                           )
+                         ),
                          h4("Particle tracking"),
                          dataTableOutput("particletable_output")#,
                          # verbatimTextOutput("capture_endpoint")

@@ -936,6 +936,14 @@ server <- function(input, output, session) {
     updateCheckboxInput(session,"update_images_results",value=FALSE)
   })
 
+  observeEvent(input$headNlevels,{
+    # a <- input$headNlevels
+    updateResults$update_head_now <- updateResults$update_head_now + 1
+  })
+  observeEvent(input$headNgrid,{
+    updateResults$update_head_now <- updateResults$update_head_now + 1
+  })
+
   observeEvent(updateResults$update_head_now,{
     n_progress <- 5
     print("observeEvent(updateResults$update_head_now)")
@@ -977,7 +985,7 @@ server <- function(input, output, session) {
 
         # get gridded head
         incProgress(1/n_progress,detail="Getting gridded head in aquifer")
-        gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(100,100),flow_dim=c(5,5))
+        gridded$h <- anem::get_gridded_hydrodynamics(wells$utm_with_images,aquifer_utm,head_dim=c(input$headNgrid,input$headNgrid),flow_dim=c(5,5))
         # gridded$raster_utm <- rasterFromXYZ(gridded$h$head %>% dplyr::rename(z=head_m),crs=proj4string_scenario())
         # gridded$raster_wgs <-  gridded$raster_utm %>% projectRaster(crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
@@ -992,19 +1000,21 @@ server <- function(input, output, session) {
 
         # get contour lines of head
         incProgress(1/n_progress,detail="Getting head contours")
-        cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m),
+        cl <- get_contourlines(gridded$h$head %>% dplyr::rename(z=head_m), nlevels=input$headNlevels,
                                type="sf",crs=proj4string_scenario())
         cl <- cl %>% sf::st_intersection(bounds_polygon)
-        cl_wgs <- cl %>% sf::st_transform(crs=4326)
+        cl_wgs <- cl %>% sf::st_transform(crs=4326) %>% dplyr::mutate(head_label=paste0("Head: ",round(level,2)," m"))
 
         # head_range <- c(min(gridded$h$head_m),max(gridded$h$head_m))
         incProgress(1/n_progress,detail="Mapping results")
         headPal <- colorNumeric(palette = "Blues",domain=cl$level, reverse=TRUE)
         headPal_rev <- colorNumeric(palette = "Blues",domain=cl$level)
+        print('cl_wgs')
+        print(cl_wgs)
         leafletProxy("resultsmap") %>%
           clearGroup("Head") %>%
           clearControls() %>%
-          addPolylines(color=~headPal(level),opacity=1,weight=3, group="Head",# label=~as.character(head_label),
+          addPolylines(color=~headPal(level),opacity=1,weight=3, group="Head", label=~as.character(head_label),
                        data=cl_wgs) %>% # %>%
           # addPolygons(data=head_sf_wgs,stroke=FALSE,fillOpacity = 0,label=~as.character(head_label)) %>%
           addLegend("bottomright", pal = headPal_rev, values = ~level, group="Head",
