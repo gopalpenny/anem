@@ -412,6 +412,16 @@ case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),
   dplyr::arrange(Well) %>% dplyr::filter(!grepl("D",Well)) %>% select(-contains("Q = -4"),-contains("Head"))
 case3 %>% knitr::kable() %>% kableExtra::kable_styling()
 ```
+```{r}
+# urban contamination check
+house_heads <- tibble::tibble(wID = c(14,15,16,17),
+                          House = 1:4,
+                          `Head, with pumping`=c(28.018, 28.082, 27.542, 27.638),
+                          `Head, no pumping`=c(31.734, 31.85, 31.522, 31.373)) %>% 
+  dplyr::mutate(`Change in head, m` = `Head, no pumping`-`Head, with pumping`)
+# house_heads %>% knitr::kable() %>% kableExtra::kable_styling()
+# house_heads %>% xtable::xtable()
+```
 
 
 #### Monte Carlo with R application
