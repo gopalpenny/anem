@@ -45,7 +45,8 @@ interpret_map_click <- function(mapClick, clickOperation, mapclicks, ...) {
     mapclicks$well_locations <- rbind(mapclicks$well_locations %>% dplyr::mutate(selected=FALSE),
                                       data.frame(Q=inputs$well_input$Q,R=inputs$well_input$R,diam=inputs$well_input$diam,
                                                  Group=inputs$well_input$group,Weight=inputs$well_input$weight,
-                                                 x=x,y=y,wID=newid,selected=TRUE,stringsAsFactors = FALSE))
+                                                 x=x,y=y,wID=newid,selected=TRUE,stringsAsFactors = FALSE)) %>%
+      dplyr::mutate_at(vars(Q,R,diam,Weight),as.numeric)
   } else if (clickOperation == "new_particle") {
     newpid <- max(c(mapclicks$particle_locations$pID,0),na.rm=TRUE) + 1
     mapclicks$particle_locations <- rbind(mapclicks$particle_locations %>% dplyr::mutate(selected=FALSE),
