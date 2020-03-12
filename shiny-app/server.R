@@ -556,6 +556,7 @@ server <- function(input, output, session) {
   observeEvent(wells_utm(),{
     print('hello')
     print(wells_roi())
+    print(mapclicks$well_locations %>% tibble::as_tibble())
     leafletProxy("prepmap") %>%
       clearGroup("Wells") %>% clearControls() %>%
       addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",fillOpacity = 0.07,opacity=0.4,stroke=TRUE,color="#888888", weight=1, group = "Wells") %>%
