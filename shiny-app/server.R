@@ -652,6 +652,7 @@ server <- function(input, output, session) {
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
+                             pageLength = 50,
                              autoWidth = TRUE#,
                              # columnDefs = list(list(width = '200px', targets = "_all"))
               )
@@ -667,7 +668,8 @@ server <- function(input, output, session) {
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
                              autoWidth = TRUE,
-                             columnDefs = list(list(width = '200px', targets = "_all")))
+                             # columnDefs = list(list(width = '200px', targets = "_all")),
+                             pageLength = 50)
     ) %>%
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','lightgray')))
@@ -680,8 +682,8 @@ server <- function(input, output, session) {
               options = list(searching=FALSE,
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
-                             autoWidth = TRUE,
-                             columnDefs = list(list(width = '200px', targets = "_all")))
+                             # columnDefs = list(list(width = '200px', targets = "_all")),
+                             autoWidth = TRUE)
     ) %>%
       formatStyle('selected',target='row',
                   backgroundColor = styleEqual(c(FALSE,TRUE),c('white','pink')))
@@ -708,6 +710,7 @@ server <- function(input, output, session) {
                              # formatNumber= function(x) format(x,nsmall=3),
                              lengthChange=FALSE,
                              autoWidth = TRUE,
+                             pageLength = 50,
                              columnDefs = list(list(width = '200px', targets = "_all")))
     )
   )
