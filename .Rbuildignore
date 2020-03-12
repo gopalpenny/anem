@@ -5,3 +5,4 @@
 ^figs_test$
 ^inst$
 ^images$
+^vignette/images$

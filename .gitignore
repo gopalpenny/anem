@@ -4,3 +4,6 @@ inst/doc
 .Rhistory
 shiny-app/screenshots/
 figs_test/
+vignettes/images/
+vignettes/anem-publication_files/
+shiny-app/test_app/
