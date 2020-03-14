@@ -400,27 +400,28 @@ q_mgd * 5e5 * 0.00378541 / 24 / 3600
 
 # L / s to cumec -- > /1000
 
-case3 <- tibble::tibble(Well=c("C1","C2","D","C3"),
-                        Baseline=c(48.305,46.666,48.39,48.967)) %>%
+case3 <- tibble::tibble(Well=c("E1","E2","E3","W"),
+                        Baseline=c(48.451,48.27,47.931,49.066)) %>%
   dplyr::mutate(Minimum=Baseline* 0.95,
-                `Head (Q = -4)`=c(47.241,45.006,44.548,48.572),
-                `Head (Q = -5)`=c(46.975,44.592,43.588,48.473),
-                `Head (Q = -6)`=c(46.708,44.177,42.627,48.374)) %>%
-  dplyr::mutate(`% change (Q = -4)`=round((Baseline-`Head (Q = -4)`)/Baseline * 100,2),
-                `% change (Q = -5)`=round((Baseline-`Head (Q = -5)`)/Baseline * 100,2),
-                `% change (Q = -6)`=round((Baseline-`Head (Q = -6)`)/Baseline * 100,2)) %>%
-  dplyr::arrange(Well) %>% dplyr::filter(!grepl("D",Well)) %>% select(-contains("Q = -4"),-contains("Head"))
+                # `Head (Q = -4)`=c(47.241,45.006,44.548,48.572),
+                `Head (Q = -9)`=c(47.74,47.026,45.686,42.208),
+                `Head (Q = -10)`=c(47.66,46.887,45.437,41.446)) %>%
+  dplyr::mutate(#`% change (Q = -4)`=round((Baseline-`Head (Q = -4)`)/Baseline * 100,2),
+                `% change (Q = -9)`=round((Baseline-`Head (Q = -9)`)/Baseline * 100,2),
+                `% change (Q = -10)`=round((Baseline-`Head (Q = -10)`)/Baseline * 100,2)) %>%
+  dplyr::arrange(Well) %>% dplyr::filter(!grepl("D",Well)) %>% dplyr::select(-dplyr::contains("Q = -4"),-dplyr::contains("Head"))
+case3 %>% xtable::xtable(caption="Hydraulic head at existing pumping wells.",label="t:gw-agency")
 case3 %>% knitr::kable() %>% kableExtra::kable_styling()
 ```
 ```{r}
 # urban contamination check
 house_heads <- tibble::tibble(wID = c(14,15,16,17),
-                          House = 1:4,
+                          House = paste0("H",1:4),
                           `Head, with pumping`=c(28.018, 28.082, 27.542, 27.638),
                           `Head, no pumping`=c(31.734, 31.85, 31.522, 31.373)) %>% 
   dplyr::mutate(`Change in head, m` = `Head, no pumping`-`Head, with pumping`)
 # house_heads %>% knitr::kable() %>% kableExtra::kable_styling()
-# house_heads %>% xtable::xtable()
+house_heads %>% dplyr::select(-wID) %>% xtable::xtable(caption="Change in head at H1-H4 due to cessation of W2 pumping.",label="t:no-pumping") %>% print(include.rownames=FALSE,caption.placement="top")
 ```
 
 
