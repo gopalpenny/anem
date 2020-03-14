@@ -410,7 +410,7 @@ case3 <- tibble::tibble(Well=c("E1","E2","E3","W"),
                 `% change (Q = -9)`=round((Baseline-`Head (Q = -9)`)/Baseline * 100,2),
                 `% change (Q = -10)`=round((Baseline-`Head (Q = -10)`)/Baseline * 100,2)) %>%
   dplyr::arrange(Well) %>% dplyr::filter(!grepl("D",Well)) %>% dplyr::select(-dplyr::contains("Q = -4"),-dplyr::contains("Head"))
-case3 %>% xtable::xtable(caption="Hydraulic head at existing pumping wells.",label="t:gw-agency")
+case3 %>% xtable::xtable(caption="Hydraulic head at existing pumping wells.",label="t:gw-agency") %>% print(include.rownames=FALSE,caption.placement="top")
 case3 %>% knitr::kable() %>% kableExtra::kable_styling()
 ```
 ```{r}
