@@ -19,6 +19,7 @@ get_well_heads <- function(loc,well_images,aquifer,params_list) {
   return(out_df)
 }
 
+# Import data from the app
 aa <- import_app_rds("shiny-app/example_scenarios/groundwater_agency_scenario2.rds",gen_well_images = FALSE)
 
 wells <- aa$wells %>% sf::st_set_geometry(NULL)
@@ -27,13 +28,17 @@ aquifer <- aa$aquifer
 aquifer$recharge <- NULL
 aquifer$bounds <- aquifer$bounds %>% sf::st_set_geometry(NULL)
 
-Ksat_range <- c(1e-4,2e-3)
+get_hydraulic_head(wells %>% dplyr::filter(well_type=="Actual"),wells,aquifer)
+# Set uniform distributions
+Ksat_range <- c(1e-5,2e-4)
 z0_range <- c(15,25)
-n_range <- c(0.35,0.4)
+n_range <- c(0.3,0.4)
 t_ROI_years <- 10
 t_roi <- 3600*24*365*t_ROI_years
+
+# Get max ROI
 R_max <- get_ROI(method="cooper-jacob",Tr=max(Ksat_range)*max(z0_range),t=t_roi,S=min(n_range))
-wID_target <- 3
+wID_target <- 17
 well_images <- wells %>%
   dplyr::filter(wID %in% wID_target) %>%
   dplyr::mutate(R = R_max,
@@ -41,7 +46,8 @@ well_images <- wells %>%
   generate_image_wells(aa$aquifer,include_image_columns = T)
 loc <- wells %>% dplyr::filter(well_image=="Actual") %>% dplyr::select(x,y,wID)
 
-set.seed(100)
+# get random parameter data.frame (N=1000)
+set.seed(200)
 N <- 1000
 params_df <- tibble::tibble(Ksat=runif(N,min=Ksat_range[1],max=Ksat_range[2]),
                             z0=runif(N,min=z0_range[1],max=z0_range[2]),
@@ -49,25 +55,32 @@ params_df <- tibble::tibble(Ksat=runif(N,min=Ksat_range[1],max=Ksat_range[2]),
   dplyr::mutate(R=get_ROI(method="cooper-jacob",Tr=Ksat*z0,t=t_roi,S=n),
                 i = dplyr::row_number())
 
+# get change in head at other wells due to unit injection (Q=1) at the new well
 well_head_random <- lapply(split(params_df,1:nrow(params_df)),get_well_heads,loc=loc,well_images=well_images,aquifer=aquifer) %>%
-  dplyr::bind_rows()
-well_head_drawdown <- well_head_random %>%
-  dplyr::filter(wID != 3) %>%
+  dplyr::bind_rows() %>%
+  dplyr::filter(wID != 17) %>%
+  dplyr::mutate(unit_change_in_head_m=head-aquifer$h0)
+
+ggplot(well_head_random) + geom_histogram(aes(unit_change_in_head_m),bins=100)
+#
+well_head_drawdown <- well_head_random  %>%
   dplyr::group_by(i) %>%
-  dplyr::summarize(head_unit=min(head)) %>%
-  dplyr::mutate(drawdown_unit=50-head_unit) %>%
-  tidyr::crossing(Q=seq(-0.1,-0.5,by=-0.01)) %>%
-  dplyr::mutate(drawdown = drawdown_unit * Q,
-                head=50-drawdown,
-                selected=Q %in% seq(-0.1,-0.5,by=-0.1),
-                Q_name=paste0("Q = ",Q)) %>%
+  dplyr::summarize(drawdown_unit=max(unit_change_in_head_m)) %>%
+  # dplyr::mutate(drawdown_unit=50-head_unit) %>%
+  tidyr::crossing(Q=seq(-0.002,-0.02,by=-0.001)) %>%
+  # tidyr::crossing(Q=seq(-0.1,-0.5,by=-0.01)) %>%
+  dplyr::mutate(change_in_head = drawdown_unit * Q,
+                head=aquifer$h0+change_in_head,
+                selected=Q %in% seq(-0.004,-0.016,by=-0.004),
+                Q_name=factor(paste0("Q = ",Q*1e3),
+                              levels=paste0("Q = ",sort(unique(Q),decreasing = TRUE)*1e3))) %>%
   dplyr::group_by(Q,Q_name) %>%
   dplyr::arrange(dplyr::desc(head)) %>%
-  dplyr::mutate(pct_reduction=(50-head)/50*100,
+  dplyr::mutate(pct_reduction=(aquifer$h0-head)/aquifer$h0*100,
                 ecdf=dplyr::row_number()/dplyr::n()) %>%
   dplyr::group_by()
 
-q_colors <- colorspace::heat_hcl(5,h=c(90,350),l=c(80,40),c=c(100,80))
+q_colors <- colorspace::heat_hcl(4,h=c(90,320),l=c(80,40),c=c(100,70))
 # colorspace::swatchplot(q_colors)
 drawdown_quantiles <- well_head_drawdown %>%
   dplyr::group_by(Q,Q_name,selected) %>%
@@ -78,11 +91,11 @@ drawdown_percentiles <- well_head_drawdown %>%
 p_density <- ggplot() +
   geom_density(data=well_head_drawdown %>% dplyr::filter(selected),aes(pct_reduction,color=Q_name),size=0.5) +
   coord_cartesian(xlim=c(0,15)) +
-  scale_color_manual("Pumping rate",values = q_colors) +
-  labs(x="Percent reduction",y="Density",subtitle = "(b)") +
+  scale_color_manual("Pumping\nrate (l/s)",values = q_colors) +
+  labs(x="Percent reduction",y="Probability density",subtitle = "(b) Uncertainty analysis (R anem)") +
   theme_bw() %+replace% theme(panel.grid = element_blank(),
                               # axis.title.x=element_blank(),
-                              legend.position = c(0.7,0.7))
+                              legend.position = c(0.7,0.65))
 
 # gg_gw + p_density + p_ecdf +
 #   patchwork::plot_annotation(tag_levels = "a")
@@ -95,30 +108,33 @@ p_ecdf <- ggplot() +
   scale_color_manual("Pumping rate",values=q_colors) +
   xlab("Percent reduction") + ylab("ECDF") +
   coord_cartesian(xlim=c(0,15)) +
-  labs(subtitle = "(c)") +
+  labs(subtitle = "(c) Prob compliance (R anem)") +
   theme_bw() %+replace% theme(panel.grid = element_blank(),
                               # legend.margin = margin(1,0,1,0,unit="cm"),
                               legend.position="none",
                               legend.justification = c(0,1))
 
-gw_image <- image_read("shiny-app/screenshots/groundwater_agency_application.png")
+gw_image <- image_read("shiny-app/screenshots/groundwater_agency_application2.png")
 tiff_file <- tempfile()
 image_write(gw_image,path=tiff_file,format="tiff")
 gw_raster <- raster::brick(tiff_file)
 # p <- raster::plotRGB(gw_raster)
 gg_gw <- RStoolbox::ggRGB(gw_raster,r=1,g=2,b=3) +
-  xlim(15,310) + ylim(20,390) + labs(subtitle = "(a)") +
+  coord_equal(xlim=round(gw_raster@ncols*c(0.047,0.953)),ylim=round(gw_raster@nrows*c(0.047,0.953))) +
+  # xlim(15,310) + ylim(20,390) +
+  labs(subtitle = "(a) Current situation (anem-app)") +
   theme(axis.text=element_blank(),
         axis.ticks=element_blank(),
         axis.title=element_blank(),
-        panel.border = element_blank())
+        panel.border = element_blank(),
+        panel.background = element_rect(fill=NA,color=NA))
 
-pdf(file.path("vignettes","images","groundwater_agency.pdf"),width=8.5,height=4)
+pdf(file.path("vignettes","images","groundwater_agency_orig.pdf"),width=8.8,height=3)
 # gg_gw + p_density / p_ecdf + patchwork::plot_annotation(tag_levels = "a")
-ggpubr::ggarrange(gg_gw, p_density, p_ecdf, nrow=1, widths=c(0.36,0.32,0.32))
+ggpubr::ggarrange(gg_gw, p_density, p_ecdf, nrow=1, widths=c(0.34,0.33,0.33))
 dev.off()
 
-png(file.path("vignettes","images","groundwater_agency.png"),width=600,height=300)
+png(file.path("vignettes","images","groundwater_agency_orig.png"),width=600,height=300)
 gg_gw + p_density / p_ecdf +
   patchwork::plot_annotation(tag_levels = "a")
 dev.off()
