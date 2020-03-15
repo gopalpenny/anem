@@ -173,7 +173,7 @@ ggplot() +
 
 ### Check the head and flow along the boundaries
 
-The function `get_bounds_behavior()` is a helper function to generate hydraulic properties at the boundaries. It obtains hydraulic head and the flow normal to the boundary. Normal flow is defined such that positive flow has some component in the x-direction (the y-direction depends on the normal vector for the boundary). The function `plot_bounds_behavior()` is a wrapper around `get_bounds_behavior()`, and it can be used to quickly compare the hydraulic head along the boundaries and flow across the boundaries under two scenarios: 
+The function `get_bounds_behavior()` is a helper function to generate hydraulic properties at the boundaries. It obtains hydraulic head and the flow normal to the boundaries by setting boundaries to segments and using `get_segments_behavior()`. Normal flow is defined such that positive flow has some component in the x-direction (the y-direction depends on the normal vector for the boundary). The function `plot_bounds_behavior()` is a wrapper around `get_bounds_behavior()`, and it can be used to quickly compare the hydraulic head along the boundaries and flow across the boundaries under two scenarios: 
 
 * no images (ie, homogeneous, uniform aquifer -- all well images removed)
 * images (ie, aquifer with boundaries -- all well images intact)
