@@ -4,21 +4,20 @@
 \alias{get_segments_behavior}
 \title{Get hydraulic behavior along segments}
 \usage{
-get_segments_behavior(wells, segments, aquifer, length.out = 100,
-  eps = 1e-10)
+get_segments_behavior(segments, wells, aquifer, length.out = 100)
 }
 \arguments{
+\item{segments}{Either: (a) A data.frame containing sID, x1, x2, y1, y2, or (2) a vector containing c(x1,y1,x2,y2)}
+
 \item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
 radius of influence R [m], & coordinates x [m], y [m]}
 
-\item{segments}{A data.frame containing, m, b, sID, x1, x2, y1, y2}
-
 \item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 
-\item{length.out}{The number of points to check on each segment}
+\item{length.out}{The number of points to evaluate on each segment}
 }
 \value{
-Returns a \code{data.frame}, with \code{length.out} rows for each bID.
+Returns a \code{data.frame}, with \code{length.out} rows for each sID.
 Each row represents a point along sID and contains the head and flow as:
  dx = -Ksat * dh/dx, and
  dy = -Ksat * dh/dy
@@ -27,20 +26,28 @@ Each row represents a point along sID and contains the head and flow as:
 Get hydraulic head and flow on segments
 }
 \examples{
+library(tidyverse)
 wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\%
   mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
 aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
 well_images <- generate_image_wells(wells,aquifer)
+segments <- c(40,20,15,20)
+segments_behavior <- get_segments_behavior(segments,well_images,aquifer) \%>\% as_tibble()
+p_domain <- ggplot() +
+  geom_point(data=well_images \%>\% filter(well_image=="Z"),aes(x,y,fill=Q),color="black",size=2,shape=21) +
+  scale_fill_gradient2(low="blue",high="red",mid="gray")+
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type),color="black") +
+  geom_path(data=segments_behavior,aes(x,y,linetype="segment"),color="blue") +
+  coord_equal()
+p_segments <- ggplot(segments_behavior) +
+  geom_line(aes(dist,head))# + facet_grid(var~sID,scales="free")
+gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
+
 segments <- aquifer$bounds[1:2,] \%>\% rename(sID=bID) \%>\%
   dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),y_unit_norm=get_unit_norm(m,"y"))
-segments_behavior <- get_segments_behavior(well_images,segments,aquifer) \%>\% as_tibble()
-p_domain <- ggplot() +
-  geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
-  scale_fill_gradient2(low="blue",high="red",mid="gray")+
-  geom_segment(data=segments,aes(x1,y1,xend=x2,yend=y2),linetype="dashed") +
-  coord_equal()
+segments_behavior <- get_segments_behavior(segments,well_images,aquifer) \%>\% as_tibble()
+
 p_segments <- ggplot(segments_behavior \%>\% gather(var,val,head,flow_normal)) +
   geom_line(aes(dist,val,color=as.factor(sID))) + facet_grid(var~sID,scales="free")
-gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
 }

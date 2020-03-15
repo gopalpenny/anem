@@ -22,41 +22,64 @@ get_segment_seq <- function(segment,length.out=10) {
 #' Get hydraulic behavior along segments
 #'
 #' Get hydraulic head and flow on segments
-#' @param segments A data.frame containing, m, b, sID, x1, x2, y1, y2
-#' @param length.out The number of points to check on each segment
+#' @param segments Either: (a) A data.frame containing sID, x1, x2, y1, y2, or (2) a vector containing c(x1,y1,x2,y2)
+#' @param length.out The number of points to evaluate on each segment
 #' @inheritParams get_hydraulic_head
-#' @return Returns a \code{data.frame}, with \code{length.out} rows for each bID.
+#' @return Returns a \code{data.frame}, with \code{length.out} rows for each sID.
 #' Each row represents a point along sID and contains the head and flow as:
 #'  dx = -Ksat * dh/dx, and
 #'  dy = -Ksat * dh/dy
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) %>%
 #'   mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 #' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
 #' aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
 #' well_images <- generate_image_wells(wells,aquifer)
+#' segments <- c(40,20,15,20)
+#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer) %>% as_tibble()
+#' p_domain <- ggplot() +
+#'   geom_point(data=well_images %>% filter(well_image=="Z"),aes(x,y,fill=Q),color="black",size=2,shape=21) +
+#'   scale_fill_gradient2(low="blue",high="red",mid="gray")+
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type),color="black") +
+#'   geom_path(data=segments_behavior,aes(x,y,linetype="segment"),color="blue") +
+#'   coord_equal()
+#' p_segments <- ggplot(segments_behavior) +
+#'   geom_line(aes(dist,head))# + facet_grid(var~sID,scales="free")
+#' gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
+#'
 #' segments <- aquifer$bounds[1:2,] %>% rename(sID=bID) %>%
 #'   dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),y_unit_norm=get_unit_norm(m,"y"))
-#' segments_behavior <- get_segments_behavior(well_images,segments,aquifer) %>% as_tibble()
-#' p_domain <- ggplot() +
-#'   geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
-#'   scale_fill_gradient2(low="blue",high="red",mid="gray")+
-#'   geom_segment(data=segments,aes(x1,y1,xend=x2,yend=y2),linetype="dashed") +
-#'   coord_equal()
+#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer) %>% as_tibble()
+#'
 #' p_segments <- ggplot(segments_behavior %>% gather(var,val,head,flow_normal)) +
 #'   geom_line(aes(dist,val,color=as.factor(sID))) + facet_grid(var~sID,scales="free")
-#' gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
-get_segments_behavior <- function(wells,segments,aquifer,length.out=100,eps=1e-10) {
+get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 
+  if (any(grep("data.frame",class(segments)))) {
+    if (!any(names(segments)=="sID")) {
+      segments$sID <- 1:nrow(segments)
+    }
+  } else if (length(segments)==4) {
+    segments <- data.frame(sID=1,x1=segments[1],y1=segments[2],x2=segments[3],y2=segments[4])
+  } else {
+    stop("segments must be a data.frame or vector with length 4.")
+  }
+  if (!any(grep("x_unit_norm",names(segments))) | !any(grep("y_unit_norm",names(segments)))) {
+    segments <- segments %>%
+      dplyr::mutate(m=get_slope_intercept(x1,y1,x2,y2)$m,
+                    x_unit_norm=get_unit_norm(m,"x"),
+                    y_unit_norm=get_unit_norm(m,"y"))
+    }
   segments_seq_list <- lapply(split(segments,segments$sID),get_segment_seq,length.out=length.out)
 
   segments_seq <- do.call(rbind,segments_seq_list) %>%
     dplyr::left_join(segments %>% dplyr::select(sID,x_unit_norm,y_unit_norm),by="sID")
 
   head <- get_hydraulic_head(segments_seq,wells,aquifer)
-  flowdir <- get_flow_direction(segments_seq,wells,aquifer,eps=eps)
+  flowdir <- get_flow_direction(segments_seq,wells,aquifer)
 
   bounds_seq <- segments_seq %>%
     dplyr::mutate(head=head,
@@ -134,8 +157,8 @@ get_bounds_behavior <- function(wells,aquifer,length.out=100) {
     dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),
                   y_unit_norm=get_unit_norm(m,"y"))
 
-  bounds_seq <- get_segments_behavior(wells,bounds_wide %>% dplyr::rename(sID=bID),
-                                      aquifer=aquifer,length.out=length.out) %>%
+  bounds_seq <- get_segments_behavior(bounds_wide %>% dplyr::rename(sID=bID),
+                                      wells,aquifer=aquifer,length.out=length.out) %>%
     dplyr::rename(bID=sID) %>%
     dplyr::left_join(bounds %>% dplyr::select(bID,bound_type),by="bID")
 

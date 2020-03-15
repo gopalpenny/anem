@@ -42,3 +42,22 @@ test_that("plot_bounds_behavior generates 4x5 table",{
 test_that("plot_bounds_behavior generates bounds_behavior",{
   expect_equal(dim(gg_list$bounds_behavior),c(160,15))
 })
+
+wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) %>%
+  dplyr::mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
+bounds_df <- tibble::tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
+aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
+well_images <- generate_image_wells(wells,aquifer)
+segments <- c(40,20,15,20)
+segments_behavior <- get_segments_behavior(segments,well_images,aquifer) %>% tibble::as_tibble()
+test_that("get_segments_behavior properly extracts head",{
+  expect_equal(round(max(segments_behavior$head),4),103.9295)
+  expect_equal(round(min(segments_behavior$head),4),100)
+  expect_equal(round(mean(segments_behavior$head),4),102.1467)
+})
+
+test_that("get_segments_behavior properly extracts flow_normal",{
+  expect_equal(round(max(segments_behavior$flow_normal*1e5),4),7.1926)
+  expect_equal(round(min(segments_behavior$flow_normal*1e5),4),-3.8801)
+  expect_equal(round(mean(segments_behavior$flow_normal*1e5),4),-0.202)
+})
