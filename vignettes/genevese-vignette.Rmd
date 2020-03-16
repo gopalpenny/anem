@@ -32,11 +32,11 @@ library(anem)
 Let's begin by loading some data to practice with. The data are stored in two shapefiles included with this package, a `genevese_wells` shapefile containing *point* features with attributes for `rate` and `diameter`, and a second `genevese_boundaries` shapefile with *line* geometries and the property `bound_type`.
 
 ```{r data_import}
-pts_wgs <- genevese_wells
-pts_wgs
+load("../data/genevese_wells.rda")
+genevese_wells
 
-boundaries_wgs <- genevese_bounds
-boundaries_wgs
+load("../data/genevese_bounds.rda")
+genevese_bounds
 ```
 
 ### Plot the data
@@ -44,10 +44,10 @@ boundaries_wgs
 The coordinates of objects should be in a planar coordinate system in meters. Tranform both of the shapefiles to UTM projection, first by getting the UTM zone, using `longitude_to_utm_zone()`, and proj4string, using `utm_zone_to_proj4()`, then transforming the shapefiles usng `sf::st_transform()`.
 
 ```{r transform_to_planar}
-utm_zone <- longitude_to_utm_zone(mean(st_coordinates(pts_wgs)[,'X']))
+utm_zone <- longitude_to_utm_zone(mean(st_coordinates(genevese_wells)[,'X']))
 utm_proj4 <- utm_zone_to_proj4(utm_zone)
-pts_utm <- pts_wgs %>% sf::st_transform(utm_proj4)
-boundaries_utm <- boundaries_wgs %>% sf::st_transform(utm_proj4)
+pts_utm <- genevese_wells %>% sf::st_transform(utm_proj4)
+boundaries_utm <- genevese_bounds %>% sf::st_transform(utm_proj4)
 
 ggplot() + 
   geom_sf(data=boundaries_utm, aes()) + 
