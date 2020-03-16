@@ -124,6 +124,8 @@ get_single_drawdown_relationship <- function(wells, aquifer, group_column, weigh
 
   var_type <- ifelse(aquifer$aquifer_type=="confined","D","PHI")
   var_name <- ifelse(aquifer$aquifer_type=="confined","hydraulic head","discharge potential")
+  drawdown_units <- ifelse(aquifer$aquifer_type=="confined","[m/cumec]","[m^2/cumec]")
+  var_units <- ifelse(aquifer$aquifer_type=="confined","[m]","[m^2]")
 
   loc <- wells %>% dplyr::filter(well_image=="Actual",!! group_column==loc_group)
   pump_wells <- wells %>% dplyr::filter(!! group_column==pump_group) %>%
@@ -134,7 +136,8 @@ get_single_drawdown_relationship <- function(wells, aquifer, group_column, weigh
   weighted_potential <- loc_potential %>% dplyr::group_by() %>%
     dplyr::summarize(var=paste(var_type,loc_group,pump_group,sep="_"),
                      pot=weighted.mean(potential,!! weights_column),
-                     description=paste("Weighted effect of pumping in group",pump_group,"on",var_name,"in group",loc_group))
+                     units=drawdown_units,
+                     description=paste("Weighted effect of pumping [cumec] in group",pump_group,"on",var_name,var_units,"in group",loc_group))
 
   return(weighted_potential)
 }

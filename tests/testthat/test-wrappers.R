@@ -13,7 +13,7 @@ wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
 wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
 df <- tibble::tibble(var=c("PHI_A_A", "PHI_A_B", "PHI_B_A", "PHI_B_B"),
                  pot=round(c(1317.4124,242.8351,242.8351,875.3999),5))
-test_that("get_pumping_relationships returns correct result for simple aquifer and two countries",{
+test_that("get_drawdown_relationships returns correct result for simple aquifer and two countries",{
   expect_equal(get_drawdown_relationships(wells,aquifer_unconfined,country,weights) %>% dplyr::mutate(pot=round(pot,4)) %>% dplyr::select(var,pot),df)
 })
 
