@@ -33,6 +33,20 @@ get_segment_seq <- function(segment,length.out=10) {
 #' @export
 #' @examples
 #' library(tidyverse)
+#' aquifer <- aquifer_confined_example
+#' aquifer$Ksat <- 5e-4
+#' wells <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1)) %>% generate_image_wells(aquifer)
+#' seg <- c(0,500,1000,500)
+#' seg_w1 <- get_segments_behavior(seg,wells %>% filter(orig_wID==1),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W1")
+#' seg_w2 <- get_segments_behavior(seg,wells %>% filter(orig_wID==2),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W2")
+#' seg_w3 <- get_segments_behavior(seg,wells %>% filter(orig_wID==3),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W3")
+#' seg_all <- get_segments_behavior(seg,wells,aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="All")
+#' seg_behavior <- bind_rows(seg_all,seg_w1,seg_w2,seg_w3)
+#' ggplot() +
+#' geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
+#' annotate(geom="text",x=0,y=85,label="Constant head",angle=90) +
+#' annotate(geom="text",x=1000,y=85,label="No flow",angle=90)
+#'
 #' wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) %>%
 #'   mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 #' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
