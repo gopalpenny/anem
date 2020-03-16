@@ -14,7 +14,7 @@ the boundaries, returns \code{FALSE}.
 Check to see if one or more points falls within aquifer boundaries.
 }
 \examples{
-aquifer <- aquifer_example
+aquifer <- aquifer_unconfined_example
 x <- 100
 y <- 100
 x <- seq(0,100,by=50)
