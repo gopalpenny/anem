@@ -798,7 +798,7 @@ get_perpendicular_line <- function(m,x,y) {
 #' Function returns \code{TRUE} if the point is inside aquifer boundaries or on the boundary. If the point is outside
 #'the boundaries, returns \code{FALSE}.
 #' @examples
-#' aquifer <- aquifer_example
+#' aquifer <- aquifer_unconfined_example
 #' x <- 100
 #' y <- 100
 #' x <- seq(0,100,by=50)

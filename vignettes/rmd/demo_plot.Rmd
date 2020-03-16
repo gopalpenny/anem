@@ -25,7 +25,7 @@ gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100))
 
 ```{r include=FALSE}
 library(anem)
-aquifer <- aquifer_example
+aquifer <- aquifer_unconfined_example
 wells <- define_wells(wells_example) %>% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100))
 ```
