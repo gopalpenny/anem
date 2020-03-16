@@ -6,3 +6,4 @@
 ^inst$
 ^images$
 ^vignette/images$
+^data/genevese*\.rda$
