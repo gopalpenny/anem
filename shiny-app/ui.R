@@ -200,9 +200,12 @@ ui <- fluidPage(
                       tabPanel(
                         "File",value="files",
                         hr(),
-                        p("Upload a scenario file or download the current scenario. The file should be saved with a .rds extension."),
-                        shiny::fileInput("fileUpload","Upload scenario",multiple=FALSE,c(".rds",".Rds",".RDS")),
-                        shiny::downloadButton("fileDownload","Download scenario")#,
+                        p("Download the current scenario. The file should be saved with a .rds extension."),
+                        shiny::downloadButton("fileDownload","Download current scenario"),
+                        hr(),
+                        p("Load an example scenario or upload a scenario."),
+                        shiny::selectInput("exampleUpload","Load example scenario",choices=c("None","Groundwater district","Municipal contamination")),
+                        shiny::fileInput("fileUpload","Upload scenario",multiple=FALSE,c(".rds",".Rds",".RDS"))#,
                         # shiny::verbatimTextOutput("printfile")
                       )
                     )

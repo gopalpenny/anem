@@ -25,6 +25,10 @@ server <- function(input, output, session) {
   notification_id <- NULL
   note_id_R_diam <- NULL
 
+  scenario <- reactiveValues(
+    loadscenario = NULL
+  )
+
   output$fileDownload <- downloadHandler(
     filename = function() {
       "anem_scenario.rds"
@@ -40,7 +44,7 @@ server <- function(input, output, session) {
     }
   )
 
-  fileUp <- reactive({
+  fileUp <- reactive({ # File upload handler
     # print("FILE UPLOAD BEGINS")
     req(input$fileUpload)
 
@@ -53,39 +57,59 @@ server <- function(input, output, session) {
   })
 
   observeEvent(fileUp(),{
-    pl <- fileUp()
-    updateSelectInput(session,"b1_type",selected=pl$b1_type)
-    updateSelectInput(session,"b2_type",selected=pl$b2_type)
-    updateSelectInput(session,"b3_type",selected=pl$b3_type)
-    updateSelectInput(session,"b4_type",selected=pl$b4_type)
-    updateSelectInput(session,"aquifer_type",selected=pl$aquifer_type)
+    scenario$loadscenario <- fileUp()
+  })
 
-    updateNumericInput(session,"porosity",value=pl$porosity)
-    updateNumericInput(session,"Ksat",value=pl$Ksat)
-    updateNumericInput(session,"h0",value=pl$h0)
-    updateNumericInput(session,"z0",value=pl$z0)
-    updateNumericInput(session,"rechargeFlow",value=pl$rechargeFlow)
-    updateNumericInput(session,"max_tracking_time_years",value=pl$max_tracking_time_years)
-    updateNumericInput(session,"z0",value=pl$z0)
+  observeEvent(input$exampleUpload,{
+    print("example upload:")
+    print(input$exampleUpload)
+    if (input$exampleUpload=="Groundwater district") {
+      scenario$loadscenario <- readRDS("example_scenarios/groundwater_district.rds")
+      shiny::showNotification("This example is fabricated and does not represent the actual groundwater situation in this area.",closeButton = T,duration = 10)
+    } else if (input$exampleUpload=="Municipal contamination") {
+      scenario$loadscenario <- readRDS("example_scenarios/municipal_contamination.rds")
+      shiny::showNotification("This example is fabricated and does not represent the actual groundwater situation in this area.",closeButton = T,duration = 10)
+    } else if (input$exampleUpload=="None") {
+      scenario$loadscenario <- NULL
+    }
+  })
 
-    updateCheckboxInput(session,"wellCapture",value=pl$wellCapture)
-    updateSliderInput(session,"captureParticles",value=pl$captureParticles)
+  observeEvent(scenario$loadscenario,{
+    if (!is.null(scenario$loadscenario)) {
+      pl <- scenario$loadscenario
+      updateSelectInput(session,"b1_type",selected=pl$b1_type)
+      updateSelectInput(session,"b2_type",selected=pl$b2_type)
+      updateSelectInput(session,"b3_type",selected=pl$b3_type)
+      updateSelectInput(session,"b4_type",selected=pl$b4_type)
+      updateSelectInput(session,"aquifer_type",selected=pl$aquifer_type)
 
-    updateCheckboxInput(session,"enableRecharge",value=pl$enableRecharge)
+      updateNumericInput(session,"porosity",value=pl$porosity)
+      updateNumericInput(session,"Ksat",value=pl$Ksat)
+      updateNumericInput(session,"h0",value=pl$h0)
+      updateNumericInput(session,"z0",value=pl$z0)
+      updateNumericInput(session,"rechargeFlow",value=pl$rechargeFlow)
+      updateNumericInput(session,"max_tracking_time_years",value=pl$max_tracking_time_years)
+      updateNumericInput(session,"z0",value=pl$z0)
 
-    mapclicks$bound_vertices <- pl$bound_vertices
-    mapclicks$particle_locations <- pl$particle_locations
-    mapclicks$recharge_vertices <- pl$recharge_vertices
-    mapclicks$well_locations <- pl$well_locations
+      updateCheckboxInput(session,"wellCapture",value=pl$wellCapture)
+      updateSliderInput(session,"captureParticles",value=pl$captureParticles)
 
-    updateSliderInput(session,"headNlevels",value=pl$headNlevels)
-    updateSliderInput(session,"headNgrid",value=pl$headNgrid)
+      updateCheckboxInput(session,"enableRecharge",value=pl$enableRecharge)
 
-    print("mapclicks$well_locations")
-    print(mapclicks$well_locations)
+      mapclicks$bound_vertices <- pl$bound_vertices
+      mapclicks$particle_locations <- pl$particle_locations
+      mapclicks$recharge_vertices <- pl$recharge_vertices
+      mapclicks$well_locations <- pl$well_locations
 
-    updateResults$reset_zoom <- updateResults$reset_zoom + 1
-    shiny::updateActionButton(session,"resetZoomLink")
+      updateSliderInput(session,"headNlevels",value=pl$headNlevels)
+      updateSliderInput(session,"headNgrid",value=pl$headNgrid)
+
+      print("mapclicks$well_locations")
+      print(mapclicks$well_locations)
+
+      updateResults$reset_zoom <- updateResults$reset_zoom + 1
+      shiny::updateActionButton(session,"resetZoomLink")
+    }
   })
 
   # Check when to update results
@@ -947,13 +971,19 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$headNlevels,{
-    updateResults$update_head_now <- updateResults$update_head_now + 1
+    if (input$maintabs == "results") { # check current tab, because this object can be modified by uploading a file
+      updateResults$update_head_now <- updateResults$update_head_now + 1
+    }
   })
   observeEvent(input$headNgrid,{
-    updateResults$update_head_now <- updateResults$update_head_now + 1
+    if (input$maintabs == "results") { # check current tab, because this object can be modified by uploading a file
+      updateResults$update_head_now <- updateResults$update_head_now + 1
+    }
   })
   observeEvent(input$headNupgrade,{
-    updateSliderInput(session,"headNgrid",max = input$headNupgrade)
+    if (input$maintabs == "results") { # check current tab, because this object can be modified by uploading a file
+      updateSliderInput(session,"headNgrid",max = input$headNupgrade)
+    }
   })
 
   observeEvent(updateResults$update_head_now,{
