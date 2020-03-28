@@ -1,7 +1,7 @@
 # test_shiny_helpers.R
 
-# file <- list.files("shiny-app/example_scenarios",full.names = TRUE)[1] # for debugging
-file <- list.files("../../shiny-app/example_scenarios",full.names = TRUE)[1]
+# file <- list.files("inst/anem-app/example_scenarios",full.names = TRUE)[1] # for debugging
+file <- list.files("../../inst/anem-app/example_scenarios",full.names = TRUE)[1]
 test_that("import_app_rds imports from file",{
   expect_equal(names(import_app_rds(file)),
                c("aquifer","wells","particles"))
