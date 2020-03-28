@@ -1,11 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^data-raw$
-^shiny-app$
 ^figs_test$
-^inst$
-^images$
-^vignette/images$
 ^data/genevese*\.rda$
 ^rsconnect$
 ^ignore$
