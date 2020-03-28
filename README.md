@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/gopalpenny/anem.svg?branch=master)](https://travis-ci.org/gopalpenny/anem)
+<!-- badges: end -->
+
 # anem
 2d steady state groundwater flow using the analytical element method
 

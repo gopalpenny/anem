@@ -5,3 +5,4 @@
 ^data/genevese*\.rda$
 ^rsconnect$
 ^ignore$
+^\.travis\.yml$
