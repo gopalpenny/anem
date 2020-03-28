@@ -5,7 +5,7 @@ Version: 0.1.0
 Author: person("Gopal", "Penny", email = "gopalpenny@gmail.com",
                   role = c("aut", "cre"))
 Maintainer: Gopal Penny <gopalpenny@gmail.com>
-Description: This package is used for 2d steady state groundwater flow, applying the 
+Description: This package is used for 2D steady state groundwater flow, applying the 
     analytical element method in aquifers with rectangular boundaries.
 License: What license is it under?
 Encoding: UTF-8
