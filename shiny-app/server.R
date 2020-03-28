@@ -74,6 +74,23 @@ server <- function(input, output, session) {
     }
   })
 
+  observeEvent(input$prepmap_bounds,{
+    print("input$prepmap_bounds")
+    print(str(input$prepmap_bounds))
+    print("input$prepmap_zoom")
+    print(input$prepmap_zoom)
+    print("input$prepmap_center")
+    print(str(input$prepmap_center))
+  })
+  observeEvent(input$resultsmap_bounds,{
+    print("input$resultsmap_bounds")
+    print(str(input$resultsmap_bounds))
+    # print("input$resultsmap_bounds")
+    # print(input$resultsmap_bounds)
+    # print("input$resultsmap_bounds")
+    # print(str(input$resultsmap_bounds))
+  })
+
   observeEvent(scenario$loadscenario,{
     if (!is.null(scenario$loadscenario)) {
       pl <- scenario$loadscenario
