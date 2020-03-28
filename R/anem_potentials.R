@@ -1,4 +1,4 @@
-# anema_potentials.R
+# anem_potentials.R
 
 
 #' Estimate the radius of influence of a well

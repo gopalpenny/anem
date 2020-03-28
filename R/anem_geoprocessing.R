@@ -1,4 +1,4 @@
-# aem_geoprocessing.R
+# anem_geoprocessing.R
 # This file contains code for prepping and geoprocessing spatial features for the anelem package.
 
 #' Get UTM zone from coordinates

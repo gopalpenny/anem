@@ -1,4 +1,4 @@
-# anema_imaging.R
+# anem_imaging.R
 
 #' Mirror a well across a boundary
 #'

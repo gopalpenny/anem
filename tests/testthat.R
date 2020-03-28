@@ -1,4 +1,4 @@
 library(testthat)
-library(anema)
+library(anem)
 
-test_check("anema")
+test_check("anem")
