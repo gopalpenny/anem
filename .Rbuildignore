@@ -7,3 +7,5 @@
 ^images$
 ^vignette/images$
 ^data/genevese*\.rda$
+^rsconnect$
+^ignore$
