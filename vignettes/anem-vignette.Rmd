@@ -142,7 +142,7 @@ ggplot() +
   coord_equal()
 ```
 
-Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean. The results show $\Phi_{ii}$ and $\Phi_{ij}$.
+Get drawdown relationships using `get_drawdown_relationships()`. This function calculates the average drawdown at wells in each group defined by the column `group_column`. The average is taken as the weighted mean, determined by the `weights_column`. The weights were previously set equal for all wells so that the result here is a simple mean. The results show PHIii and PHIij.
 
 ```{r drawdown_relationships,results='hide'}
 drawdown_relationships <- get_drawdown_relationships(wells, aquifer_unconfined, group_column=country, weights_column=weights)
