@@ -69,17 +69,4 @@ ggplot() +
   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()
-
-tstart <- Sys.time()
-myfunc <- function(N,group_imaging) {
-  for (i in 1:N) {
-    generate_image_wells(wells,bounds,group_imaging=group_imaging)
-  }
-}
-system.time(myfunc(5,TRUE))
-system.time(myfunc(5,FALSE))
-
-wells <- define_wells(x=rnorm(20),y=rnorm(20),Q=20,R=100,diam=1)
-system.time(generate_image_wells(wells,bounds,group_imaging=TRUE))
-system.time(generate_image_wells(wells,bounds,group_imaging=FALSE))
 }
