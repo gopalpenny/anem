@@ -405,6 +405,7 @@ gen_circ <- function(x,y,r) {
 #' @param df data.frame with columns x, y, r
 #' @export
 #' @examples
+#' library(tidyverse)
 #' df <- data.frame(x=1:3,y=1:3,roi=c(0.5,1,1.5))
 #' circles <- gen_circles(df %>% rename(r=roi))
 #' ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
