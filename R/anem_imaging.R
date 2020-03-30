@@ -21,6 +21,8 @@
 #' @keywords internal
 #' @importFrom magrittr %>%
 #' @examples
+#'
+#' \dontrun{
 #' well <- define_wells(wID=1,x=0,y=0,path=1,orig_wID=1)
 #' boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2)
@@ -37,6 +39,7 @@
 #' well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 #' boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 #' get_mirror_point(well, boundary, new_wID=2) %>% select(x,y)
+#' }
 get_mirror_point <- function(well, boundary, new_wID=NA) {
   check_wells(well,c("x","y","well_image"))
   is_sf <- max(grepl("sf",class(well)))
@@ -127,6 +130,7 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #' @importFrom magrittr %>%
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 #' bounds <- data.frame(m=1,b=1,bound_type="CH",bID=1)
 #' mirror_across_bounds(wells,bounds)
@@ -142,6 +146,7 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #' bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
 #' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
 #' mirror_across_bounds(well1,bounds)
+#' }
 mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE) {
 
   if (first_mirror) { # initialize wells
@@ -261,6 +266,7 @@ mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE)
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
 #' wells <- define_wells(bind_rows(well1,well2))
@@ -368,6 +374,9 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 #' @importFrom magrittr %>%
 #' @keywords internal
 #' @examples
+#'
+#' \dontrun{
+#' library(tidyverse)
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 #' bounds <- data.frame(m=1,b=1,bound_type="NF",bID=1)
 #' images <- mirror_well_parallel_bounds(wells,bounds)
@@ -388,6 +397,7 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 #'   geom_point(aes(x,y,fill=Q,shape=well_image)) +
 #'   scale_shape_manual(values=21:23) +
 #'   coord_equal()
+#' }
 mirror_well_parallel_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE) {
 
   is_sf <- max(grepl("sf",class(wells)))
@@ -526,9 +536,11 @@ reconstruct_image_pumping <- function(image_wells) {
 #'
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' get_pumping_sign("Actual")
 #' get_pumping_sign("Image (+Q)")
 #' get_pumping_sign("Image (-Q)")
+#' }
 get_pumping_sign <- function(well_image) {
   sign <- dplyr::case_when(
     grepl("Actual|\\+Q",well_image)~1,
@@ -543,12 +555,14 @@ get_pumping_sign <- function(well_image) {
 #' Get sign of pumping relative to pumping of Actual well (associated by orig_wID)
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' set_pumping_sign("Actual","NF")
 #' set_pumping_sign("Actual","CH")
 #' set_pumping_sign("Image (+Q)","NF")
 #' set_pumping_sign("Image (+Q)","CH")
 #' set_pumping_sign("Image (-Q)","NF")
 #' set_pumping_sign("Image (-Q)","CH")
+#' }
 set_pumping_sign <- function(well_image,bound_type,type="text") {
   prev_sign <- dplyr::case_when(
     grepl("Actual|\\+Q",well_image)~1,
@@ -578,6 +592,8 @@ set_pumping_sign <- function(well_image,bound_type,type="text") {
 #' @param bound_type2 Character vector of bound_type for second mirror boundary ("CH" or "NF")
 #' @keywords internal
 #' @examples
+#'
+#' \dontrun{
 #' gen_well_image_type(N=rep(1:2,2),well_image=rep("Actual",4),
 #'   bound_type1=c("NF","NF","CH","CH"),bound_type2=c("CH","CH","NF","NF"))
 #' well_image <- "Actual"
@@ -591,6 +607,7 @@ set_pumping_sign <- function(well_image,bound_type,type="text") {
 #' gen_well_image_type(1:8,"Image (+Q)","NF","CH")
 #' gen_well_image_type(1:8,"Image (-Q)","NF","CH")
 #' gen_well_image_type(1:8,"Actual","CH","CH")
+#' }
 gen_well_image_type <- function(N,well_image,bound_type1,bound_type2,type="text") {
   Q_sign <- rep(1,length(N))
 

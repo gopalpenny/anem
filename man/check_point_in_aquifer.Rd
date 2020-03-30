@@ -14,6 +14,7 @@ the boundaries, returns \code{FALSE}.
 Check to see if one or more points falls within aquifer boundaries.
 }
 \examples{
+\dontrun{
 aquifer <- aquifer_unconfined_example
 x <- 100
 y <- 100
@@ -26,5 +27,6 @@ check_point_in_aquifer(seq(0,1000,by=500),seq(0,100,by=500),aquifer)
 x <- rep(500,3)
 y <- seq(0,1000,by=500)
 check_point_in_aquifer(x,yseq(0,1000,by=500),aquifer)
+}
 }
 \keyword{internal}

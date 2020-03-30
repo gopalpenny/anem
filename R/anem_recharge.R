@@ -23,6 +23,7 @@
 #' \item 3. Recharge divide, "D": \code{get_recharge_divide_potential()}
 #' }
 #' @examples
+#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,1),flow=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -88,6 +89,8 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #' Returns hydraulic head (confined aquifers) or discharge potential (unconfined aquifers) at the location(s).
 #' @keywords internal
 #' @examples
+#' \dontrun{
+#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,2),flow=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -110,6 +113,7 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #' loc$h2 <- get_recharge_flow_potential(loc, aquifer)
 #' loc <- loc %>% dplyr::mutate(h=sqrt(h2))
 #' ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2(midpoint=50)
+#' }
 get_recharge_flow_potential <- function(loc, aquifer) {
   params <- aquifer$recharge
 
@@ -160,6 +164,8 @@ get_recharge_flow_potential <- function(loc, aquifer) {
 #' Returns hydraulic head (confined aquifers) or discharge potential (unconfined aquifers) at the location(s).
 #' @keywords internal
 #' @examples
+#' \dontrun{
+#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,sqrt(3)),flow_main=1,flow_opp=2,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -196,6 +202,7 @@ get_recharge_flow_potential <- function(loc, aquifer) {
 #' loc$h2 <- get_recharge_divide_potential(loc, aquifer)
 #' loc <- loc %>% dplyr::mutate(h=sqrt(h2))
 #' ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2(midpoint=aquifer$h0)
+#' }
 get_recharge_divide_potential <- function(loc, aquifer) {
   params <- aquifer$recharge
 

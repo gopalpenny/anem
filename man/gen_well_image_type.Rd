@@ -22,6 +22,8 @@ Get sign of pumping of image well relative to pumping of Actual well
 boundaries of constant head and/or no-flow.
 }
 \examples{
+
+\dontrun{
 gen_well_image_type(N=rep(1:2,2),well_image=rep("Actual",4),
   bound_type1=c("NF","NF","CH","CH"),bound_type2=c("CH","CH","NF","NF"))
 well_image <- "Actual"
@@ -35,5 +37,6 @@ gen_well_image_type(1:8,"Actual","NF","CH")
 gen_well_image_type(1:8,"Image (+Q)","NF","CH")
 gen_well_image_type(1:8,"Image (-Q)","NF","CH")
 gen_well_image_type(1:8,"Actual","CH","CH")
+}
 }
 \keyword{internal}

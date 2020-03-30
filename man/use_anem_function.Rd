@@ -15,6 +15,7 @@ use_anem_function(function_name, ...)
 Use select anem functions not exported from package
 }
 \examples{
+
 # get_utm_rectangle()
 edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
                          y1=c(41.44,41.83,41.15,40.85),

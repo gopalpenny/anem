@@ -11,4 +11,4 @@ anem_app_scenario
 \description{
 anem-app scenario
 }
-\keyword{datasets}
+\keyword{internal}

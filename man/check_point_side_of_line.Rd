@@ -21,6 +21,7 @@ the line is vertical (m=Inf), returns +1 for points to the right of the line and
 Check point is in bounds
 }
 \examples{
+\dontrun{
 x <- 100
 y <- 100
 line <- list(m=Inf,b=2)
@@ -30,5 +31,6 @@ check_point_side_of_line(list(m=Inf,b=2),3,0)
 check_point_side_of_line(list(m=1,b=2),0,0)
 check_point_side_of_line(list(m=1,b=2),0,2)
 check_point_side_of_line(list(m=1,b=2),0,3)
+}
 }
 \keyword{internal}

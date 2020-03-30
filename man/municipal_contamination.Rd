@@ -11,4 +11,4 @@ municipal_contamination
 \description{
 anem-app scenario with urban contamination at a well
 }
-\keyword{datasets}
+\keyword{internal}

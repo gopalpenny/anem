@@ -10,11 +10,13 @@ check_aquifer(aquifer, standard_columns = NULL)
 Check aquifer properties
 }
 \examples{
+\dontrun{
 aquifer <- define_aquifer("confined",1e-4)
 check_aquifer(aquifer)
 
 aquifer2 <- define_aquifer("unconfined",1e-4)
 check_aquifer(aquifer2,c("bounds","Ksat"))
 check_aquifer(aquifer2,c("Ksat"))
+}
 }
 \keyword{internal}

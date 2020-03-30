@@ -34,6 +34,7 @@ if uniform flow is specified, it will pass through any boundary, including no-fl
 The aquifer and aquifer$recharge must be correctly specified using \code{define_aquifer} and/or \code{define_recharge}.
 }
 \examples{
+library(tidyverse)
 ## Flow - confined aquifer
 recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,1),flow=1,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)

@@ -34,6 +34,8 @@ The average drawdown is also weighted by values in weights_column, for the loc_g
 Get drawdown relationship at locations locations due to unit pumping from wells. Include weights on location and wells.
 }
 \examples{
+\dontrun{
+library(tidyverse)
 # define aquifer
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
@@ -54,5 +56,6 @@ ggplot() +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
   geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y,fill=country),shape=21) +
   coord_equal()
+}
 }
 \keyword{internal}

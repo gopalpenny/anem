@@ -11,4 +11,4 @@ groundwater_district
 \description{
 anem-app scenario with four pumping wells near a river
 }
-\keyword{datasets}
+\keyword{internal}

@@ -29,6 +29,7 @@ Either \code{path} or \code{params} should be supplied to the function. If both
 are specified, only \code{path} will be used.
 }
 \examples{
+library(tidyverse)
 # using path
 app <- import_app_rds("~/Downloads/anem_scenario.rds")
 

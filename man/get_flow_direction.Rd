@@ -36,6 +36,7 @@ Calculates the derivative of hydraulic head in x and y directions, returning \eq
   analytically or numerically from hydraulic head.
 }
 \examples{
+library(tidyverse)
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 get_flow_direction(loc=c(5,5),wells,aquifer)
@@ -66,7 +67,6 @@ fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
                 dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
                 x2=x+dx_norm,y2=y+dy_norm)
 
-library(ggplot2)
 ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 

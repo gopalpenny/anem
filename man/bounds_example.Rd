@@ -11,4 +11,4 @@ bounds_example
 \description{
 Bounds example
 }
-\keyword{datasets}
+\keyword{internal}

@@ -10,10 +10,12 @@ get_theta(x, y)
 Get angle from x,y
 }
 \examples{
+\dontrun{
 get_theta(-1,0)
 get_theta(1,0)
 get_theta(-1,1)/pi
 get_theta(0,1)/pi
 get_theta(c(1,1,0,-1,-1),c(0,1,1,1,0))/pi
+}
 }
 \keyword{internal}

@@ -52,6 +52,7 @@ then repeated for the other two perpendicular boundaries.
 }
 
 \examples{
+library(tidyverse)
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
 wells <- define_wells(bind_rows(well1,well2))

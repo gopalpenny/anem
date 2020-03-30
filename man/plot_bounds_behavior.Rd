@@ -18,6 +18,7 @@ Two ggplot objects that show behavior on the boundaries, one for head and one fo
 Plot behavior on boundaries with and without well images
 }
 \examples{
+library(tidyverse)
 wells1 <- define_wells(x0=c(5),y0=c(5),Q=c(-.0001),diam=c(.1)) \%>\% as_tibble() \%>\%
   mutate(R=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),

@@ -18,6 +18,8 @@ are given an id, and there is one row in the output which identifies the opposid
 Get the 4 vertices corresponding to quadrangle of 4 lines
 }
 \examples{
+\dontrun{
+library(tidyverse)
 bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\% mutate(bID=row_number())
 quad_vertices <- get_quad_vertices(bounds)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
@@ -42,5 +44,6 @@ bounds <-data.frame(bID=c(5, 6, 7, 8),
                     y1=c(4592114, 4630407, 4518117, 4592114),
                     y2=c(4630407, 4556624, 4556624, 4518117))
 vertices <- get_quad_vertices(bounds)
+}
 }
 \keyword{internal}

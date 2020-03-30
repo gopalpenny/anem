@@ -30,6 +30,8 @@ Mirror a well across a boundary, specified as constant head (CH) or no flow
 (NF) and defined by the line \eqn{m x + b})
 }
 \examples{
+
+\dontrun{
 well <- define_wells(wID=1,x=0,y=0,path=1,orig_wID=1)
 boundary <- data.frame(bID=1,m=-1,b=1,bound_type="NF")
 get_mirror_point(well, boundary, new_wID=2)
@@ -46,5 +48,6 @@ get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
 well <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group="a")
 boundary <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 get_mirror_point(well, boundary, new_wID=2) \%>\% select(x,y)
+}
 }
 \keyword{internal}

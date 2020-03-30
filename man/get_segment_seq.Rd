@@ -13,6 +13,8 @@ get_segment_seq(segment, length.out = 10)
 Get segment sequence
 }
 \examples{
+\dontrun{
 get_segment_seq(list(sID=1,x1=0,y1=0,x2=1,y2=1),length.out=5)
+}
 }
 \keyword{internal}

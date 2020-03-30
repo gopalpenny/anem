@@ -10,10 +10,12 @@ check_wells(wells, columns = NULL)
 Check that wells have standard columns and that specified columns have no NA values
 }
 \examples{
+\dontrun{
 wells_df <- data.frame(R=1:10,Q=NA,x=10:1,y=1:10,image=NA,diam=NA)
 wells <- define_wells(wells_df)
 check_wells(wells)
 check_wells(wells,c("R"))
 check_wells(wells,c("R","Q","well_type"))
+}
 }
 \keyword{internal}

@@ -6,7 +6,9 @@
 #' @param segment A list containing x1, y1, x2, y2, and sID
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' get_segment_seq(list(sID=1,x1=0,y1=0,x2=1,y2=1),length.out=5)
+#' }
 get_segment_seq <- function(segment,length.out=10) {
   segment_seq <- tibble::tibble(
     x = seq(segment$x1,segment$x2,length.out = length.out),
@@ -118,6 +120,7 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' # Example 1
 #' wells <- define_wells(x=c(50,5),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08),R=100)
 #' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
@@ -207,6 +210,7 @@ get_unit_norm <- function(m,axis) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' wells1 <- define_wells(x0=c(5),y0=c(5),Q=c(-.0001),diam=c(.1)) %>% as_tibble() %>%
 #'   mutate(R=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
 #' bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
@@ -281,12 +285,14 @@ plot_bounds_behavior <- function(well_images,aquifer,length.out=100) {
 #'
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' aquifer <- define_aquifer("confined",1e-4)
 #' check_aquifer(aquifer)
 #'
 #' aquifer2 <- define_aquifer("unconfined",1e-4)
 #' check_aquifer(aquifer2,c("bounds","Ksat"))
 #' check_aquifer(aquifer2,c("Ksat"))
+#' }
 check_aquifer <- function(aquifer,standard_columns=NULL) {
   cAquifer <- "Good"
 
@@ -313,8 +319,10 @@ check_aquifer <- function(aquifer,standard_columns=NULL) {
 #' Check that boundaries have slopes that are normal to each other
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' check_bounds(tibble(m=c(1,1,-1,-1)))
 #' check_bounds(tibble(m=c(1,0.9,-1,-1)))
+#' }
 check_bounds <- function(bounds) {
   slopes <- bounds$m
   slopes_unique <- unique(slopes)
@@ -343,11 +351,13 @@ check_rectangle <- function(rect) {
 #' Check that wells have standard columns and that specified columns have no NA values
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' wells_df <- data.frame(R=1:10,Q=NA,x=10:1,y=1:10,image=NA,diam=NA)
 #' wells <- define_wells(wells_df)
 #' check_wells(wells)
 #' check_wells(wells,c("R"))
 #' check_wells(wells,c("R","Q","well_type"))
+#' }
 check_wells <- function(wells,columns=NULL) {
   standard_names <- c("wID","Q","R","diam","x","y","well_type","well_image")
   missing_columns <- standard_names[!(standard_names %in% names(wells))]

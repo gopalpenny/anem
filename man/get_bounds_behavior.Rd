@@ -24,6 +24,7 @@ Each row represents a point along bID and contains the head and flow as:
 Get hydraulic head and flow on boundaries
 }
 \examples{
+library(tidyverse)
 # Example 1
 wells <- define_wells(x=c(50,5),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08),R=100)
 bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),

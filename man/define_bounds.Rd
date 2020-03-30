@@ -23,6 +23,7 @@ A data.frame containing slope (m) and intercept (b) for each line,
 Prepare boundaries with slope (m) and intercept (b) of all line objects, and add boundary ID (bID)
 }
 \examples{
+library(tidyverse)
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 bounds <- define_bounds(bounds_df)
 ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2)) + coord_equal()

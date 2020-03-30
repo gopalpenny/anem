@@ -21,6 +21,8 @@ the midpoints.
 Convert 4 lines to a rectangular box with only right angles
 }
 \examples{
+\dontrun{
+library(tidyverse)
 bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 rect_boundaries <- get_rectangle(bounds)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
@@ -42,5 +44,6 @@ bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2
 rect_boundaries4 <- get_rectangle(bounds4)
 ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
   geom_segment(data=rect_boundaries4,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+}
 }
 \keyword{internal}

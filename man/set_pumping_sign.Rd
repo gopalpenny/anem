@@ -10,11 +10,13 @@ set_pumping_sign(well_image, bound_type, type = "text")
 Get sign of pumping relative to pumping of Actual well (associated by orig_wID)
 }
 \examples{
+\dontrun{
 set_pumping_sign("Actual","NF")
 set_pumping_sign("Actual","CH")
 set_pumping_sign("Image (+Q)","NF")
 set_pumping_sign("Image (+Q)","CH")
 set_pumping_sign("Image (-Q)","NF")
 set_pumping_sign("Image (-Q)","CH")
+}
 }
 \keyword{internal}

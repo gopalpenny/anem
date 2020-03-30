@@ -47,6 +47,9 @@ Images wells across parallel boundaries
 }
 
 \examples{
+
+\dontrun{
+library(tidyverse)
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 bounds <- data.frame(m=1,b=1,bound_type="NF",bID=1)
 images <- mirror_well_parallel_bounds(wells,bounds)
@@ -67,5 +70,6 @@ ggplot(images) +
   geom_point(aes(x,y,fill=Q,shape=well_image)) +
   scale_shape_manual(values=21:23) +
   coord_equal()
+}
 }
 \keyword{internal}

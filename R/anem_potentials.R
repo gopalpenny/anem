@@ -147,6 +147,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #'   and \eqn{-dh/dy}.
 #' @export
 #' @examples
+#' library(tidyverse)
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #' get_flow_direction(loc=c(5,5),wells,aquifer)
@@ -177,7 +178,6 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #'                 dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
 #'                 x2=x+dx_norm,y2=y+dy_norm)
 #'
-#' library(ggplot2)
 #' ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
 #'   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
 #'
@@ -359,6 +359,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #'   distance that exceeds the radius of influence of the well, R, is set equal to R
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 #' get_flow_direction(loc=c(5,5),wells,aquifer)
@@ -393,6 +394,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #' loc <- expand.grid(x=9:11,y=9:11)
 #' (d <- get_flow_direction(loc,NULL,aquifer_recharge))
 #' cbind(loc,d)
+#' }
 get_flowdir_raw <- function(loc, wells, aquifer) {
 
   df_input <- any(grepl("data.frame",class(loc)))
@@ -501,6 +503,7 @@ get_flowdir_raw <- function(loc, wells, aquifer) {
 #' @export
 #' @keywords internal
 #' @examples
+#' library(tidyverse)
 #' # Create a grid of locations
 #' loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
 #'

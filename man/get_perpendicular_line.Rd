@@ -21,9 +21,11 @@ line that passes through x, y.
 Get perpendicular in from slope and point
 }
 \examples{
+\dontrun{
 get_perpendicular_line(Inf,2,3)
 get_perpendicular_line(0,2,3)
 get_perpendicular_line(1/2,2,2)
 get_perpendicular_line(-2,2,2)
+}
 }
 \keyword{internal}

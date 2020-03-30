@@ -10,11 +10,13 @@ get_slope_intercept(x1, y1, x2 = NULL, y2 = NULL, m = NULL)
 Get slope and intercept of a line defined by x1, y1, x2, y2
 }
 \examples{
+\dontrun{
 get_slope_intercept(0,0,1,2)
 get_slope_intercept(0,-0,2,-1)
 get_slope_intercept(0,0,0,3)
 get_slope_intercept(0,2,3,2)
 get_slope_intercept(1,1,m=-1)
 get_slope_intercept(1,1,m=Inf)
+}
 }
 \keyword{internal}

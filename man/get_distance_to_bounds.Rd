@@ -16,6 +16,8 @@ Get distance from point to bounds. Location on the boundaries
 has to fall within the segment x1, y1, x2, y2
 }
 \examples{
+\dontrun{
+library(tidyverse)
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
 loc <- c(150,150)
 get_distance_to_bounds(loc,bounds)
@@ -27,5 +29,6 @@ ggplot(bounds) +
   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_point(data=loc,aes(x,y)) +
   coord_equal()
+}
 }
 \keyword{internal}

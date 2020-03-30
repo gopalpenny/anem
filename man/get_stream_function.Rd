@@ -26,6 +26,7 @@ Get stream function at given locations for a set of wells in a confined aquifer.
 Taken from Strack, 2017 Chapter 2: eqn 2.56
 }
 \examples{
+library(tidyverse)
 # Create a grid of locations
 loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
 

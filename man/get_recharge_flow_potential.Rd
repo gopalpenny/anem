@@ -32,6 +32,8 @@ these parameters are:
 }
 }
 \examples{
+\dontrun{
+library(tidyverse)
 ## Flow - confined aquifer
 recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,2),flow=1,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -54,5 +56,6 @@ loc <- expand.grid(x=-100:100,y=-100:100)
 loc$h2 <- get_recharge_flow_potential(loc, aquifer)
 loc <- loc \%>\% dplyr::mutate(h=sqrt(h2))
 ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2(midpoint=50)
+}
 }
 \keyword{internal}

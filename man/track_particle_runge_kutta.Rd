@@ -35,6 +35,8 @@ provided that:
 }
 }
 \examples{
+\dontrun{
+library(tidyverse)
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
 wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
@@ -71,5 +73,6 @@ particle_path[nrow(particle_path),]
 
 system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
 particle_path[nrow(particle_path),]
+}
 }
 \keyword{internal}

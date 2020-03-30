@@ -10,8 +10,10 @@ get_pumping_sign(well_image)
 Get pumping sign
 }
 \examples{
+\dontrun{
 get_pumping_sign("Actual")
 get_pumping_sign("Image (+Q)")
 get_pumping_sign("Image (-Q)")
+}
 }
 \keyword{internal}

@@ -18,6 +18,8 @@ get_confined_flowlines(wells, aquifer, nominal_levels = 40,
 Get flowlines in confined aquifer
 }
 \examples{
+\dontrun{
+library(tidyverse)
 # define aquifer
 bounds_df <- data.frame(bound_type=c("NF","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer("confined",1e-3,bounds=bounds_df,h0=100)
@@ -32,5 +34,6 @@ ggplot() +
   geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y),shape=21) +
   geom_path(data=cl0,aes(x,y,color=as.factor(line))) +
   coord_equal()
+}
 }
 \keyword{internal}

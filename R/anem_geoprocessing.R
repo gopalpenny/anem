@@ -58,6 +58,8 @@ prep_bounds_sf <- function(bounds_sf) {
 #' @export
 #' @keywords internal
 #' @examples
+#' \dontrun{
+#' library(tidyverse)
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
@@ -79,6 +81,7 @@ prep_bounds_sf <- function(bounds_sf) {
 #' rect_boundaries4 <- get_rectangle(bounds4)
 #' ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_segment(data=rect_boundaries4,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#' }
 get_rectangle <- function(bounds) {
   is_sf <- max(grepl("sf",class(bounds)))
 
@@ -155,8 +158,10 @@ get_rectangle <- function(bounds) {
 #' Convert bounds object with bID, x1, y1, x2, y2 to sf object
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' bounds <- data.frame(bID=1,x1=1,y1=1,x2=3,y2=3)
-#' #bounds_to_sf(bounds,crs=4326)
+#' bounds_to_sf(bounds,crs=4326)
+#' }
 bounds_to_sf <- function(bounds,crs) {
   bounds_geometry <- bounds %>% tidyr::gather(coord,val,x1,y1,x2,y2) %>%
     dplyr::mutate(axis=substr(coord,1,1),
@@ -180,6 +185,8 @@ bounds_to_sf <- function(bounds,crs) {
 #' are given an id, and there is one row in the output which identifies the opposide bound
 #' (with which there is no intersection).
 #' @examples
+#' \dontrun{
+#' library(tidyverse)
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
 #' quad_vertices <- get_quad_vertices(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
@@ -204,6 +211,7 @@ bounds_to_sf <- function(bounds,crs) {
 #'                     y1=c(4592114, 4630407, 4518117, 4592114),
 #'                     y2=c(4630407, 4556624, 4556624, 4518117))
 #' vertices <- get_quad_vertices(bounds)
+#' }
 get_quad_vertices <- function(bounds) {
   if (max(grepl("sf",class(bounds)))) {
     bounds <- bounds %>% sf::st_set_geometry(NULL)
@@ -301,6 +309,8 @@ get_intersection <- function(m1,b1,m2,b2) {
 #' @param b Intercept of the line (if \code{m} is \code{Inf}, \code{b} should be the x-intercept)
 #' @keywords internal
 #' @examples
+#'
+#' \dontrun{
 #' get_nearest_point_on_boundary(c(1,1),)
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 #' loc <- c(150,150)
@@ -324,6 +334,7 @@ get_intersection <- function(m1,b1,m2,b2) {
 #'    geom_point(data=loc_rep,aes(x,y),color="black")  +
 #'    geom_point(data=nearest,aes(x,y),color="red",alpha=0.5) +
 #'    coord_equal()
+#' }
 get_nearest_point_on_line <- function(loc,m,b) {
   if (max(grepl("data.frame",class(loc)))) {
     x_loc <- loc$x
@@ -419,12 +430,14 @@ get_quad_vertices_wide <- function(bounds) {
 #' Get slope and intercept of a line defined by x1, y1, x2, y2
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' get_slope_intercept(0,0,1,2)
 #' get_slope_intercept(0,-0,2,-1)
 #' get_slope_intercept(0,0,0,3)
 #' get_slope_intercept(0,2,3,2)
 #' get_slope_intercept(1,1,m=-1)
 #' get_slope_intercept(1,1,m=Inf)
+#' }
 get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
   if (is.null(m)) {
     m <- dplyr::if_else(x2==x1, Inf, (y2-y1)/(x2-x1))
@@ -447,6 +460,8 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
 #' @importFrom magrittr %>%
 #' @keywords internal
 #' @examples
+#' \dontrun{
+#' library(tidyverse)
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 #' loc <- c(150,150)
 #' get_distance_to_bounds(loc,bounds)
@@ -458,6 +473,7 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
 #'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_point(data=loc,aes(x,y)) +
 #'   coord_equal()
+#' }
 get_distance_to_bounds <- function(loc,bounds,return_locations=FALSE) {
   if (any(grepl("data.frame",class(loc)))) {
     x_loc <- loc$x
@@ -508,9 +524,11 @@ get_distance_to_bounds <- function(loc,bounds,return_locations=FALSE) {
 #' Test if x is in range [x1,x2]
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' in_range(5,1,4)
 #' in_range(5,6,4)
 #' in_range(1:5,rep(4,5),c(4,4,5,6,7))
+#' }
 in_range <- function(x,x1,x2) {
   x_low <- pmin(x1,x2)
   x_high <- pmax(x1,x2)
@@ -563,12 +581,14 @@ get_edges_from_vertices <- function(vertices) {
 #' is a segment of the rectangle, and the segments are ordered so that
 #' the rectangle is specified as segment 1: p1 --> p2, segment 2: p2 --> p3, etc.
 #' @examples
+#' \dontrun{
 #' edges_user <- data.frame(x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749846,-87.1823783130922),
 #'                  y1=c(41.4427263776721,41.8327350621526,41.1455697310095,40.8512155742825),
 #'                  bID=c(5,6,7,8),
 #'                  x2=c(-86.2150051217412,-85.8522401749846,-87.1823783130922,-87.3802501022322),
 #'                  y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
 #' edges_rect <- get_utm_rectangle(edges_user)
+#' }
 get_utm_rectangle <- function(edges_user) {
 
   edges_sf_wgs <- edges_user %>% tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
@@ -636,9 +656,11 @@ get_utm_rectangle <- function(edges_user) {
 #' @keywords internal
 #' @importFrom magrittr %>%
 #' @examples
+#' \dontrun{
 #' bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
-#' #bounds_sf <- bounds_to_sf(bounds, crs=4326)
-#' #bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
+#' bounds_sf <- bounds_to_sf(bounds, crs=4326)
+#' bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
+#' }
 bounds_to_sf2 <- function(bounds, crs) {
   bounds_linestring <- bounds %>% dplyr::select(-dplyr::matches("^[mb]$")) %>%
     tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
@@ -790,10 +812,12 @@ bounds_sf_to_polygon <- function(bounds_sf) {
 #' line that passes through x, y.
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' get_perpendicular_line(Inf,2,3)
 #' get_perpendicular_line(0,2,3)
 #' get_perpendicular_line(1/2,2,2)
 #' get_perpendicular_line(-2,2,2)
+#' }
 get_perpendicular_line <- function(m,x,y) {
   if (abs(m==Inf)) {
     m_perp <- 0
@@ -816,6 +840,7 @@ get_perpendicular_line <- function(m,x,y) {
 #'the boundaries, returns \code{FALSE}.
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' aquifer <- aquifer_unconfined_example
 #' x <- 100
 #' y <- 100
@@ -828,6 +853,7 @@ get_perpendicular_line <- function(m,x,y) {
 #' x <- rep(500,3)
 #' y <- seq(0,1000,by=500)
 #' check_point_in_aquifer(x,yseq(0,1000,by=500),aquifer)
+#' }
 check_point_in_aquifer <- function(x,y,aquifer) {
   if (any(grepl("sf",class(aquifer$bounds)))) {
     bounds <- aquifer$bounds %>% sf::st_set_geometry(NULL)
@@ -863,6 +889,7 @@ check_point_in_aquifer <- function(x,y,aquifer) {
 #' Returns +1 for any point above the line, -1 for any point below the line, and 0 for a point on the line. If
 #' the line is vertical (m=Inf), returns +1 for points to the right of the line and -1 for points to the left of the line.
 #' @examples
+#' \dontrun{
 #' x <- 100
 #' y <- 100
 #' line <- list(m=Inf,b=2)
@@ -872,6 +899,7 @@ check_point_in_aquifer <- function(x,y,aquifer) {
 #' check_point_side_of_line(list(m=1,b=2),0,0)
 #' check_point_side_of_line(list(m=1,b=2),0,2)
 #' check_point_side_of_line(list(m=1,b=2),0,3)
+#' }
 check_point_side_of_line <- function(line,x,y) {
   if (line$m != Inf) {
     return(sign(y - (line$m * x + line$b)))

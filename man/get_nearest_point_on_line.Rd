@@ -17,6 +17,8 @@ get_nearest_point_on_line(loc, m, b)
 Get nearest point on
 }
 \examples{
+
+\dontrun{
 get_nearest_point_on_boundary(c(1,1),)
 bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
 loc <- c(150,150)
@@ -40,5 +42,6 @@ ggplot() +
    geom_point(data=loc_rep,aes(x,y),color="black")  +
    geom_point(data=nearest,aes(x,y),color="red",alpha=0.5) +
    coord_equal()
+}
 }
 \keyword{internal}

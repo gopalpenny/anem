@@ -26,6 +26,7 @@ run_shiny <- function(shiny_app,display.mode="auto") {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' # using path
 #' app <- import_app_rds("~/Downloads/anem_scenario.rds")
 #'

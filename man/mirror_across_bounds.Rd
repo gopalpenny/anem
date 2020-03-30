@@ -47,6 +47,7 @@ Recursively mirror wells across boundaries
 }
 
 \examples{
+\dontrun{
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 bounds <- data.frame(m=1,b=1,bound_type="CH",bID=1)
 mirror_across_bounds(wells,bounds)
@@ -62,5 +63,6 @@ mirror_across_bounds(wells,bounds)
 bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
 bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
 mirror_across_bounds(well1,bounds)
+}
 }
 \keyword{internal}
