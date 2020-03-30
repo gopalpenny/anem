@@ -38,6 +38,8 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
 #' step is calculated using bilinear interpolation. If a particle is near a source well (i.e., an injection well if \code{reverse = FALSE},
 #' or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisely at that location.
+#'
+#' Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 #' @return
 #' Returns a data.frame containing the time and locations of particle. If \code{loc} is a \code{data.frame},
 #' columns in \code{loc} not named x or y are included in results.
@@ -66,6 +68,9 @@ particle_velocity_m_day <- function(t, loc, params) {
 #'   geom_path(data=particle_path,aes(x,y,color=p)) +
 #'   coord_equal()
 track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, step_dist = "auto", grid_length=200) {
+  if (any(aquifer$recharge$recharge_type == "D")) {
+    stop("track_particles does not function with \"D\" type recharge")
+  }
   # note: use profiling to evaluate code http://adv-r.had.co.nz/Profiling.html
   ca <- check_aquifer(aquifer,standard_columns = c("Ksat","n"))
   if (ca != "Good") {
@@ -311,6 +316,8 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #' @details
 #' Tracking particles are initialized radially around each well at a distance of \code{buff_m}. These particles must be
 #' initialized outside any grid cells that overlap the well, because particle velocities inside this cell will be incorrect.
+#'
+#' Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 #' @examples
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
@@ -328,8 +335,11 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #'   scale_shape_manual(values=c(5,4,3,0,1)) +
 #'   coord_equal()
 get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_particles = 8, buff_m = 20, injection_wells = FALSE, ...) {
+  if (any(aquifer$recharge$recharge_type == "D")) {
+    stop("get_capture_zone does not function with \"D\" type recharge")
+  }
   theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
-  if (wIDs=="all") {
+  if (identical(wIDs,"all")) {
     wIDs <- wells %>% dplyr::filter(well_image=="Actual") %>% dplyr::pull(wID) %>% unique()
   }
   pts <- data.frame(dx = cos(theta), dy = sin(theta)) %>% dplyr::mutate(pID = dplyr::row_number())
