@@ -59,3 +59,4 @@ loc <- expand.grid(x=9:11,y=9:11)
 (d <- get_flow_direction(loc,NULL,aquifer_recharge))
 cbind(loc,d)
 }
+\keyword{internal}

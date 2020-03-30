@@ -9,3 +9,4 @@ get_row_as_vector(df, row = 1)
 \description{
 return the row of a data.frame or tibble as a vector (used for extracting x,y coordinates)
 }
+\keyword{internal}

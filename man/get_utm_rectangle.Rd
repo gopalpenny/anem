@@ -26,3 +26,4 @@ edges_user <- data.frame(x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749
                  y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
 edges_rect <- get_utm_rectangle(edges_user)
 }
+\keyword{internal}

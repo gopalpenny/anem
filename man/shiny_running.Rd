@@ -9,3 +9,4 @@ shiny_running()
 \description{
 Check to see if code is being run in Shiny environment
 }
+\keyword{internal}

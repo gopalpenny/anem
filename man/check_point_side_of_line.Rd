@@ -31,3 +31,4 @@ check_point_side_of_line(list(m=1,b=2),0,0)
 check_point_side_of_line(list(m=1,b=2),0,2)
 check_point_side_of_line(list(m=1,b=2),0,3)
 }
+\keyword{internal}

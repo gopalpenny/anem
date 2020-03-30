@@ -36,3 +36,4 @@ gen_well_image_type(1:8,"Image (+Q)","NF","CH")
 gen_well_image_type(1:8,"Image (-Q)","NF","CH")
 gen_well_image_type(1:8,"Actual","CH","CH")
 }
+\keyword{internal}

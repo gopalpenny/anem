@@ -17,3 +17,4 @@ aquifer2 <- define_aquifer("unconfined",1e-4)
 check_aquifer(aquifer2,c("bounds","Ksat"))
 check_aquifer(aquifer2,c("Ksat"))
 }
+\keyword{internal}

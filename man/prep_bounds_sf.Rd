@@ -15,3 +15,4 @@ outputs a data.frame with all of the attributes and coordinate endpoints as x1, 
 \description{
 Convert boundaries sf object to dataframe, with appropriate column coordinates
 }
+\keyword{internal}

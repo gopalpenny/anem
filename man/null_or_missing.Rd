@@ -9,3 +9,4 @@ null_or_missing(x)
 \description{
 Check for null or missing value in function
 }
+\keyword{internal}

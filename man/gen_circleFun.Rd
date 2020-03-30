@@ -12,3 +12,4 @@ gen_circleFun(circle, npoints = 100)
 \description{
 Generate outline of circle
 }
+\keyword{internal}

@@ -13,3 +13,4 @@ Check that boundaries have slopes that are normal to each other
 check_bounds(tibble(m=c(1,1,-1,-1)))
 check_bounds(tibble(m=c(1,0.9,-1,-1)))
 }
+\keyword{internal}

@@ -9,3 +9,4 @@ get_quad_vertices_wide(bounds)
 \description{
 Get quadrangle vertices in wide format
 }
+\keyword{internal}

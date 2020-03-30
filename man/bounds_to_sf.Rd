@@ -11,5 +11,6 @@ Convert bounds object with bID, x1, y1, x2, y2 to sf object
 }
 \examples{
 bounds <- data.frame(bID=1,x1=1,y1=1,x2=3,y2=3)
-bounds_to_sf(bounds,crs=4326)
+#bounds_to_sf(bounds,crs=4326)
 }
+\keyword{internal}

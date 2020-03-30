@@ -43,3 +43,4 @@ rect_boundaries4 <- get_rectangle(bounds4)
 ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
   geom_segment(data=rect_boundaries4,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 }
+\keyword{internal}

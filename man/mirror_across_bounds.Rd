@@ -63,3 +63,4 @@ bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0
 bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
 mirror_across_bounds(well1,bounds)
 }
+\keyword{internal}

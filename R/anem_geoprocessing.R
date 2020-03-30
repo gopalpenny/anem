@@ -28,6 +28,7 @@ utm_zone_to_proj4 <- function(utm_zone) {
 #' Convert boundaries sf object to dataframe, with appropriate column coordinates
 #'
 #' @param bounds_sf boundaries sf object, with line features (2 end points)
+#' @keywords internal
 #' @return outputs a data.frame with all of the attributes and coordinate endpoints as x1, y1, x2, y2.
 #' @importFrom magrittr %>%
 prep_bounds_sf <- function(bounds_sf) {
@@ -55,6 +56,7 @@ prep_bounds_sf <- function(bounds_sf) {
 #' and short axes of the rectangle (at right angles), then generating lines with these slopes through
 #' the midpoints.
 #' @export
+#' @keywords internal
 #' @examples
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
@@ -151,9 +153,10 @@ get_rectangle <- function(bounds) {
 #' Get bounds as sf object
 #'
 #' Convert bounds object with bID, x1, y1, x2, y2 to sf object
+#' @keywords internal
 #' @examples
 #' bounds <- data.frame(bID=1,x1=1,y1=1,x2=3,y2=3)
-#' bounds_to_sf(bounds,crs=4326)
+#' #bounds_to_sf(bounds,crs=4326)
 bounds_to_sf <- function(bounds,crs) {
   bounds_geometry <- bounds %>% tidyr::gather(coord,val,x1,y1,x2,y2) %>%
     dplyr::mutate(axis=substr(coord,1,1),
@@ -172,6 +175,7 @@ bounds_to_sf <- function(bounds,crs) {
 #' Get the 4 vertices corresponding to quadrangle of 4 lines
 #' @param bounds a data.frame containing 4 lines (rows) defined by bID and x1, y1, x2, y2, or m and b
 #' @importFrom magrittr %>%
+#' @keywords internal
 #' @return Returns a data.frame vertices for each of the 4 bounds. The bounds
 #' are given an id, and there is one row in the output which identifies the opposide bound
 #' (with which there is no intersection).
@@ -254,6 +258,7 @@ get_quad_vertices <- function(bounds) {
 #' If a line has 3 intersection points, the middle one is definitely a vertex
 #' of the quadrangle. If less than 3, then both are intersection points.
 #' Choose the second one.
+#' @keywords internal
 get_point_on_quandrangle <- function(x,y,axis) {
   # if (length(x)>1) {
     vec_order <- order(x)
@@ -294,6 +299,7 @@ get_intersection <- function(m1,b1,m2,b2) {
 #' @param loc Points as \code{c(x,y)} or a \code{data.frame} with columns \code{x} and \code{y}
 #' @param m Slope of the line
 #' @param b Intercept of the line (if \code{m} is \code{Inf}, \code{b} should be the x-intercept)
+#' @keywords internal
 #' @examples
 #' get_nearest_point_on_boundary(c(1,1),)
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
@@ -356,6 +362,7 @@ get_nearest_point_on_line <- function(loc,m,b) {
 #' Generate outline of circle
 #'
 #' @param circle A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional
+#' @keywords internal
 #' @importFrom magrittr %>%
 gen_circleFun <- function(circle, npoints = 100){
   center <- c(circle$x,circle$y)
@@ -377,6 +384,7 @@ gen_circleFun <- function(circle, npoints = 100){
 }
 
 #' Generate an object that acts like a circle
+#' @keywords internal
 gen_circ <- function(x,y,r) {
   return(list(x=x,y=y,r=r))
 }
@@ -398,6 +406,7 @@ gen_circles <- function(df) {
 #' Get quadrangle vertices
 #'
 #' Get quadrangle vertices in wide format
+#' @keywords internal
 get_quad_vertices_wide <- function(bounds) {
   bounds <- get_quad_vertices(bounds) %>% dplyr::filter(!is.na(x)) %>% dplyr::group_by(bID) %>%
     dplyr::mutate(num=rank(intersection_bID)) %>% dplyr::select(-intersection_bID) %>%
@@ -408,6 +417,7 @@ get_quad_vertices_wide <- function(bounds) {
 #' Get slope and intercept
 #'
 #' Get slope and intercept of a line defined by x1, y1, x2, y2
+#' @keywords internal
 #' @examples
 #' get_slope_intercept(0,0,1,2)
 #' get_slope_intercept(0,-0,2,-1)
@@ -435,6 +445,7 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
 #' @param loc Location given as c(x,y) or as data.frame and $x, $y
 #' @param bounds Boundary object with m and b or x1, y1, x2, y2
 #' @importFrom magrittr %>%
+#' @keywords internal
 #' @examples
 #' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 #' loc <- c(150,150)
@@ -495,6 +506,7 @@ get_distance_to_bounds <- function(loc,bounds,return_locations=FALSE) {
 #' Test if x is in range
 #'
 #' Test if x is in range [x1,x2]
+#' @keywords internal
 #' @examples
 #' in_range(5,1,4)
 #' in_range(5,6,4)
@@ -517,6 +529,7 @@ in_range <- function(x,x1,x2) {
 #' @return
 #' This function returns bounds object from x, y vertices, with bID 1:4
 #' @importFrom magrittr %>%
+#' @keywords internal
 #' @export
 #' @examples
 #' vertices <- data.frame(x=c(0,1),y=c(0,1),bID=1:2)
@@ -544,6 +557,7 @@ get_edges_from_vertices <- function(vertices) {
 #' Transform quadrangle (in WGS coordinates) to UTM coordinates,
 #' then convert to a rectangle, then transform back to WGS.
 #' @param edges_user A data.frame with 4 rows and columns x1, y1, x2, y2, and bID
+#' @keywords internal
 #' @return
 #' Returns a data.frame with 4 rows representing a rectangle. Each row
 #' is a segment of the rectangle, and the segments are ordered so that
@@ -619,11 +633,12 @@ get_utm_rectangle <- function(edges_user) {
 #' @param crs crs object for sf package
 #' @return
 #' returns object
+#' @keywords internal
 #' @importFrom magrittr %>%
 #' @examples
 #' bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
-#' bounds_sf <- bounds_to_sf(bounds, crs=4326)
-#' bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
+#' #bounds_sf <- bounds_to_sf(bounds, crs=4326)
+#' #bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
 bounds_to_sf2 <- function(bounds, crs) {
   bounds_linestring <- bounds %>% dplyr::select(-dplyr::matches("^[mb]$")) %>%
     tidyr::gather(coord,val,dplyr::matches("[xy][12]")) %>%
@@ -739,6 +754,7 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
 #' Convert bounds as sf object to polygon
 #' @param bounds_sf An sf object containing 4 line segments that meet at the ends to
 #'   form a polygon
+#' @keywords internal
 bounds_sf_to_polygon <- function(bounds_sf) {
   bounds_sf %>% dplyr::mutate(L1=row_number())
 
@@ -772,6 +788,7 @@ bounds_sf_to_polygon <- function(bounds_sf) {
 #' @return
 #' Returns a list containing $m and $b, the slope and intercept of a perpendicular
 #' line that passes through x, y.
+#' @keywords internal
 #' @examples
 #' get_perpendicular_line(Inf,2,3)
 #' get_perpendicular_line(0,2,3)
@@ -797,6 +814,7 @@ get_perpendicular_line <- function(m,x,y) {
 #' @return
 #' Function returns \code{TRUE} if the point is inside aquifer boundaries or on the boundary. If the point is outside
 #'the boundaries, returns \code{FALSE}.
+#' @keywords internal
 #' @examples
 #' aquifer <- aquifer_unconfined_example
 #' x <- 100
@@ -840,6 +858,7 @@ check_point_in_aquifer <- function(x,y,aquifer) {
 #' @param x x coordinates
 #' @param y y coordinates
 #' @param line list containing m and m
+#' @keywords internal
 #' @return
 #' Returns +1 for any point above the line, -1 for any point below the line, and 0 for a point on the line. If
 #' the line is vertical (m=Inf), returns +1 for points to the right of the line and -1 for points to the left of the line.

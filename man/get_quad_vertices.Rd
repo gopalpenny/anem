@@ -43,3 +43,4 @@ bounds <-data.frame(bID=c(5, 6, 7, 8),
                     y2=c(4630407, 4556624, 4556624, 4518117))
 vertices <- get_quad_vertices(bounds)
 }
+\keyword{internal}

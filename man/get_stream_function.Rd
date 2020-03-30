@@ -54,3 +54,4 @@ ggplot() +
   theme(legend.position=c(0.8,0.1),legend.title=element_blank()) +
   coord_equal()
 }
+\keyword{internal}

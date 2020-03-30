@@ -19,6 +19,7 @@ Get sf object from boundaries
 }
 \examples{
 bounds <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
-bounds_sf <- bounds_to_sf(bounds, crs=4326)
-bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
+#bounds_sf <- bounds_to_sf(bounds, crs=4326)
+#bounds_sf <- use_anem_function("bounds_to_sf",bounds=bounds,crs=4326)
 }
+\keyword{internal}

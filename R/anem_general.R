@@ -3,6 +3,8 @@
 #' Is shiny running?
 #'
 #' Check to see if code is being run in Shiny environment
+#'
+#' @keywords internal
 shiny_running <- function() {
   # Look for `runApp` call somewhere in the call stack.
   frames = sys.frames()

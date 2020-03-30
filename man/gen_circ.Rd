@@ -9,3 +9,4 @@ gen_circ(x, y, r)
 \description{
 Generate an object that acts like a circle
 }
+\keyword{internal}

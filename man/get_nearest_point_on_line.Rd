@@ -41,3 +41,4 @@ ggplot() +
    geom_point(data=nearest,aes(x,y),color="red",alpha=0.5) +
    coord_equal()
 }
+\keyword{internal}

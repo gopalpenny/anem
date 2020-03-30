@@ -14,3 +14,4 @@ get_pumping_sign("Actual")
 get_pumping_sign("Image (+Q)")
 get_pumping_sign("Image (-Q)")
 }
+\keyword{internal}

@@ -33,3 +33,4 @@ ggplot() +
   geom_path(data=cl0,aes(x,y,color=as.factor(line))) +
   coord_equal()
 }
+\keyword{internal}

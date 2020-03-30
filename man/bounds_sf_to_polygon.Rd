@@ -13,3 +13,4 @@ form a polygon}
 \description{
 Convert bounds as sf object to polygon
 }
+\keyword{internal}

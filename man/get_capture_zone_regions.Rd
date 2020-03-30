@@ -20,3 +20,4 @@ Get well capture zone regions
   \item "smoothed": Returns a data.frame with smoothed path intersecting the \code{endpoints}
 }
 }
+\keyword{internal}

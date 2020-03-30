@@ -86,6 +86,7 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #' }
 #' @return
 #' Returns hydraulic head (confined aquifers) or discharge potential (unconfined aquifers) at the location(s).
+#' @keywords internal
 #' @examples
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,2),flow=1,x0=0,y0=0)
@@ -157,6 +158,7 @@ get_recharge_flow_potential <- function(loc, aquifer) {
 #' }
 #' @return
 #' Returns hydraulic head (confined aquifers) or discharge potential (unconfined aquifers) at the location(s).
+#' @keywords internal
 #' @examples
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,sqrt(3)),flow_main=1,flow_opp=2,x0=0,y0=0)

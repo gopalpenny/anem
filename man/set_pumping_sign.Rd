@@ -17,3 +17,4 @@ set_pumping_sign("Image (+Q)","CH")
 set_pumping_sign("Image (-Q)","NF")
 set_pumping_sign("Image (-Q)","CH")
 }
+\keyword{internal}

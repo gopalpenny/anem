@@ -77,6 +77,7 @@ get_drawdown_relationships <- function(wells,aquifer,group_column,weights_column
 #'
 #' The unit pumping at the pumping wells is weighted by values in weights_column for the pump_group.
 #' The average drawdown is also weighted by values in weights_column, for the loc_group.
+#' @keywords internal
 #' @examples
 #' # define aquifer
 #' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -229,6 +230,7 @@ get_gridded_hydrodynamics <- function(wells,aquifer,head_dim=c(20,20),flow_dim=c
 #' @param function_name Name of function to use, as a string
 #' @param ... Named inputs to each function
 #' @export
+#' @keywords internal
 #' @examples
 #' # get_utm_rectangle()
 #' edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
@@ -263,6 +265,7 @@ use_anem_function <- function(function_name,...) {
 }
 
 #' Check for null or missing value in function
+#' @keywords internal
 null_or_missing <- function(x) {
   if (missing(x)) {
     return(TRUE)

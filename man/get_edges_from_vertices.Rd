@@ -26,3 +26,4 @@ get_edges_from_vertices(vertices)
 vertices <- data.frame(x=c(0,0,1,1),y=c(0,1,1,0),bID=1:4)
 get_edges_from_vertices(vertices)
 }
+\keyword{internal}

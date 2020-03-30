@@ -6,6 +6,7 @@
 #' @param t time -- necessary for deSolve radau
 #' @param loc loc as c(x,y)
 #' @param params params for radau -- must included $wells, $aquifer$Ksat, $n, $direction (+1 or -1 for reverse)
+#' @keywords internal
 #' @return
 #' Returns the velocity of the particle in m/day
 particle_velocity_m_day <- function(t, loc, params) {
@@ -243,6 +244,7 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 #' @param wells Wells object
 #' @param aquifer Aquifer object
 #' @param flow_dim Dimensions for generating raster for generating flowlines
+#' @keywords internal
 #' @examples
 #' # define aquifer
 #' bounds_df <- data.frame(bound_type=c("NF","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
@@ -378,6 +380,7 @@ get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_partic
 #'
 #' Get well capture zone regions
 #' @param type specifies which results to return. One of \code{"all"}, \code{"paths"}, \code{"endpoints"}, or \code{"smoothed"}. See details.
+#' @keywords internal
 #' @details
 #' \itemize{
 #'   \item "all": Returns a list containing all three named objects described below.
@@ -412,6 +415,7 @@ get_capture_zone_regions <- function(particle_paths, aquifer, ...) {
 #' Get angle from x, y
 #'
 #' Get angle from x,y
+#' @keywords internal
 #' @examples
 #' get_theta(-1,0)
 #' get_theta(1,0)

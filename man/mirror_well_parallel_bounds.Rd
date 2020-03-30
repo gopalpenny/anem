@@ -68,3 +68,4 @@ ggplot(images) +
   scale_shape_manual(values=21:23) +
   coord_equal()
 }
+\keyword{internal}

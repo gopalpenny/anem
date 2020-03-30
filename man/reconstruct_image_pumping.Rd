@@ -29,3 +29,4 @@ image_wells_image_NA <- image_wells \%>\%
 image_wells_reconstructed <- reconstruct_image_pumping(image_wells_image_NA)
 identical(image_wells,image_wells_reconstructed)
 }
+\keyword{internal}

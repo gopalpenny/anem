@@ -14,3 +14,4 @@ in_range(5,1,4)
 in_range(5,6,4)
 in_range(1:5,rep(4,5),c(4,4,5,6,7))
 }
+\keyword{internal}

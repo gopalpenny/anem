@@ -53,6 +53,7 @@ get_ROI <- function(..., method) {
 #' Get row of a data.frame as a vector
 #'
 #' return the row of a data.frame or tibble as a vector (used for extracting x,y coordinates)
+#' @keywords internal
 get_row_as_vector <- function(df,row=1) {
   return(df %>% dplyr::slice(row) %>% unlist(.,use.names = FALSE))
 }
@@ -356,6 +357,7 @@ get_potential_differential <- function(loc, wells, aquifer) {
 #'   Note: if the \code{loc} is contained within the diameter of a well, the distance between the location
 #'   and that well is automatically adjusted to the edge of the well screen (i.e., well$diam/2). Similar any well-location
 #'   distance that exceeds the radius of influence of the well, R, is set equal to R
+#' @keywords internal
 #' @examples
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 #' aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
@@ -497,6 +499,7 @@ get_flowdir_raw <- function(loc, wells, aquifer) {
 #'   The streamfunction will have multiple values for \eqn{\theta=\pi=-\pi} for each well. The
 #'   flow net at any location is then the sum of the stream functions for all wells.
 #' @export
+#' @keywords internal
 #' @examples
 #' # Create a grid of locations
 #' loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))

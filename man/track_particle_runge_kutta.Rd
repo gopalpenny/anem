@@ -72,3 +72,4 @@ particle_path[nrow(particle_path),]
 system.time(particle_path <- track_particle(c(900,50), wells, aquifer))
 particle_path[nrow(particle_path),]
 }
+\keyword{internal}

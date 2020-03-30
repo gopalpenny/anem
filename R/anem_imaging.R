@@ -18,6 +18,7 @@
 #'   the following columns: x, y, Q, diam, path, orig_wID, transform
 #'   (boundary type),
 #'   source_bound
+#' @keywords internal
 #' @importFrom magrittr %>%
 #' @examples
 #' well <- define_wells(wID=1,x=0,y=0,path=1,orig_wID=1)
@@ -124,6 +125,7 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #'   column of identifiers, wID. If it is not present, the function generates
 #'   them. The image well wID's are always generated automatically. not present.
 #' @importFrom magrittr %>%
+#' @keywords internal
 #' @examples
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 #' bounds <- data.frame(m=1,b=1,bound_type="CH",bID=1)
@@ -364,6 +366,7 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 #'   column of identifiers, wID. If it is not present, the function generates
 #'   them. The image well wID's are always generated automatically. not present.
 #' @importFrom magrittr %>%
+#' @keywords internal
 #' @examples
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 #' bounds <- data.frame(m=1,b=1,bound_type="NF",bID=1)
@@ -497,6 +500,7 @@ mirror_well_parallel_bounds <- function(wells,bounds,num_levels=NULL,first_mirro
 #' @return A tibble containing wells where Image wells contain pumping rates similar to
 #' generate_image_wells.
 #' @export
+#' @keywords internal
 #' @examples
 #' well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)
@@ -520,6 +524,7 @@ reconstruct_image_pumping <- function(image_wells) {
 
 #' Get pumping sign
 #'
+#' @keywords internal
 #' @examples
 #' get_pumping_sign("Actual")
 #' get_pumping_sign("Image (+Q)")
@@ -536,6 +541,7 @@ get_pumping_sign <- function(well_image) {
 #' Get pumping sign
 #'
 #' Get sign of pumping relative to pumping of Actual well (associated by orig_wID)
+#' @keywords internal
 #' @examples
 #' set_pumping_sign("Actual","NF")
 #' set_pumping_sign("Actual","CH")
@@ -570,6 +576,7 @@ set_pumping_sign <- function(well_image,bound_type,type="text") {
 #' @param well_image Character vector of well_image ("Actual", "Image (+Q)", or "Image (-Q)")
 #' @param bound_type1 Character vector of bound_type for first mirror boundary ("CH" or "NF")
 #' @param bound_type2 Character vector of bound_type for second mirror boundary ("CH" or "NF")
+#' @keywords internal
 #' @examples
 #' gen_well_image_type(N=rep(1:2,2),well_image=rep("Actual",4),
 #'   bound_type1=c("NF","NF","CH","CH"),bound_type2=c("CH","CH","NF","NF"))

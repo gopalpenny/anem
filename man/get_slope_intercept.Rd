@@ -17,3 +17,4 @@ get_slope_intercept(0,2,3,2)
 get_slope_intercept(1,1,m=-1)
 get_slope_intercept(1,1,m=Inf)
 }
+\keyword{internal}

@@ -14,3 +14,4 @@ If a line has 3 intersection points, the middle one is definitely a vertex
 of the quadrangle. If less than 3, then both are intersection points.
 Choose the second one.
 }
+\keyword{internal}

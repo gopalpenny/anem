@@ -16,3 +16,4 @@ check_wells(wells)
 check_wells(wells,c("R"))
 check_wells(wells,c("R","Q","well_type"))
 }
+\keyword{internal}

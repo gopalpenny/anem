@@ -19,3 +19,4 @@ Returns the velocity of the particle in m/day
 \description{
 Get particle velocity, in m/day
 }
+\keyword{internal}

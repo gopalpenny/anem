@@ -4,6 +4,7 @@
 #'
 #' Get segment sequence
 #' @param segment A list containing x1, y1, x2, y2, and sID
+#' @keywords internal
 #' @examples
 #' get_segment_seq(list(sID=1,x1=0,y1=0,x2=1,y2=1),length.out=5)
 get_segment_seq <- function(segment,length.out=10) {
@@ -197,6 +198,7 @@ get_unit_norm <- function(m,axis) {
     stop("specify axis as x or y")
   }
 }
+
 #' Plot behavior on boundaries
 #'
 #' Plot behavior on boundaries with and without well images
@@ -277,6 +279,7 @@ plot_bounds_behavior <- function(well_images,aquifer,length.out=100) {
 
 #' Check aquifer properties
 #'
+#' @keywords internal
 #' @examples
 #' aquifer <- define_aquifer("confined",1e-4)
 #' check_aquifer(aquifer)
@@ -308,6 +311,7 @@ check_aquifer <- function(aquifer,standard_columns=NULL) {
 #' Check boundaries
 #'
 #' Check that boundaries have slopes that are normal to each other
+#' @keywords internal
 #' @examples
 #' check_bounds(tibble(m=c(1,1,-1,-1)))
 #' check_bounds(tibble(m=c(1,0.9,-1,-1)))
@@ -337,6 +341,7 @@ check_rectangle <- function(rect) {
 #' Check wells
 #'
 #' Check that wells have standard columns and that specified columns have no NA values
+#' @keywords internal
 #' @examples
 #' wells_df <- data.frame(R=1:10,Q=NA,x=10:1,y=1:10,image=NA,diam=NA)
 #' wells <- define_wells(wells_df)

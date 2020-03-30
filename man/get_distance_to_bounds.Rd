@@ -28,3 +28,4 @@ ggplot(bounds) +
   geom_point(data=loc,aes(x,y)) +
   coord_equal()
 }
+\keyword{internal}

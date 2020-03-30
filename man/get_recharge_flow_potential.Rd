@@ -55,3 +55,4 @@ loc$h2 <- get_recharge_flow_potential(loc, aquifer)
 loc <- loc \%>\% dplyr::mutate(h=sqrt(h2))
 ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2(midpoint=50)
 }
+\keyword{internal}
