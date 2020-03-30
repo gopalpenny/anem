@@ -87,3 +87,97 @@ And for unconfined aquifers, remember $\partial \phi/\partial x = 2 h \partial h
 \frac{\partial h}{\partial x} &= \frac{f_x'}{2 h} \\
 \frac{\partial h}{\partial y} &= \frac{f_y'}{2 h}
 \end{align}
+
+## Time integration for a particle and single well in confined aquifer
+
+Assume the particle begins at $(x,y,t)=(x_0,0,0)$ and moving away from an injection well located at $(x,y)=(x_i,0)$.
+
+$$\frac{dh}{dx} = -\frac{Q}{2 \pi k z_0} \frac{1}{x-x_i}$$
+
+The velocity of a particle is (remember $Q>0$ represents an injection well)
+
+\begin{align}
+v &= \frac{q}{n} \\
+&= -\frac{1}{n} k \frac{dh}{dx} \\
+&= \frac{1}{n} k \frac{Q}{2 \pi k z_0} \frac{1}{x-x_i}
+\end{align}
+
+\begin{align}
+x(t+\Delta t) &= x(t) + v(x,t)\Delta t \\
+\lim_{\Delta t \to 0}\frac{x(t+\Delta t) - x(t)}{\Delta(t)} &= \lim_{\Delta t \to 0} v(x,t) \\
+\frac{dx}{dt} &= v(x,t) = \frac{Q}{2 \pi n z_0} \frac{1}{x-x_i} \\
+\int_{x_0}^x (x-x_i) dx &= \int_0^t \frac{Q}{2 \pi n z_0} dt \\
+\frac{x^2}{2}-x_ix \,\big\rvert_{x_0}^x &= \frac{Q}{2 \pi n z_0} t \,\big\rvert_{0}^t \\
+\frac{1}{2}(x^2-x_0^2)-x_i(x-x_0) &= \frac{Q}{2 \pi n z_0} t
+\end{align}
+
+Assuming $x_i=0$, we get:
+
+\begin{align}
+x^2 &= \frac{Q}{\pi n z_0} t + x_0^2 \\
+x &= \sqrt{\frac{Qt}{\pi n z_0} + x_0^2}
+\end{align}
+
+```{r}
+library(anem)
+library(magrittr)
+library(ggplot2)
+wells <- data.frame(x=0,y=0,Q=1,diam=1,R=1000) %>% define_wells()
+bounds_df <- data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(-100,500,1000,-500))
+aquifer <- define_aquifer(Ksat=1,n=0.3,z0=10,h0=0,aquifer_type="confined",bounds=bounds_df)
+x0 <- 10
+particle <- track_particles(c(x0,0),wells,aquifer,step_dist=2,grid_length = 500) %>% dplyr::rename(x_num=x)
+particle <- particle %>% 
+  dplyr::mutate(x_eqn=sqrt(wells$Q*time_days*3600*24/(pi*aquifer$n*aquifer$z0)+x0^2),
+                pct_diff=(x_num-x_eqn)/x_eqn * 100)
+
+particle %>% dplyr::filter(x_num<1000) %>% 
+  tidyr::gather(var,x,x_num,x_eqn,pct_diff) %>% 
+ggplot() + 
+  geom_line(aes(time_days,x,color=var,linetype=var),size=1.5) + facet_wrap(~type,ncol=1,scales="free_y")
+
+
+x0 <- 10
+particle2 <- track_particles(c(x0,0),wells,aquifer,step_dist=20,grid_length = 100) %>% dplyr::rename(x_num=x)
+particle2 <- particle2%>% 
+  dplyr::mutate(x_eqn=sqrt(wells$Q*time_days*3600*24/(pi*aquifer$n*aquifer$z0)+x0^2),
+                pct_diff=(x_num-x_eqn)/x_eqn * 100)
+
+particle2 %>% 
+  dplyr::filter(x_num<1000) %>% 
+  tidyr::gather(var,x,x_num,x_eqn,pct_diff) %>% 
+  dplyr::mutate(type=ifelse(grepl("x",var),"x","pct_diff")) %>%
+ggplot() + 
+  geom_line(aes(time_days,x,color=var,linetype=var),size=1) + facet_wrap(~type,ncol=1,scales="free_y")
+```
+
+## Time integration for a particle and single well in unconfined aquifer
+
+Assume the particle begins at $(x,y,t)=(x_0,0,0)$ and moving away from an injection well located at $(x,y)=(0,0)$.
+
+\begin{align}
+h^2 - h_0^2 &= -\frac{Q}{\pi k} \log \left( \frac{x}{R} \right) \\
+h &= \sqrt{-\frac{Q}{\pi k} \log \left( \frac{x}{R} \right) + h_0^2}
+\end{align}
+
+$$\frac{dh}{dx} = -\frac{Q}{2 \pi  k x \sqrt{h_0^2-\frac{Q \log \left(\frac{x}{R}\right)}{\pi  k}}}$$
+<!-- $$\frac{dh}{dx} = -Q (2 \pi  k x)^{-1} \Bigg[h_0^2-\frac{Q \log \left(\frac{x}{R}\right)}{\pi  k}\Bigg]^{-\frac{1}{2}}$$ -->
+
+The velocity of a particle is (remember $Q>0$ represents an injection well)
+
+\begin{align}
+v &= \frac{q}{n} \\
+&= -\frac{1}{n} k \frac{dh}{dx} \\
+&= \frac{Q}{2 \pi n x \sqrt{h_0^2-\frac{Q \log \left(\frac{x}{R}\right)}{\pi  k}}}
+\end{align}
+
+\begin{align}
+x(t+\Delta t) &= x(t) + v(x,t)\Delta t \\
+\lim_{\Delta t \to 0}\frac{x(t+\Delta t) - x(t)}{\Delta(t)} &= \lim_{\Delta t \to 0} v(x,t) \\
+\frac{dx}{dt} &= v(x,t) = \frac{Q}{2 \pi n x \sqrt{h_0^2-\frac{Q \log \left(\frac{x}{R}\right)}{\pi  k}}} \\
+\int_{x_0}^x x \sqrt{h_0^2-\frac{Q \log \left(\frac{x}{R}\right)}{\pi  k}} dx &= \int_0^t \frac{Q}{2 \pi n} dt
+\end{align}
+
+This integral is a bit too gnarly. I tried in Mathematica and got some complicated results.
+
+<!-- Mathematica code: FullSimplify[Integrate[x Sqrt[h0^2-(Q Log[x/R])/(k pi)],x],x>0 && x el Reals && x < R] -->

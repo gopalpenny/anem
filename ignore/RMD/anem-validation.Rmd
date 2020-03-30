@@ -201,3 +201,85 @@ get_potential_differential(loc[loc$pID==3,],well,aquifer_uconfined)
 
 In this last case, the observation location is within the radius of the well casing, which means that the effect of the co-located well is measured a distance of $r=diam/2=0.5$. In this case, the results are also valid.
 
+## Particle tracking in a confined aquifer
+
+Particle tracking performs better when particles are far away from wells. Close to wells the velocity changes quickly such that the numerical tracking routine does relatively poorly in this region.
+
+Track a particle starting at $(x,y)=(10,0)$ moving away from an injection well at $(x,y)=(0,0)$. The grid cell size (x-direction) is 2.2 m with a step distance of 2 m.
+
+```{r fig.width=5}
+wells <- data.frame(x=0,y=0,Q=1,diam=1,R=1000) %>% define_wells()
+bounds_df <- data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(-100,500,1000,-500))
+aquifer <- define_aquifer(Ksat=1,n=0.3,z0=10,h0=0,aquifer_type="confined",bounds=bounds_df)
+x0 <- 10
+particle <- track_particles(c(x0,0),wells,aquifer,step_dist=2,grid_length = 500) %>% rename(x_num=x)
+particle <- particle %>% 
+  mutate(x_eqn=sqrt(wells$Q*time_days*3600*24/(pi*aquifer$n*aquifer$z0)+x0^2),
+                pct_diff=(x_num-x_eqn)/x_eqn * 100)
+```
+
+
+```{r fig.width=5,echo=FALSE}
+particle %>% filter(x_num<1000) %>% 
+  gather(var,x,x_num,x_eqn,pct_diff) %>% 
+  mutate(type=ifelse(grepl("x",var),"x","pct_diff")) %>%
+ggplot() + 
+  geom_line(aes(time_days,x,color=var,linetype=var),size=1.5) + 
+  facet_wrap(~type,ncol=1,scales="free_y",strip.position = "left") + 
+  theme(strip.placement = "outside",strip.background = element_rect(fill=NA),
+        axis.title.y=element_blank())
+
+```
+
+Track a particle starting at $(x,y)=(10,0)$ moving away from an injection well at $(x,y)=(0,0)$. The grid size is 11 m with a step distance of 20 m.
+
+```{r fig.width=5}
+x0 <- 10
+particle2 <- track_particles(c(x0,0),wells,aquifer,step_dist=20,grid_length = 100) %>% rename(x_num=x)
+particle2 <- particle2%>% 
+  mutate(x_eqn=sqrt(wells$Q*time_days*3600*24/(pi*aquifer$n*aquifer$z0)+x0^2),
+                pct_diff=(x_num-x_eqn)/x_eqn * 100)
+```
+
+
+```{r fig.width=5,echo=FALSE}
+particle2 %>% 
+  filter(x_num<1000) %>% 
+  gather(var,x,x_num,x_eqn,pct_diff) %>% 
+  mutate(type=ifelse(grepl("x",var),"x","pct_diff")) %>%
+ggplot() + 
+  geom_line(aes(time_days,x,color=var,linetype=var),size=1) + 
+  facet_wrap(~type,ncol=1,scales="free_y",strip.position = "left") + 
+  theme(strip.placement = "outside",strip.background = element_rect(fill=NA),
+        axis.title.y=element_blank())
+```
+
+## Particle tracking in an unconfined aquifer
+
+I was unable to derive an equation for particle location in an unconfined aquifer. The integral of $dx/dt$ was quite gnarly. Instead, I compare the results of an unconfined aquifer with the theoretical results from a confined aquifer.
+
+In this case with an initial undisturbed aquifer depth of 100 m, large $K_{sat}=1$ m s^-1^, and small pumping ($Q=0.001$ cumec), the comparison looks quite good when simulated over 5 years.
+
+
+```{r fig.width=5}
+wells2 <- data.frame(x=0,y=0,Q=0.001,diam=1,R=1000) %>% define_wells()
+aquifer_un <- define_aquifer(Ksat=1,n=0.3,h0=100,aquifer_type="unconfined",bounds=bounds_df)
+x0 <- 10
+particle_un <- track_particles(c(x0,0),wells2,aquifer_un,step_dist=2,grid_length = 500,t_max = 365*5) %>% rename(x_num=x)
+particle_un <- particle_un %>% 
+  mutate(x_eqn=sqrt(wells2$Q*time_days*3600*24/(pi*aquifer_un$n*aquifer_un$h0)+x0^2),
+                pct_diff=(x_num-x_eqn)/x_eqn * 100)
+```
+
+
+```{r fig.width=5,echo=FALSE}
+particle_un %>% filter(x_num<1000) %>% 
+  gather(var,x,x_num,x_eqn,pct_diff) %>% 
+  mutate(type=ifelse(grepl("x",var),"x","pct_diff")) %>%
+ggplot() + 
+  geom_line(aes(time_days,x,color=var,linetype=var),size=1.5) + 
+  facet_wrap(~type,ncol=1,scales="free_y",strip.position = "left") + 
+  theme(strip.placement = "outside",strip.background = element_rect(fill=NA),
+        axis.title.y=element_blank())
+
+```
