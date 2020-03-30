@@ -43,6 +43,8 @@ Particle tracking continues as long as:
 The domain is discretized and velocities are calculated on a 200 x 200 grid. The instantaneous velocity for each time
 step is calculated using bilinear interpolation. If a particle is near a source well (i.e., an injection well if \code{reverse = FALSE},
 or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisely at that location.
+
+Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 }
 \examples{
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))

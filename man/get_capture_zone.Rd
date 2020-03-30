@@ -30,6 +30,8 @@ Get the capture zone for one or more wells
 \details{
 Tracking particles are initialized radially around each well at a distance of \code{buff_m}. These particles must be
 initialized outside any grid cells that overlap the well, because particle velocities inside this cell will be incorrect.
+
+Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 }
 \examples{
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
