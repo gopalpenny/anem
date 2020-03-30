@@ -227,7 +227,7 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' }
 #' }
 #' }
-#' @section Potential future implementation
+#' @section Potential future implementation:
 #' \describe{
 #' \item{Head boundaries, "H"}{This is not yet implemented. It would allow the head profile to be specified by 2 or 3 points,
 #' where the result is steady uniform flow determined by the hydraulic gradient between head at the \code{recharge_vector}

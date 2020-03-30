@@ -93,6 +93,23 @@ The function returns a list of named parameters including:
 }
 }
 }
+\section{Potential future implementation}{
+
+\describe{
+\item{Head boundaries, "H"}{This is not yet implemented. It would allow the head profile to be specified by 2 or 3 points,
+where the result is steady uniform flow determined by the hydraulic gradient between head at the \code{recharge_vector}
+origin and head at the other 1 (or 2) point(s). Note that \code{aquifer$h0} is ignored with this option.
+This \code{recharge_type} requires parameters:
+\itemize{
+\item \code{h1}: Hydraulic head at \code{x1, y1}
+\item \code{h2}: Hydraulic head at \code{x2, y2}
+\item \code{x3, y3, h3}: Optional coordinate location \code{x3, y3} and hydraulic head \code{h3} at a third point.
+If this is specified, there will be a watershed divide
+}
+}
+}
+}
+
 \examples{
 aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
 recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
