@@ -42,7 +42,7 @@ loc <- tidyr::crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=
 
 # Constant head boundary
 wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
-aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0)
+aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0,n=0.35)
 constant_head_boundary <- loc %>%
   dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
   dplyr::bind_cols(head=get_hydraulic_head(loc,wells_constant_head,aquifer))
@@ -91,6 +91,7 @@ Aquifers in this package are characterized by:
 * Saturated hydraulic conductivity, Ksat
 * Resting hydraulic head, h0
 * Thickness of the aquifer, z0 (confined aquifers only)
+* Porosity of the aquifer, n
 * Aquifer boundaries, characterized by:
   + Boundary ID, or bID
   + Coordinates in a cartesian plane, given as slope, m, and intercept, b, and coordinates (x1, y1, x2, y2)
@@ -102,7 +103,7 @@ Use the `define_aquifer()` function to create a new aquifer, which has the class
 ```{r}
 # define aquifer
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
+aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100,n=0.35)
 print(aquifer_unconfined)
 ```
 
@@ -138,7 +139,7 @@ Plot the aquifer and wells.
 
 ```{r set_simple_wells}
 ggplot() +
-  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +
   geom_point(data=wells_actual,aes(x,y,fill=country),shape=21) +
   coord_equal()
@@ -168,7 +169,7 @@ ggplot() +
   geom_contour(data=gridded_1$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
   geom_segment(data=gridded_1$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
-  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
   coord_equal()
 ```
@@ -211,7 +212,7 @@ recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),
 
 # Define bounds as "PB" -- pervious bounds, which have no effect (other than to define output grid)
 bounds_recharge <- define_bounds(data.frame(bound_type=rep("PB",4),m=c(Inf,0,Inf,0),b=c(0,0,1000,1000)))
-aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params,bounds=bounds_recharge)
+aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,n=0.35,recharge=recharge_params,bounds=bounds_recharge)
 gridded_2 <- get_gridded_hydrodynamics(wells_actual,aquifer_recharge,c(20,20),c(8,8))
 ```
 
@@ -223,14 +224,34 @@ ggplot() +
   geom_contour(data=gridded_2$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
   geom_segment(data=gridded_2$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
-  geom_segment(data=aquifer_recharge$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
+  geom_segment(data=aquifer_recharge$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   geom_point(data=wells_actual,aes(x,y),shape=21) +
   coord_equal()
 ```
 
 ### Particle tracking
 
-The package implements particle tracking in two ways: (1) tracking individual particles using `track_particles` and (2) estimating capture zones of wells using `get_capture_zone`, which initializes particles in the vicinity of wells and tracks them in reverse. See the help files for each function for more details.
+The package implements particle tracking in two ways: (1) tracking individual particles using `track_particles` and (2) estimating capture zones of wells using `get_capture_zone`, which initializes particles in the vicinity of wells and tracks them in reverse. Here we use `get_capture_zone` on the previous aquifer to generate particle tracking away from wells.
+
+```{r}
+# wells <- wells
+# wells[4,"Q"] <- 0.25
+well_particles <- get_capture_zone(wells,aquifer_unconfined,t_max=365,n_particles=4)
+```
+
+```{r}
+gridded_3 <- get_gridded_hydrodynamics(wells,aquifer_unconfined)
+ggplot() +
+  geom_raster(data=gridded_1$head,aes(x,y,fill=head_m)) +
+  geom_contour(data=gridded_1$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
+  # geom_segment(data=gridded_1$flow,aes(x,y,xend=x2,yend=y2),
+  #              arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
+  geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
+  geom_path(data=well_particles,aes(x,y,group=i,color=as.factor(wID)),show.legend = FALSE) +
+  geom_point(data=wells_actual,aes(x,y,color=as.factor(wID)),shape=21,show.legend = FALSE) +
+  coord_equal()
+```
+
 
 ### Integrating with anem-app
 
