@@ -162,3 +162,18 @@ test_that("gen_well_image_type works for NF, CH boundary",{
   expect_equal(gen_well_image_type(N=rep(1:5,each=2),well_image=rep("Image (-Q)",10),
                                    bound_type1=c(rep("NF",10)),bound_type2=c(rep("CH",10)))$sign,rep(c(-1,1,1,-1,-1),each=2))
 })
+
+
+# CODE FOR TESTING DIFFERENT IMAGING SCHEME
+# tstart <- Sys.time()
+# myfunc <- function(N,group_imaging) {
+#   for (i in 1:N) {
+#     generate_image_wells(wells,bounds,group_imaging=group_imaging)
+#   }
+# }
+# system.time(myfunc(5,TRUE))
+# system.time(myfunc(5,FALSE))
+#
+# wells <- define_wells(x=rnorm(20),y=rnorm(20),Q=20,R=100,diam=1)
+# system.time(generate_image_wells(wells,bounds,group_imaging=TRUE))
+# system.time(generate_image_wells(wells,bounds,group_imaging=FALSE))
