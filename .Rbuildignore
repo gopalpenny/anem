@@ -6,3 +6,4 @@
 ^rsconnect$
 ^ignore$
 ^\.travis\.yml$
+^example_scenarios$
