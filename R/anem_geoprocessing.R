@@ -285,9 +285,12 @@ get_point_on_quandrangle <- function(x,y,axis) {
 #'
 #' Get intersection of two lines specified by slope m and intercept, b
 #' @examples
+#' @keywords internal
+#' \dontrun{
 #' get_intersection(1,0,-1,2)
 #' get_intersection(Inf,1,0,2)
 #' get_intersection(Inf,1,Inf,2)
+#' }
 get_intersection <- function(m1,b1,m2,b2) {
   x <- ifelse(m1==m2,NaN,
               ifelse(m1==Inf, b1,
@@ -689,6 +692,7 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' library(tidyverse)
 #' df <- tidyr::crossing(x=-10:10,y=-10:10) %>% dplyr::mutate(z=x^2)
 #' cl <- get_contourlines(df,nlevels=5)
 #' unique(cl$level)
@@ -699,7 +703,8 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' cl <- get_contourlines(df,levels=c(15,20,60))
 #' unique(cl$level)
 #'
-#' df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) %>% dplyr::mutate(z=sqrt(x^2+y^2))
+#' df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) %>%
+#'   dplyr::mutate(z=sqrt(x^2+y^2))
 #' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +

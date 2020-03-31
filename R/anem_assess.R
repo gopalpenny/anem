@@ -126,7 +126,7 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
 #'                  m=c(0.8,-1.25,0.8,-1.25),b=c(3,100,-25,1),
 #'                  bID=as.numeric(1:4))
-#' aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df)
+#' aquifer <- define_aquifer("unconfined",1e-4,h0=100,bounds=bounds_df)
 #' well_images <- generate_image_wells(wells,aquifer)
 #' ggplot() +
 #'   geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
@@ -144,7 +144,7 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #' set.seed(30)
 #' wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
 #'   mutate(R=1000,  #
-#'          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+#'          country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) %>%
 #'   group_by(country) %>%
 #'   mutate(weights=1,Q=-1/n()) %>% group_by()
 #' wells_actual <- define_wells(wells_df)
@@ -216,7 +216,7 @@ get_unit_norm <- function(m,axis) {
 #' bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
 #'                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
 #'                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-#' aquifer1 <- define_aquifer("unconfined",Ksat=1,bounds=bounds_df1)
+#' aquifer1 <- define_aquifer("unconfined",Ksat=1,h0=100,bounds=bounds_df1)
 #' well_images1 <- generate_image_wells(wells1,aquifer1) %>%
 #'   filter(max_mirror_dist<R)
 #' p_domain <- ggplot() +
