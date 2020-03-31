@@ -332,7 +332,7 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #' wells_df_orig[4,"Q"] <- 0.25
 #' wells <- define_wells(wells_df_orig) %>% generate_image_wells(aquifer)
 #' particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all")
-#' particle_paths %>% dplyr::filter(endpoint)
+#' particle_endpoint <- particle_paths %>% dplyr::filter(endpoint)
 #'
 #' ggplot() +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +

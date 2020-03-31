@@ -26,7 +26,7 @@
 #' set.seed(30)
 #' wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
 #'   mutate(R=1000,  # t = 1 year
-#'          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+#'          country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) %>%
 #'   group_by(country) %>%
 #'   mutate(weights=1,Q=1/n()) %>% group_by()
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
@@ -90,7 +90,7 @@ get_drawdown_relationships <- function(wells,aquifer,group_column,weights_column
 #' set.seed(30)
 #' wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) %>%
 #'   mutate(R=1000,  # t = 1 year
-#'          country=factor(y>500,levels=c(F,T),labels=c("A","B"))) %>%
+#'          country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) %>%
 #'   group_by(country) %>%
 #'   mutate(weights=1,Q=1/n()) %>% group_by()
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer_unconfined)
