@@ -11,7 +11,7 @@
 #' }
 anem_app <- function(shiny_app="anem-app") {
   if (dir.exists(shiny_app)) {
-    shiny::runApp(shiny_app,display.mode=display.mode)
+    shiny::runApp(shiny_app)
   } else if (dir.exists(file.path("inst",shiny_app))) {
     shiny::runApp(file.path("inst",shiny_app),display.mode=display.mode)
   } else {
