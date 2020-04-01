@@ -499,14 +499,11 @@ mirror_well_parallel_bounds <- function(wells,bounds,num_levels=NULL,first_mirro
 #' @export
 #' @keywords internal
 #' @examples
-#' well1 <- define_wells(x=50,y=50,Q=5,R=100,diam=1)
-#' well2 <- define_wells(x=25,y=75,Q=-2,R=100,diam=1)
-#' wells <- define_wells(bind_rows(well1,well2))
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
-#' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
-#' image_wells <- generate_image_wells(wells,bounds)
-#' image_wells_image_NA <- image_wells %>%
-#'   dplyr::mutate(Q=dplyr::case_when(grepl("Image",well_image)~as.numeric(NA),TRUE~Q))
+#' wells <- define_wells(wells_example)
+#' aquifer <- aquifer_confined_example
+#' image_wells <- generate_image_wells(wells,aquifer)
+#' image_wells_image_NA <- image_wells
+#' image_wells_image_NA$Q[grepl("Image",image_wells_image_NA$well_image)] <- NA
 #' image_wells_reconstructed <- reconstruct_image_pumping(image_wells_image_NA)
 #' identical(image_wells,image_wells_reconstructed)
 reconstruct_image_pumping <- function(image_wells) {

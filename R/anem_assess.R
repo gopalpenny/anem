@@ -35,28 +35,44 @@ get_segment_seq <- function(segment,length.out=10) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
-#' aquifer <- aquifer_confined_example
-#' aquifer$Ksat <- 5e-4
-#' wells <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1)) %>% generate_image_wells(aquifer)
-#' seg <- c(0,500,1000,500)
-#' seg_w1 <- get_segments_behavior(seg,wells %>% filter(orig_wID==1),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W1")
-#' seg_w2 <- get_segments_behavior(seg,wells %>% filter(orig_wID==2),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W2")
-#' seg_w3 <- get_segments_behavior(seg,wells %>% filter(orig_wID==3),aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="W3")
-#' seg_all <- get_segments_behavior(seg,wells,aquifer,1000) %>% select(x,y,head) %>% mutate(Wells="All")
-#' seg_behavior <- bind_rows(seg_all,seg_w1,seg_w2,seg_w3)
-#' ggplot() +
-#' geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
-#' annotate(geom="text",x=0,y=85,label="Constant head",angle=90) +
-#' annotate(geom="text",x=1000,y=85,label="No flow",angle=90)
+#' # define the aquifer
+#' aquifer_super <- aquifer_confined_example
+#' aquifer_super$Ksat <- 5e-4
 #'
-#' wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) %>%
-#'   mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-#' bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
+#' # define wells and images
+#' wells_super_actual <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1))
+#' wells_super <- generate_image_wells(wells_super_actual,aquifer_super)
+#'
+#' # set the segment
+#' seg <- c(0,500,1000,500)
+#'
+#' # get segment for each well and all wells
+#' seg_w1 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==1,],aquifer_super,1000)
+#' seg_w1 <- data.frame(seg_w1[,c("x","y","head")],Wells="W1")
+#' seg_w2 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==2,],aquifer_super,1000)
+#' seg_w2 <- data.frame(seg_w2[,c("x","y","head")],Wells="W2")
+#' seg_w3 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==3,],aquifer_super,1000)
+#' seg_w3 <- data.frame(seg_w3[,c("x","y","head")],Wells="W3")
+#' seg_all <- get_segments_behavior(seg,wells_super,aquifer_super,1000)
+#' seg_all <- data.frame(seg_all[,c("x","y","head")],Wells="All")
+#'
+#' # plot results
+#' library(ggplot2)
+#' seg_behavior <- rbind(seg_all,seg_w1,seg_w2,seg_w3)
+#' ggplot() +
+#'   geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
+#'   geom_vline(data=data.frame(x=c(0,1000)),aes(xintercept=x),color="gray") +
+#'   annotate(geom="text",x=40,y=90,label="Constant head boundary",angle=-90) +
+#'   annotate(geom="text",x=1040,y=93,label="No flow boundary",angle=-90)
+#'
+#' # Example 2
+#' wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08))
+#' wells$R <- get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov")  # 630720000 - 20 years
+#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
 #' aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
 #' well_images <- generate_image_wells(wells,aquifer)
 #' segments <- c(40,20,15,20)
-#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer) %>% as_tibble()
+#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer)
 #' p_domain <- ggplot() +
 #'   geom_point(data=well_images %>% filter(well_image=="Z"),aes(x,y,fill=Q),color="black",size=2,shape=21) +
 #'   scale_fill_gradient2(low="blue",high="red",mid="gray")+
@@ -66,13 +82,6 @@ get_segment_seq <- function(segment,length.out=10) {
 #' p_segments <- ggplot(segments_behavior) +
 #'   geom_line(aes(dist,head))# + facet_grid(var~sID,scales="free")
 #' gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
-#'
-#' segments <- aquifer$bounds[1:2,] %>% rename(sID=bID) %>%
-#'   dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),y_unit_norm=get_unit_norm(m,"y"))
-#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer) %>% as_tibble()
-#'
-#' p_segments <- ggplot(segments_behavior %>% gather(var,val,head,flow_normal)) +
-#'   geom_line(aes(dist,val,color=as.factor(sID))) + facet_grid(var~sID,scales="free")
 get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 
   if (any(grep("data.frame",class(segments)))) {
@@ -112,7 +121,7 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #'
 #' Get hydraulic head and flow on boundaries
 #' @inheritParams get_hydraulic_head
-#' @param length.out The number of points to check on each boundary
+#' @param length.out The number of points to evaluate on each boundary
 #' @return Returns a \code{data.frame}, with \code{length.out} rows for each bID.
 #' Each row represents a point along bID and contains the head and flow as:
 #'  dx = -Ksat * dh/dx, and
@@ -149,7 +158,6 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #'   mutate(weights=1,Q=-1/n()) %>% group_by()
 #' wells_actual <- define_wells(wells_df)
 #' wells <- wells_actual %>% generate_image_wells(aquifer_unconfined)
-#' print(wells)
 #' bound_behavior_no_im <- get_bounds_behavior(wells_actual,aquifer_unconfined) %>%
 #'   dplyr::mutate(im="unbounded")
 #' bound_behavior_im <- get_bounds_behavior(wells,aquifer_unconfined) %>%
@@ -158,10 +166,6 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #'   group_by(bID,bound_type,im) %>%
 #'   summarize(`Head`=mean(head),
 #'             `Flow`=mean(abs(flow_normal)))
-#' bounds_behavior_summary %>% select(-ends_with("_sd")) %>%
-#'   gather(var,val,Head,Flow) %>%
-#'   unite(bound,bID,bound_type,sep=" ") %>% unite(var,var,im,sep=", ") %>%
-#'   spread(var,val)
 get_bounds_behavior <- function(wells,aquifer,length.out=100) {
   if (max(grepl("aquifer",class(aquifer)))) {
     bounds <- aquifer$bounds
@@ -211,38 +215,14 @@ get_unit_norm <- function(m,axis) {
 #' @export
 #' @examples
 #' library(tidyverse)
-#' wells1 <- define_wells(x0=c(5),y0=c(5),Q=c(-.0001),diam=c(.1)) %>% as_tibble() %>%
-#'   mutate(R=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-#' bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
-#'                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
-#'                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-#' aquifer1 <- define_aquifer("unconfined",Ksat=1,h0=100,bounds=bounds_df1)
-#' well_images1 <- generate_image_wells(wells1,aquifer1) %>%
-#'   filter(max_mirror_dist<R)
+#' aquifer <- aquifer_confined_example
+#' well_images <- define_wells(wells_example) %>% generate_image_wells(aquifer)
 #' p_domain <- ggplot() +
-#'   geom_point(data=well_images1,aes(x0,y0,fill=Q),color="black",size=2,shape=21,alpha=0.5) +
+#'   geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
 #'   scale_fill_gradient2(low="blue",high="red",mid="gray") +
-#'   geom_abline(data=bounds1,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) +
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
 #'   coord_equal()
-#' gg_list <- plot_bounds_behavior(wells1,well_images1,bounds=bounds1,
-#'                                 h0=100,Ksat=0.00000005,aquifer_type="unconfined",length.out=20)
-#' gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
-#'
-#'
-#' wells2 <- data.frame(x0=c(2,8),y0=c(5,5),Q=c(-.0007,.0005),diam=c(1,1)) %>% as_tibble() %>%
-#'   mutate(roi=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-#' bounds2 <- tibble(bound_type=c("CH","NF","NF","NF"),
-#'                   m=c(1,-1,1,-1),b=c(10,20,-10,1),
-#'                   bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-#' well_images2 <- generate_image_wells(wells2,bounds2,num_levels=20) %>%
-#'   filter(max_mirror_dist<roi)
-#' p_domain <- ggplot() +
-#'   geom_point(data=well_images2,aes(x0,y0,fill=Q),color="black",size=2,shape=21) +
-#'   scale_fill_gradient2(low="blue",high="red",mid="gray") +
-#'   geom_abline(data=bounds2,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) +
-#'   coord_equal()
-#' gg_list <- plot_bounds_behavior(wells2,well_images2,bounds=bounds2,
-#'                                 h0=100,Ksat=0.00000005,aquifer_type="unconfined",length.out=20)
+#' gg_list <- plot_bounds_behavior(well_images,aquifer,length.out=20)
 #' gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
 #' gg_list$table
 #' gg_list$bounds_behavior
