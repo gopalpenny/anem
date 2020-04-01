@@ -1,10 +1,22 @@
 #' Run anem shiny app
 #'
-#' Run shiny app within package anem
+#' Run anem-app
+#'
+#' Run anem-app hiny application
+#' @export
 #' @examples
-#' run_shiny("anem_shiny")
-run_shiny <- function(shiny_app,display.mode="auto") {
-  shiny::runApp(file.path("inst/shiny-examples",paste0(shiny_app,".R")),display.mode=display.mode)
+#' library(anem)
+#' \dontrun{
+#' anem_app()
+#' }
+anem_app <- function(shiny_app="anem-app") {
+  if (dir.exists(shiny_app)) {
+    shiny::runApp(shiny_app,display.mode=display.mode)
+  } else if (dir.exists(file.path("inst",shiny_app))) {
+    shiny::runApp(file.path("inst",shiny_app),display.mode=display.mode)
+  } else {
+    stop("Could not find anem-app directory in ./ or ./inst/")
+  }
 }
 
 #' Import app rds
@@ -27,20 +39,21 @@ run_shiny <- function(shiny_app,display.mode="auto") {
 #' @export
 #' @examples
 #' library(tidyverse)
-#' # using path
-#' app <- import_app_rds("~/Downloads/anem_scenario.rds")
+#' # using built in package data
+#' app <- import_app_rds(params=anem_app_scenario)
 #'
-#' # using params
-#' params <- readRDS("~/Downloads/anem_scenario.rds")
-#' app <- import_app_rds(params=params)
+#' # using RDS file
+#' file <- tempfile("anem_app_scenario.rds")
+#' saveRDS(anem_app_scenario,file)
+#' app <- import_app_rds(file)
 #'
-#' # view the data
-#' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80))
+#' #' # view the data
+#' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80),c(8,8))
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
 #'                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
-#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
+#'   geom_segment(data=app$aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
 #'   coord_equal()
 import_app_rds <- function(path, params = NULL, gen_well_images = TRUE) {
   # Import rds file
@@ -149,3 +162,4 @@ import_app_rds <- function(path, params = NULL, gen_well_images = TRUE) {
   # Return results as a list
   return(list(aquifer=aquifer_utm,wells=wells_utm,particles=particles_utm))
 }
+
