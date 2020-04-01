@@ -64,10 +64,10 @@ server <- function(input, output, session) {
     print("example upload:")
     print(input$exampleUpload)
     if (input$exampleUpload=="Groundwater district") {
-      scenario$loadscenario <- readRDS("example_scenarios/groundwater_district.rds")
+      scenario$loadscenario <- anem::groundwater_district
       shiny::showNotification("This example is fabricated and does not represent the actual groundwater situation in this area.",closeButton = T,duration = 10)
     } else if (input$exampleUpload=="Municipal contamination") {
-      scenario$loadscenario <- readRDS("example_scenarios/municipal_contamination.rds")
+      scenario$loadscenario <- anem::municipal_contamination
       shiny::showNotification("This example is fabricated and does not represent the actual groundwater situation in this area.",closeButton = T,duration = 10)
     } else if (input$exampleUpload=="None") {
       scenario$loadscenario <- NULL
