@@ -508,6 +508,7 @@ get_flowdir_raw <- function(loc, wells, aquifer) {
 #' loc <- crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
 #'
 #' # Constant head boundary
+#' aquifer <- define_aquifer("confined",1e-3,h0=0,z0=10)
 #' wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
 #' constant_head_boundary <- loc %>%
 #'   dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
