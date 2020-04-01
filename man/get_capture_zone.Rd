@@ -34,19 +34,19 @@ initialized outside any grid cells that overlap the well, because particle veloc
 Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 }
 \examples{
-library(tidyverse)
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
 wells_df_orig <- wells_example
 wells_df_orig[4,"Q"] <- 0.25
-wells <- define_wells(wells_df_orig) \%>\% generate_image_wells(aquifer)
-particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all")
-particle_endpoint <- particle_paths \%>\% dplyr::filter(endpoint)
+wells <- generate_image_wells(define_wells(wells_df_orig), aquifer)
+particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all", n_particles = 4)
+particle_endpoint <- particle_paths[particle_paths$endpoint,]
 
+library(ggplot2)
 ggplot() +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   geom_path(data=particle_paths,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
-  geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
+  geom_point(data=wells[wells$wID==wells$orig_wID,],aes(x,y,color=as.factor(wID)),size=3) +
   geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
   scale_shape_manual(values=c(5,4,3,0,1)) +
   coord_equal()

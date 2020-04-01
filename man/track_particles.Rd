@@ -21,6 +21,8 @@ track_particles(loc, wells, aquifer, t_max = 365, reverse = FALSE,
 \item{step_dist}{Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
 any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
 than the grid spacing to ensure that particles are captured by wells.}
+
+\item{grid_length}{The number of grid cells in each dimension (x,y) to calculate exact particle velocity.}
 }
 \value{
 Returns a data.frame containing the time and locations of particle. If \code{loc} is a \code{data.frame},
@@ -47,26 +49,28 @@ or a pumping well if \code{reverse = TRUE}), the velocity is calculated precisel
 Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 }
 \examples{
-library(tidyverse)
 bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=20,z0=20,bounds=bounds_df)
 uncon_aquifer <- define_aquifer(aquifer_type="unconfined",Ksat=0.001,n=0.4,h0=20,bounds=bounds_df)
-wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
-  define_wells() \%>\% generate_image_wells(aquifer)
+wells_df <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600))
+wells <- generate_image_wells(define_wells(wells_df),aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 
-system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2))
+particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2)
 particle_path[nrow(particle_path),]
-system.time(particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2))
+particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2)
 particle_path[nrow(particle_path),]
 
-loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700)) \%>\% dplyr::mutate(p=letters[row_number()])
-system.time(particle_path <- track_particles(loc, wells, aquifer, t_max=365*100))
-particle_path \%>\% filter(status!="On path")
+loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700))
+loc$p <- letters[1:nrow(loc)]
+particle_path <- track_particles(loc, wells, aquifer, t_max=365*100)
+particle_path[particle_path$status!="On path",]
+
+library(ggplot2)
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
-  geom_point(data=wells \%>\% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
-  geom_path(data=particle_path,aes(x,y,color=p)) +
+  geom_point(data=wells[wells$wID==wells$orig_wID,],aes(x,y),shape=21) +
+  geom_path(data=particle_path,aes(x,y,color=p),show.legend=FALSE) +
   coord_equal()
 }

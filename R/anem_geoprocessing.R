@@ -59,24 +59,28 @@ prep_bounds_sf <- function(bounds_sf) {
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
+#' # Example 1
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
+#'
+#' library(ggplot2)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_segment(data=rect_boundaries,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 #'
+#' # Example 2
 #' bounds2 <- data.frame(m=c(2,4,-1,-1),b=c(0,4,3,20))
 #' rect_boundaries2 <- get_rectangle(bounds2)
 #' ggplot() + geom_abline(data=bounds2,aes(slope=m,intercept=b)) +
 #'   geom_segment(data=rect_boundaries2,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 #'
-#'
+#' # Example 3
 #' bounds3 <- data.frame(m=c(Inf,0,Inf,0),b=c(0,4,4,0))
 #' rect_boundaries3 <- get_rectangle(bounds3)
-#' ggplot() + geom_abline(data=bounds3 %>% filter(m!=Inf),aes(slope=m,intercept=b),linetype="dashed") +
-#'   geom_vline(data=bounds3 %>% filter(m==Inf),aes(xintercept=b),linetype="dashed") +
+#' ggplot() + geom_abline(data=bounds3[bounds3$m!=Inf,],aes(slope=m,intercept=b),linetype="dashed") +
+#'   geom_vline(data=bounds3[bounds3$m==Inf,],aes(xintercept=b),linetype="dashed") +
 #'   geom_segment(data=rect_boundaries3,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 #'
+#' # Example 4
 #' bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' rect_boundaries4 <- get_rectangle(bounds4)
 #' ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
@@ -186,7 +190,9 @@ bounds_to_sf <- function(bounds,crs) {
 #' (with which there is no intersection).
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
+#' library(magrittr)
+#' library(ggplot2)
+#' library(dplyr)
 #' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
 #' quad_vertices <- get_quad_vertices(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
@@ -408,9 +414,9 @@ gen_circ <- function(x,y,r) {
 #' @param df data.frame with columns x, y, r
 #' @export
 #' @examples
-#' library(tidyverse)
-#' df <- data.frame(x=1:3,y=1:3,roi=c(0.5,1,1.5))
-#' circles <- gen_circles(df %>% rename(r=roi))
+#' library(ggplot2)
+#' df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5))
+#' circles <- gen_circles(df)
 #' ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
 gen_circles <- function(df) {
   df$id <- 1:dim(df)[1]
@@ -465,14 +471,16 @@ get_slope_intercept <- function(x1,y1,x2=NULL,y2=NULL,m=NULL) {
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' bounds <- define_bounds(bounds_example)
 #' loc <- c(150,150)
 #' get_distance_to_bounds(loc,bounds)
 #'
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20))
+#' bounds <- define_bounds(bounds_df)
 #' loc <- data.frame(x=c(-200,0,200,50),y=c(-200,0,200,-50))
 #' get_distance_to_bounds(loc,bounds)
+#'
+#' library(ggplot2)
 #' ggplot(bounds) +
 #'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_point(data=loc,aes(x,y)) +
@@ -689,13 +697,17 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' @param levels A vector of values at which contours should be plotted. If used, nlevels is ignored.
 #' @param ... Should contain x, y, and z, and then df will be ignored.
 #' @param type Should be either "data.frame" or "sf"
+#' @param crs The target crs for "sf" output. Used as input in \code{sf::st_as_sf}
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
-#' df <- tidyr::crossing(x=-10:10,y=-10:10) %>% dplyr::mutate(z=x^2)
+#' # Example 1
+#' df <- expand.grid(x=-10:10,y=-10:10)
+#' df$z <- df$x^2
 #' cl <- get_contourlines(df,nlevels=5)
 #' unique(cl$level)
+#'
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_path(data=cl,aes(x,y,group=line))
@@ -703,13 +715,15 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' cl <- get_contourlines(df,levels=c(15,20,60))
 #' unique(cl$level)
 #'
-#' df <- tidyr::crossing(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20)) %>%
-#'   dplyr::mutate(z=sqrt(x^2+y^2))
+#' # Example 2, with "sf" object
+#' library(sf)
+#' df <- expand.grid(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20))
+#' df$z <- sqrt(df$x^2+df$y^2)
+#'
 #' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_sf(data=cl,aes())
-#'
 get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels = NULL, ..., type = "data.frame", crs=4326) {
   params <- list(...)
   if (all(c("x","y","z") %in% names(params))) {

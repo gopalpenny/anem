@@ -4,7 +4,7 @@
 \alias{anem_app}
 \title{Run anem shiny app}
 \usage{
-anem_app(shiny_app = "anem-app")
+anem_app()
 }
 \description{
 Run anem-app

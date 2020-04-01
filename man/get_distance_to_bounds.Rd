@@ -17,14 +17,16 @@ has to fall within the segment x1, y1, x2, y2
 }
 \examples{
 \dontrun{
-library(tidyverse)
-bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+bounds <- define_bounds(bounds_example)
 loc <- c(150,150)
 get_distance_to_bounds(loc,bounds)
 
-bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) \%>\% define_bounds()
+bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20))
+bounds <- define_bounds(bounds_df)
 loc <- data.frame(x=c(-200,0,200,50),y=c(-200,0,200,-50))
 get_distance_to_bounds(loc,bounds)
+
+library(ggplot2)
 ggplot(bounds) +
   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_point(data=loc,aes(x,y)) +

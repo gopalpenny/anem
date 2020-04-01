@@ -49,10 +49,11 @@ Images wells across parallel boundaries
 \examples{
 
 \dontrun{
-library(tidyverse)
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 bounds <- data.frame(m=1,b=1,bound_type="NF",bID=1)
 images <- mirror_well_parallel_bounds(wells,bounds)
+
+library(ggplot2)
 ggplot() +
   geom_abline(data=bounds,aes(slope=m,intercept=b)) +
   geom_point(data=images,aes(x,y,color=well_image)) +
@@ -60,9 +61,9 @@ ggplot() +
 
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-wells <- define_wells(bind_rows(well1,well2))
+wells <- define_wells(rbind(well1,well2))
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
+bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 mirror_well_parallel_bounds(well1,bounds)
 images <- mirror_well_parallel_bounds(wells,bounds)
 ggplot(images) +

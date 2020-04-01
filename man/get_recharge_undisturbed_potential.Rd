@@ -34,7 +34,6 @@ if uniform flow is specified, it will pass through any boundary, including no-fl
 The aquifer and aquifer$recharge must be correctly specified using \code{define_aquifer} and/or \code{define_recharge}.
 }
 \examples{
-library(tidyverse)
 ## Flow - confined aquifer
 recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,1),flow=1,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -42,10 +41,12 @@ get_recharge_undisturbed_potential(c(1/sqrt(2),1/sqrt(2)), aquifer)
 
 loc <- expand.grid(x=-2:2,y=-2:2)
 loc$h <- get_recharge_undisturbed_potential(loc, aquifer)
+
 library(ggplot2)
 ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2()
 
-recharge_params <- list(recharge_type="F",recharge_vector=c(-1,-5,0,0),flow=1,x0=0,y0=0)
+recharge_params <- list(recharge_type="F",
+  recharge_vector=c(-1,-5,0,0),flow=1,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=10,z0=1,recharge=recharge_params)
 loc <- expand.grid(x=-100:100,y=-100:100)
 loc$h <- get_recharge_undisturbed_potential(loc, aquifer)

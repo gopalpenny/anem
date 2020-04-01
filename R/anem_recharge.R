@@ -23,7 +23,6 @@
 #' \item 3. Recharge divide, "D": \code{get_recharge_divide_potential()}
 #' }
 #' @examples
-#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,1),flow=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -31,10 +30,12 @@
 #'
 #' loc <- expand.grid(x=-2:2,y=-2:2)
 #' loc$h <- get_recharge_undisturbed_potential(loc, aquifer)
+#'
 #' library(ggplot2)
 #' ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2()
 #'
-#' recharge_params <- list(recharge_type="F",recharge_vector=c(-1,-5,0,0),flow=1,x0=0,y0=0)
+#' recharge_params <- list(recharge_type="F",
+#'   recharge_vector=c(-1,-5,0,0),flow=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=10,z0=1,recharge=recharge_params)
 #' loc <- expand.grid(x=-100:100,y=-100:100)
 #' loc$h <- get_recharge_undisturbed_potential(loc, aquifer)
@@ -90,7 +91,6 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,1,2),flow=1,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
@@ -98,6 +98,7 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #'
 #' loc <- expand.grid(x=-2:2,y=-2:2)
 #' loc$h <- get_recharge_flow_potential(loc, aquifer)
+#'
 #' library(ggplot2)
 #' ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2()
 #'
@@ -111,7 +112,7 @@ get_recharge_undisturbed_potential <- function(loc, aquifer) {
 #' aquifer <- define_aquifer("unconfined",1e-1,h0=50,recharge=recharge_params)
 #' loc <- expand.grid(x=-100:100,y=-100:100)
 #' loc$h2 <- get_recharge_flow_potential(loc, aquifer)
-#' loc <- loc %>% dplyr::mutate(h=sqrt(h2))
+#' loc$h <- sqrt(loc$h2)
 #' ggplot(loc) + geom_raster(aes(x,y,fill=h)) + scale_fill_gradient2(midpoint=50)
 #' }
 get_recharge_flow_potential <- function(loc, aquifer) {
@@ -165,7 +166,6 @@ get_recharge_flow_potential <- function(loc, aquifer) {
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
 #' ## Flow - confined aquifer
 #' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,sqrt(3)),flow_main=1,flow_opp=2,x0=0,y0=0)
 #' aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)

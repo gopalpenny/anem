@@ -19,16 +19,18 @@ Get flowlines in confined aquifer
 }
 \examples{
 \dontrun{
-library(tidyverse)
+library(dplyr)
+
 # define aquifer
 bounds_df <- data.frame(bound_type=c("NF","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer <- define_aquifer("confined",1e-3,bounds=bounds_df,h0=100)
 
 # define wells and well images
 wells_df <- data.frame(x=c(300,700),y=c(200,600),diam=1) \%>\%
-  dplyr::mutate(R=1000,Q=-1/dplyr::n())
+  mutate(R=1000,Q=-1/dplyr::n())
 wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer)
 
+library(ggplot2)
 ggplot() +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y),shape=21) +

@@ -52,20 +52,21 @@ then repeated for the other two perpendicular boundaries.
 }
 
 \examples{
-library(tidyverse)
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-wells <- define_wells(bind_rows(well1,well2))
-bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+wells <- define_wells(rbind(well1,well2))
+bounds <- define_bounds(data.frame(bound_type=c("CH","NF","NF","NF"),
+  m=c(Inf,0,Inf,0),b=c(0,0,100,100)))
 aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
 image_wells <- generate_image_wells(wells,bounds)
 
-bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
 aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
-image_wells <- generate_image_wells(well1,bounds,include_image_columns=TRUE)
+image_wells <- generate_image_wells(well1,aquifer,include_image_columns=TRUE)
 
+library(ggplot2)
 ggplot() +
-  geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
   scale_shape_manual(values=c(1,16)) +
   coord_equal()

@@ -36,7 +36,6 @@ Calculates the derivative of hydraulic head in x and y directions, returning \eq
   analytically or numerically from hydraulic head.
 }
 \examples{
-library(tidyverse)
 wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
 aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 get_flow_direction(loc=c(5,5),wells,aquifer)
@@ -59,13 +58,16 @@ fd3 <- get_flow_direction(wells3,loc=grid_pts3,aquifer_unconfined)
 
 ## plot the flow directions
 # scale dx and dy for visualization
+library(dplyr)
+library(ggplot2)
+library(magrittr)
 fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
-   dplyr::mutate(dx_norm=dx*50,dy_norm=dy*50,x2=x+dx_norm,y2=y+dy_norm) # normaliz
+   mutate(dx_norm=dx*50,dy_norm=dy*50,x2=x+dx_norm,y2=y+dy_norm) # normaliz
 # alternatively, apply nonlinear scaling to dx and dy for visualization
 fd3_grid <- grid_pts3 \%>\% cbind(fd3) \%>\%
-  dplyr::mutate(angle=atan(dy/dx),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
-                dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
-                x2=x+dx_norm,y2=y+dy_norm)
+mutate(angle=atan(dy/dx),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
+       dx_norm=mag_norm*cos(angle)*sign(dx),dy_norm=mag_norm*sin(angle)*sign(dx),
+       x2=x+dx_norm,y2=y+dy_norm)
 
 ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
   geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()

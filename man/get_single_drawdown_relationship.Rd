@@ -35,22 +35,22 @@ Get drawdown relationship at locations locations due to unit pumping from wells.
 }
 \examples{
 \dontrun{
-library(tidyverse)
 # define aquifer
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
 
 # define wells and well images
+library(dplyr)
 set.seed(30)
-wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) \%>\%
-  mutate(R=1000,  # t = 1 year
-         country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) \%>\%
+wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1,R=1000) \%>\%
+  mutate(country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) \%>\%
   group_by(country) \%>\%
   mutate(weights=1,Q=1/n()) \%>\% group_by()
 wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer_unconfined)
 
 get_single_drawdown_relationship(wells, aquifer_unconfined, group_column=country, weights_column=weights,loc_group="S", pump_group="F")
 
+library(ggplot2)
 ggplot() +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
   geom_abline(slope=0,intercept=500,linetype="dashed") +

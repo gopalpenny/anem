@@ -137,14 +137,14 @@ get_mirror_point <- function(well, boundary, new_wID=NA) {
 #'
 #' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-#' wells <- define_wells(bind_rows(well1,well2))
+#' wells <- define_wells(rbind(well1,well2))
 #' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-#' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
+#' bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 #' mirror_across_bounds(well1,bounds)
 #' mirror_across_bounds(wells,bounds)
 #'
 #' bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-#' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
+#' bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 #' mirror_across_bounds(well1,bounds)
 #' }
 mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE) {
@@ -266,20 +266,21 @@ mirror_across_bounds <- function(wells,bounds,num_levels=NULL,first_mirror=TRUE)
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
 #' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-#' wells <- define_wells(bind_rows(well1,well2))
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' wells <- define_wells(rbind(well1,well2))
+#' bounds <- define_bounds(data.frame(bound_type=c("CH","NF","NF","NF"),
+#'   m=c(Inf,0,Inf,0),b=c(0,0,100,100)))
 #' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
 #' image_wells <- generate_image_wells(wells,bounds)
 #'
-#' bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' bounds <- data.frame(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
 #' aquifer <- define_aquifer("unconfined",Ksat=1e-4,bounds=bounds)
-#' image_wells <- generate_image_wells(well1,bounds,include_image_columns=TRUE)
+#' image_wells <- generate_image_wells(well1,aquifer,include_image_columns=TRUE)
 #'
+#' library(ggplot2)
 #' ggplot() +
-#'   geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2)) +
 #'   geom_point(data=image_wells,aes(x,y,color=as.factor(orig_wID))) +
 #'   scale_shape_manual(values=c(1,16)) +
 #'   coord_equal()
@@ -363,10 +364,11 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 #' @examples
 #'
 #' \dontrun{
-#' library(tidyverse)
 #' wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(0.5,-0.2),R=100,diam=c(1,1))
 #' bounds <- data.frame(m=1,b=1,bound_type="NF",bID=1)
 #' images <- mirror_well_parallel_bounds(wells,bounds)
+#'
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_abline(data=bounds,aes(slope=m,intercept=b)) +
 #'   geom_point(data=images,aes(x,y,color=well_image)) +
@@ -374,9 +376,9 @@ generate_image_wells <- function(wells,aquifer,include_image_columns=FALSE) {
 #'
 #' well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 #' well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-#' wells <- define_wells(bind_rows(well1,well2))
+#' wells <- define_wells(rbind(well1,well2))
 #' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-#' bounds <- define_bounds(bounds_df) %>% filter(m==Inf)
+#' bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 #' mirror_well_parallel_bounds(well1,bounds)
 #' images <- mirror_well_parallel_bounds(wells,bounds)
 #' ggplot(images) +

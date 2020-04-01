@@ -31,25 +31,25 @@ This function is used for mapping hydrodynamics by generating gridded output of
 hydraulic head and flow direction
 }
 \examples{
-library(tidyverse)
 # define aquifer
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
 
 # define wells and well images
 set.seed(30)
-wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) \%>\%
-  mutate(R=1000,Q=-1/n())
-wells <- define_wells(wells_df) \%>\% generate_image_wells(aquifer_unconfined)
+wells_df <- data.frame(x=runif(8,0,1000), y=runif(8,0,1000), diam=1, R=1000)
+wells_df$Q <- -1/(1:nrow(wells_df))
+wells <- generate_image_wells(define_wells(wells_df),aquifer_unconfined)
 
 gridded <- get_gridded_hydrodynamics(wells,aquifer_unconfined,c(20,20),c(8,8))
 
+library(ggplot2)
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
-  geom_point(data=wells \%>\% filter(wID==orig_wID),aes(x,y),shape=21) +
+  geom_point(data=wells[wells$wID==wells$orig_wID,],aes(x,y),shape=21) +
   coord_equal()
 
 recharge_params <- list(recharge_type="D",recharge_vector=c(500,500,501,501),

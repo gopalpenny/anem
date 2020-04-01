@@ -29,7 +29,6 @@ Either \code{path} or \code{params} should be supplied to the function. If both
 are specified, only \code{path} will be used.
 }
 \examples{
-library(tidyverse)
 # using built in package data
 app <- import_app_rds(params=anem_app_scenario)
 
@@ -40,6 +39,7 @@ app <- import_app_rds(file)
 
 #' # view the data
 gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80),c(8,8))
+library(ggplot2)
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),

@@ -19,7 +19,9 @@ Get the 4 vertices corresponding to quadrangle of 4 lines
 }
 \examples{
 \dontrun{
-library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(dplyr)
 bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) \%>\% mutate(bID=row_number())
 quad_vertices <- get_quad_vertices(bounds)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +

@@ -26,6 +26,7 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' @param step_dist Determines the distance (m) to advance the particle each timestep. Can be set to "auto" or
 #' any numeric value in m. If "auto", the distance is 1/2 the grid cell width. If numeric, should be smaller
 #' than the grid spacing to ensure that particles are captured by wells.
+#' @param grid_length The number of grid cells in each dimension (x,y) to calculate exact particle velocity.
 #' @details
 #' This function numerically integrates particle paths using the Euler method. The time step of integration depends on velocity.
 #' Each time step is set so that the particle advances by a distance of step_dist (although there is a maximum time step 1 year).
@@ -47,27 +48,29 @@ particle_velocity_m_day <- function(t, loc, params) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=20,z0=20,bounds=bounds_df)
 #' uncon_aquifer <- define_aquifer(aquifer_type="unconfined",Ksat=0.001,n=0.4,h0=20,bounds=bounds_df)
-#' wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600)) %>%
-#'   define_wells() %>% generate_image_wells(aquifer)
+#' wells_df <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,-1e-1),diam=c(1,1,1),R=c(500,100,600))
+#' wells <- generate_image_wells(define_wells(wells_df),aquifer)
 #' gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 #'
-#' system.time(particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2))
+#' particle_path <- track_particles(loc=c(600,500), wells, aquifer, t_max = 365*2)
 #' particle_path[nrow(particle_path),]
-#' system.time(particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2))
+#' particle_path <- track_particles(loc=c(600,500), wells, uncon_aquifer, t_max = 365*2)
 #' particle_path[nrow(particle_path),]
 #'
-#' loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700)) %>% dplyr::mutate(p=letters[row_number()])
-#' system.time(particle_path <- track_particles(loc, wells, aquifer, t_max=365*100))
-#' particle_path %>% filter(status!="On path")
+#' loc <- data.frame(x=c(600,725,900,250,150,200),y=c(500,825,50,500,800,700))
+#' loc$p <- letters[1:nrow(loc)]
+#' particle_path <- track_particles(loc, wells, aquifer, t_max=365*100)
+#' particle_path[particle_path$status!="On path",]
+#'
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
-#'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
-#'   geom_path(data=particle_path,aes(x,y,color=p)) +
+#'   geom_point(data=wells[wells$wID==wells$orig_wID,],aes(x,y),shape=21) +
+#'   geom_path(data=particle_path,aes(x,y,color=p),show.legend=FALSE) +
 #'   coord_equal()
 track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, step_dist = "auto", grid_length=200) {
   if (any(aquifer$recharge$recharge_type == "D")) {
@@ -248,16 +251,18 @@ track_particles <- function(loc, wells, aquifer, t_max = 365, reverse = FALSE, s
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' library(tidyverse)
+#' library(dplyr)
+#'
 #' # define aquifer
 #' bounds_df <- data.frame(bound_type=c("NF","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer("confined",1e-3,bounds=bounds_df,h0=100)
 #'
 #' # define wells and well images
 #' wells_df <- data.frame(x=c(300,700),y=c(200,600),diam=1) %>%
-#'   dplyr::mutate(R=1000,Q=-1/dplyr::n())
+#'   mutate(R=1000,Q=-1/dplyr::n())
 #' wells <- define_wells(wells_df) %>% generate_image_wells(aquifer)
 #'
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,color=bound_type)) +
 #'   geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
@@ -325,19 +330,19 @@ get_confined_flowlines <- function(wells,aquifer,nominal_levels=40, flow_dim=c(1
 #'
 #' Note: \code{get_capture_zone} does not work with \code{recharge_type == "D"}.
 #' @examples
-#' library(tidyverse)
 #' bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
 #' aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
 #' wells_df_orig <- wells_example
 #' wells_df_orig[4,"Q"] <- 0.25
-#' wells <- define_wells(wells_df_orig) %>% generate_image_wells(aquifer)
-#' particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all")
-#' particle_endpoint <- particle_paths %>% dplyr::filter(endpoint)
+#' wells <- generate_image_wells(define_wells(wells_df_orig), aquifer)
+#' particle_paths <- get_capture_zone(wells, aquifer, t_max = 365*10, wIDs = "all", n_particles = 4)
+#' particle_endpoint <- particle_paths[particle_paths$endpoint,]
 #'
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
 #'   geom_path(data=particle_paths,aes(x,y,color=as.factor(wID),group=interaction(pID,wID))) +
-#'   geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y,color=as.factor(wID)),size=3) +
+#'   geom_point(data=wells[wells$wID==wells$orig_wID,],aes(x,y,color=as.factor(wID)),size=3) +
 #'   geom_point(data=particle_endpoint,aes(x,y,shape=status)) +
 #'   scale_shape_manual(values=c(5,4,3,0,1)) +
 #'   coord_equal()

@@ -33,7 +33,6 @@ these parameters are:
 }
 \examples{
 \dontrun{
-library(tidyverse)
 ## Flow - confined aquifer
 recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,sqrt(3)),flow_main=1,flow_opp=2,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)

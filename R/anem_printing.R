@@ -3,9 +3,11 @@
 
 #' S3 Print method for class "aquifer"
 #'
-#' @param aquifer Object of type aquifer
+#' @param x Object of type aquifer
+#' @param ... Additional, optional arguments to print S3 generic
 #' @export
-print.aquifer <- function(aquifer) {
+print.aquifer <- function(x, ...) {
+  aquifer <- x
   aquifer_names <- names(aquifer)
 
   # Print meta information for standard colums:

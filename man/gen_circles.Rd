@@ -13,8 +13,8 @@ gen_circles(df)
 Generate an object that acts like a circle
 }
 \examples{
-library(tidyverse)
-df <- data.frame(x=1:3,y=1:3,roi=c(0.5,1,1.5))
-circles <- gen_circles(df \%>\% rename(r=roi))
+library(ggplot2)
+df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5))
+circles <- gen_circles(df)
 ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
 }

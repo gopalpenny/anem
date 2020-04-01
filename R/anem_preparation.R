@@ -106,9 +106,10 @@ define_wells <- function(wells_df=NULL,...) {
 #'
 #' Prepare boundaries with slope (m) and intercept (b) of all line objects, and add boundary ID (bID)
 #'
-#' @param bounds An sf object of straight lines (single segments), a
+#' @param bounds_df An sf object of straight lines (single segments), a
 #'   data.frame with column names x1, y1, x2, y2, representing the endpoints,
 #'   or a data.frame with columns m (slope) and b (intercept)
+#' @param get_rectangular logical that, if \code{TRUE}, forces bounds to be rectangular
 #' @return A data.frame containing slope (m) and intercept (b) for each line,
 #'   along with original columns. If \code{bounds} is an sf object, the columns
 #'   x1, y1, x2, y2 are automatically extracted using \code{prep_wells_sf} and
@@ -118,12 +119,18 @@ define_wells <- function(wells_df=NULL,...) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
-#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),
+#'   x1=c(0,10,13,1),y1=c(0,10,9,-1),
+#'   x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' bounds <- define_bounds(bounds_df)
+#'
+#'
+#' library(ggplot2)
 #' ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
 #'
-#' bounds_df <- data.frame(bound_type=c("CH","CH","NF","NF"),x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' bounds_df <- data.frame(bound_type=c("CH","CH","NF","NF"),
+#'   x1=c(0,0,10,10),y1=c(0,10,10,0),
+#'   x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' bounds <- define_bounds(bounds_df)
 #' ggplot(bounds) + geom_segment(aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
 define_bounds <- function(bounds_df,get_rectangular=TRUE) {

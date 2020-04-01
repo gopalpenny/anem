@@ -23,6 +23,8 @@ Suggests:
     stringr,
     tidyselect,
     gridExtra
+Depends:
+    R (>= 3.1.0)
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 Imports: 

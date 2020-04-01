@@ -4,10 +4,12 @@
 \alias{print.aquifer}
 \title{S3 Print method for class "aquifer"}
 \usage{
-\method{print}{aquifer}(aquifer)
+\method{print}{aquifer}(x, ...)
 }
 \arguments{
-\item{aquifer}{Object of type aquifer}
+\item{x}{Object of type aquifer}
+
+\item{...}{Additional, optional arguments to print S3 generic}
 }
 \description{
 S3 Print method for class "aquifer"

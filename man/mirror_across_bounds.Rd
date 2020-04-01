@@ -54,14 +54,14 @@ mirror_across_bounds(wells,bounds)
 
 well1 <- define_wells(x=50,y=50,Q=20,R=100,diam=1)
 well2 <- define_wells(x=25,y=75,Q=20,R=100,diam=1)
-wells <- define_wells(bind_rows(well1,well2))
+wells <- define_wells(rbind(well1,well2))
 bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
+bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 mirror_across_bounds(well1,bounds)
 mirror_across_bounds(wells,bounds)
 
 bounds_df <- data.frame(bound_type=c("PB","NF","PB","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100))
-bounds <- define_bounds(bounds_df) \%>\% filter(m==Inf)
+bounds <- define_bounds(bounds_df[bounds_df$m==Inf,])
 mirror_across_bounds(well1,bounds)
 }
 }

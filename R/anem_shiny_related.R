@@ -9,11 +9,12 @@
 #' \dontrun{
 #' anem_app()
 #' }
-anem_app <- function(shiny_app="anem-app") {
+anem_app <- function() {
+  shiny_app="anem-app"
   if (dir.exists(shiny_app)) {
     shiny::runApp(shiny_app)
   } else if (dir.exists(file.path("inst",shiny_app))) {
-    shiny::runApp(file.path("inst",shiny_app),display.mode=display.mode)
+    shiny::runApp(file.path("inst",shiny_app))
   } else {
     stop("Could not find anem-app directory in ./ or ./inst/")
   }
@@ -38,7 +39,6 @@ anem_app <- function(shiny_app="anem-app") {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#' library(tidyverse)
 #' # using built in package data
 #' app <- import_app_rds(params=anem_app_scenario)
 #'
@@ -49,6 +49,7 @@ anem_app <- function(shiny_app="anem-app") {
 #'
 #' #' # view the data
 #' gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80),c(8,8))
+#' library(ggplot2)
 #' ggplot() +
 #'   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
 #'   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),

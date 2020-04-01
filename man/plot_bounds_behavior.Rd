@@ -4,9 +4,12 @@
 \alias{plot_bounds_behavior}
 \title{Plot behavior on boundaries}
 \usage{
-plot_bounds_behavior(well_images, aquifer, length.out = 100)
+plot_bounds_behavior(wells, aquifer, length.out = 100)
 }
 \arguments{
+\item{wells}{wells object with each row containing rate Q [m^3/s], diam [m],
+radius of influence R [m], & coordinates x [m], y [m]}
+
 \item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 
 \item{length.out}{The number of points to evaluate on each boundary}
@@ -18,15 +21,16 @@ Two ggplot objects that show behavior on the boundaries, one for head and one fo
 Plot behavior on boundaries with and without well images
 }
 \examples{
-library(tidyverse)
 aquifer <- aquifer_confined_example
-well_images <- define_wells(wells_example) \%>\% generate_image_wells(aquifer)
+wells <- generate_image_wells(define_wells(wells_example), aquifer)
+gg_list <- plot_bounds_behavior(wells,aquifer,length.out=20)
+
+library(ggplot2)
 p_domain <- ggplot() +
-  geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
+  geom_point(data=wells,aes(x,y,fill=Q),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray") +
   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   coord_equal()
-gg_list <- plot_bounds_behavior(well_images,aquifer,length.out=20)
 gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
 gg_list$table
 gg_list$bounds_behavior

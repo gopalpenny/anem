@@ -6,6 +6,10 @@
 \usage{
 check_rectangle(rect)
 }
+\arguments{
+\item{rect}{rectangle}
+}
 \description{
 Check rectangle -- ensure 4 edges connecting 3 vertices and rectilinear
 }
+\keyword{internal}

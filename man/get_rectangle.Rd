@@ -22,24 +22,28 @@ Convert 4 lines to a rectangular box with only right angles
 }
 \examples{
 \dontrun{
-library(tidyverse)
+# Example 1
 bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 rect_boundaries <- get_rectangle(bounds)
+
+library(ggplot2)
 ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
   geom_segment(data=rect_boundaries,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 
+# Example 2
 bounds2 <- data.frame(m=c(2,4,-1,-1),b=c(0,4,3,20))
 rect_boundaries2 <- get_rectangle(bounds2)
 ggplot() + geom_abline(data=bounds2,aes(slope=m,intercept=b)) +
   geom_segment(data=rect_boundaries2,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 
-
+# Example 3
 bounds3 <- data.frame(m=c(Inf,0,Inf,0),b=c(0,4,4,0))
 rect_boundaries3 <- get_rectangle(bounds3)
-ggplot() + geom_abline(data=bounds3 \%>\% filter(m!=Inf),aes(slope=m,intercept=b),linetype="dashed") +
-  geom_vline(data=bounds3 \%>\% filter(m==Inf),aes(xintercept=b),linetype="dashed") +
+ggplot() + geom_abline(data=bounds3[bounds3$m!=Inf,],aes(slope=m,intercept=b),linetype="dashed") +
+  geom_vline(data=bounds3[bounds3$m==Inf,],aes(xintercept=b),linetype="dashed") +
   geom_segment(data=rect_boundaries3,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
 
+# Example 4
 bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
 rect_boundaries4 <- get_rectangle(bounds4)
 ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
