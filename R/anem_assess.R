@@ -36,24 +36,24 @@ get_segment_seq <- function(segment,length.out=10) {
 #' @export
 #' @examples
 #' # define the aquifer
-#' aquifer_super <- aquifer_confined_example
-#' aquifer_super$Ksat <- 5e-4
+#' aquifer <- aquifer_confined_example
+#' aquifer$Ksat <- 5e-4
 #'
 #' # define wells and images
-#' wells_super_actual <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1))
-#' wells_super <- generate_image_wells(wells_super_actual,aquifer_super)
+#' wells_actual <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1))
+#' wells <- generate_image_wells(wells_actual,aquifer)
 #'
 #' # set the segment
 #' seg <- c(0,500,1000,500)
 #'
 #' # get segment for each well and all wells
-#' seg_w1 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==1,],aquifer_super,1000)
+#' seg_w1 <- get_segments_behavior(seg,wells[wells$orig_wID==1,],aquifer,1000)
 #' seg_w1 <- data.frame(seg_w1[,c("x","y","head")],Wells="W1")
-#' seg_w2 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==2,],aquifer_super,1000)
+#' seg_w2 <- get_segments_behavior(seg,wells[wells$orig_wID==2,],aquifer,1000)
 #' seg_w2 <- data.frame(seg_w2[,c("x","y","head")],Wells="W2")
-#' seg_w3 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==3,],aquifer_super,1000)
+#' seg_w3 <- get_segments_behavior(seg,wells[wells$orig_wID==3,],aquifer,1000)
 #' seg_w3 <- data.frame(seg_w3[,c("x","y","head")],Wells="W3")
-#' seg_all <- get_segments_behavior(seg,wells_super,aquifer_super,1000)
+#' seg_all <- get_segments_behavior(seg,wells,aquifer,1000)
 #' seg_all <- data.frame(seg_all[,c("x","y","head")],Wells="All")
 #'
 #' # plot results
@@ -66,22 +66,18 @@ get_segment_seq <- function(segment,length.out=10) {
 #'   annotate(geom="text",x=1040,y=93,label="No flow boundary",angle=-90)
 #'
 #' # Example 2
-#' wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08))
-#' wells$R <- get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov")  # 630720000 - 20 years
-#' bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
-#' aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
-#' well_images <- generate_image_wells(wells,aquifer)
-#' segments <- c(40,20,15,20)
-#' segments_behavior <- get_segments_behavior(segments,well_images,aquifer)
+#' segments <- data.frame(x1=c(0,300),y1=c(500,0),x2=c(1000,1000),y2=c(500,800),sID=1:2)
+#' seg_results <- get_segments_behavior(segments,wells,aquifer,1000)
+#' seg_results$sID <- as.factor(seg_results$sID)
 #' p_domain <- ggplot() +
-#'   geom_point(data=well_images %>% filter(well_image=="Z"),aes(x,y,fill=Q),color="black",size=2,shape=21) +
 #'   scale_fill_gradient2(low="blue",high="red",mid="gray")+
 #'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type),color="black") +
-#'   geom_path(data=segments_behavior,aes(x,y,linetype="segment"),color="blue") +
+#'   geom_path(data=seg_results,aes(x,y,color=sID)) +
+#'   geom_point(data=wells[wells$well_image=="Actual",],aes(x,y),color="black",size=2,shape=21) +
 #'   coord_equal()
-#' p_segments <- ggplot(segments_behavior) +
-#'   geom_line(aes(dist,head))# + facet_grid(var~sID,scales="free")
-#' gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
+#' p_segments <- ggplot(seg_results) +
+#'   geom_line(aes(dist,head,color=sID)) + facet_wrap("sID",scales="free")
+#' gridExtra::grid.arrange(p_domain,p_segments,nrow=2)
 get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 
   if (any(grep("data.frame",class(segments)))) {
