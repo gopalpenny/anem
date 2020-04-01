@@ -19,6 +19,10 @@ You can install directly from github using `devtools`:
 devtools::install_github("https://github.com/gopalpenny/anem")
 ```
 
+## Vignette
+
+The vignette for the package is located on [github.io](https://gopalpenny.github.io/anem/anem-vignette.html)
+
 ## Shiny app
 
 The basic functionality of the package is also implemented in a Shiny application: <https://gopalpenny.shinyapps.io/anem-app/>
