@@ -30,19 +30,20 @@ are specified, only \code{path} will be used.
 }
 \examples{
 library(tidyverse)
-# using path
-app <- import_app_rds("~/Downloads/anem_scenario.rds")
+# using built in package data
+app <- import_app_rds(params=anem_app_scenario)
 
-# using params
-params <- readRDS("~/Downloads/anem_scenario.rds")
-app <- import_app_rds(params=params)
+# using RDS file
+file <- tempfile("anem_app_scenario.rds")
+saveRDS(anem_app_scenario,file)
+app <- import_app_rds(file)
 
-# view the data
-gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80))
+#' # view the data
+gridded <- get_gridded_hydrodynamics(app$wells,app$aquifer,c(80,80),c(8,8))
 ggplot() +
   geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
   geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
-  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
+  geom_segment(data=app$aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   coord_equal()
 }

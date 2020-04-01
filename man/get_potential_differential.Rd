@@ -27,11 +27,11 @@ The output is the cumulative effect at \code{loc} of all \code{wells} on the hyd
 Get the cumulative effect of all wells at a singled location, output as head (confined aquifer) or discharge potential (unconfined aquifer).
 }
 \examples{
-# Single test location
-wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-4,-2e-4),diam=c(0.75,0.8),R=c(300,300))
+# Single test locations
 aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.00001,h0=0,z0=30)
 
-wells <- rbind(well1,well2)
+well1 <- define_wells(x=0,y=0,Q=1e-3,diam=0.75,R=300)
+well2 <- define_wells(x=0.5,y=0.25,Q=-2e-3,diam=0.8,R=300)
 get_potential_differential(loc=c(50,50),well1,aquifer)
 get_potential_differential(loc=c(50,50),well2,aquifer)
 

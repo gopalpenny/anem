@@ -9,7 +9,7 @@ plot_bounds_behavior(well_images, aquifer, length.out = 100)
 \arguments{
 \item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 
-\item{length.out}{The number of points to check on each boundary}
+\item{length.out}{The number of points to evaluate on each boundary}
 }
 \value{
 Two ggplot objects that show behavior on the boundaries, one for head and one for flow
@@ -19,38 +19,14 @@ Plot behavior on boundaries with and without well images
 }
 \examples{
 library(tidyverse)
-wells1 <- define_wells(x0=c(5),y0=c(5),Q=c(-.0001),diam=c(.1)) \%>\% as_tibble() \%>\%
-  mutate(R=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds_df1 <- tibble(bound_type=c("CH","NF","NF","NF"),
-                  m=c(1,-1,1,-1),b=c(10,20,-10,1),
-                  bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-aquifer1 <- define_aquifer("unconfined",Ksat=1,bounds=bounds_df1)
-well_images1 <- generate_image_wells(wells1,aquifer1) \%>\%
-  filter(max_mirror_dist<R)
+aquifer <- aquifer_confined_example
+well_images <- define_wells(wells_example) \%>\% generate_image_wells(aquifer)
 p_domain <- ggplot() +
-  geom_point(data=well_images1,aes(x0,y0,fill=Q),color="black",size=2,shape=21,alpha=0.5) +
+  geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray") +
-  geom_abline(data=bounds1,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) +
+  geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   coord_equal()
-gg_list <- plot_bounds_behavior(wells1,well_images1,bounds=bounds1,
-                                h0=100,Ksat=0.00000005,aquifer_type="unconfined",length.out=20)
-gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
-
-
-wells2 <- data.frame(x0=c(2,8),y0=c(5,5),Q=c(-.0007,.0005),diam=c(1,1)) \%>\% as_tibble() \%>\%
-  mutate(roi=get_ROI(Ksat=0.00000005,h=100,t=6.3e8,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds2 <- tibble(bound_type=c("CH","NF","NF","NF"),
-                  m=c(1,-1,1,-1),b=c(10,20,-10,1),
-                  bID=as.numeric(1:4),bGroup=c(2,1,2,1))
-well_images2 <- generate_image_wells(wells2,bounds2,num_levels=20) \%>\%
-  filter(max_mirror_dist<roi)
-p_domain <- ggplot() +
-  geom_point(data=well_images2,aes(x0,y0,fill=Q),color="black",size=2,shape=21) +
-  scale_fill_gradient2(low="blue",high="red",mid="gray") +
-  geom_abline(data=bounds2,aes(slope=m,intercept=b,linetype=bound_type,color=as.factor(bID))) +
-  coord_equal()
-gg_list <- plot_bounds_behavior(wells2,well_images2,bounds=bounds2,
-                                h0=100,Ksat=0.00000005,aquifer_type="unconfined",length.out=20)
+gg_list <- plot_bounds_behavior(well_images,aquifer,length.out=20)
 gridExtra::grid.arrange(p_domain,gg_list$p_h,gg_list$p_f,nrow=1)
 gg_list$table
 gg_list$bounds_behavior

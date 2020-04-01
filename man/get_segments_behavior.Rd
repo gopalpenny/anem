@@ -26,28 +26,44 @@ Each row represents a point along sID and contains the head and flow as:
 Get hydraulic head and flow on segments
 }
 \examples{
-library(tidyverse)
-aquifer <- aquifer_confined_example
-aquifer$Ksat <- 5e-4
-wells <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1)) \%>\% generate_image_wells(aquifer)
-seg <- c(0,500,1000,500)
-seg_w1 <- get_segments_behavior(seg,wells \%>\% filter(orig_wID==1),aquifer,1000) \%>\% select(x,y,head) \%>\% mutate(Wells="W1")
-seg_w2 <- get_segments_behavior(seg,wells \%>\% filter(orig_wID==2),aquifer,1000) \%>\% select(x,y,head) \%>\% mutate(Wells="W2")
-seg_w3 <- get_segments_behavior(seg,wells \%>\% filter(orig_wID==3),aquifer,1000) \%>\% select(x,y,head) \%>\% mutate(Wells="W3")
-seg_all <- get_segments_behavior(seg,wells,aquifer,1000) \%>\% select(x,y,head) \%>\% mutate(Wells="All")
-seg_behavior <- bind_rows(seg_all,seg_w1,seg_w2,seg_w3)
-ggplot() +
-geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
-annotate(geom="text",x=0,y=85,label="Constant head",angle=90) +
-annotate(geom="text",x=1000,y=85,label="No flow",angle=90)
+# define the aquifer
+aquifer_super <- aquifer_confined_example
+aquifer_super$Ksat <- 5e-4
 
-wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08)) \%>\%
-  mutate(R=get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov"))  # 630720000 - 20 years
-bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
+# define wells and images
+wells_super_actual <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1))
+wells_super <- generate_image_wells(wells_super_actual,aquifer_super)
+
+# set the segment
+seg <- c(0,500,1000,500)
+
+# get segment for each well and all wells
+seg_w1 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==1,],aquifer_super,1000)
+seg_w1 <- data.frame(seg_w1[,c("x","y","head")],Wells="W1")
+seg_w2 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==2,],aquifer_super,1000)
+seg_w2 <- data.frame(seg_w2[,c("x","y","head")],Wells="W2")
+seg_w3 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==3,],aquifer_super,1000)
+seg_w3 <- data.frame(seg_w3[,c("x","y","head")],Wells="W3")
+seg_all <- get_segments_behavior(seg,wells_super,aquifer_super,1000)
+seg_all <- data.frame(seg_all[,c("x","y","head")],Wells="All")
+
+# plot results
+library(ggplot2)
+seg_behavior <- rbind(seg_all,seg_w1,seg_w2,seg_w3)
+ggplot() +
+  geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
+  geom_vline(data=data.frame(x=c(0,1000)),aes(xintercept=x),color="gray") +
+  annotate(geom="text",x=40,y=90,label="Constant head boundary",angle=-90) +
+  annotate(geom="text",x=1040,y=93,label="No flow boundary",angle=-90)
+
+# Example 2
+wells <- define_wells(x=c(50,10),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08))
+wells$R <- get_ROI(Ksat=0.0000005,h=10,t=630720000,n=0.5,method="aravin-numerov")  # 630720000 - 20 years
+bounds_df <- data.frame(bound_type=c("CH","NF","NF","NF"), m=c(0.5,-2,0.5,-2),b=c(0,100,20,50), bID=as.numeric(1:4))
 aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df,h0=100)
 well_images <- generate_image_wells(wells,aquifer)
 segments <- c(40,20,15,20)
-segments_behavior <- get_segments_behavior(segments,well_images,aquifer) \%>\% as_tibble()
+segments_behavior <- get_segments_behavior(segments,well_images,aquifer)
 p_domain <- ggplot() +
   geom_point(data=well_images \%>\% filter(well_image=="Z"),aes(x,y,fill=Q),color="black",size=2,shape=21) +
   scale_fill_gradient2(low="blue",high="red",mid="gray")+
@@ -57,11 +73,4 @@ p_domain <- ggplot() +
 p_segments <- ggplot(segments_behavior) +
   geom_line(aes(dist,head))# + facet_grid(var~sID,scales="free")
 gridExtra::grid.arrange(p_domain,p_segments,nrow=1)
-
-segments <- aquifer$bounds[1:2,] \%>\% rename(sID=bID) \%>\%
-  dplyr::mutate(x_unit_norm=get_unit_norm(m,"x"),y_unit_norm=get_unit_norm(m,"y"))
-segments_behavior <- get_segments_behavior(segments,well_images,aquifer) \%>\% as_tibble()
-
-p_segments <- ggplot(segments_behavior \%>\% gather(var,val,head,flow_normal)) +
-  geom_line(aes(dist,val,color=as.factor(sID))) + facet_grid(var~sID,scales="free")
 }

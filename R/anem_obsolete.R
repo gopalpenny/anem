@@ -209,11 +209,14 @@ track_particle_runge_kutta <- function(loc, wells, aquifer, t_max = 365*10, reve
 #' Wells in direction
 #' @details
 #' This function identifies which wells are in the direction the particle is moving (determined by line perpendicular to particle velocity)
+#' @keywords internal
 #' @examples
+#' \dontrun{
 #' wells_in_direction(c(0,0),c(1,1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
 #' wells_in_direction(c(0,0),c(-1,-1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
 #' wells_in_direction(c(100,1),c(1,0),data.frame(x=c(99,100,101),y=c(0,0,1)))
 #' wells_in_direction(c(100,1),c(0,1),data.frame(x=c(99,100,101,102),y=c(-1,0,1,2)))
+#' }
 wells_in_direction <- function(loc, v, wells) {
   div_line <- c(get_slope_intercept(loc[1],loc[2],m=-v[1]/v[2]),xsign=sign(v[1]),ysign=sign(v[2]))
   if (abs(div_line$m) != Inf) {

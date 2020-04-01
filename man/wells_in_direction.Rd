@@ -13,8 +13,11 @@ Wells in direction
 This function identifies which wells are in the direction the particle is moving (determined by line perpendicular to particle velocity)
 }
 \examples{
+\dontrun{
 wells_in_direction(c(0,0),c(1,1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
 wells_in_direction(c(0,0),c(-1,-1),data.frame(x=c(-1,0,1),y=c(-1,0,1)))
 wells_in_direction(c(100,1),c(1,0),data.frame(x=c(99,100,101),y=c(0,0,1)))
 wells_in_direction(c(100,1),c(0,1),data.frame(x=c(99,100,101,102),y=c(-1,0,1,2)))
 }
+}
+\keyword{internal}

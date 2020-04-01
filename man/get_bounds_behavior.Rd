@@ -12,7 +12,7 @@ radius of influence R [m], & coordinates x [m], y [m]}
 
 \item{aquifer}{Afuifer object containing aquifer_type, h0, Ksat, bounds, z0 (for confined case only)}
 
-\item{length.out}{The number of points to check on each boundary}
+\item{length.out}{The number of points to evaluate on each boundary}
 }
 \value{
 Returns a \code{data.frame}, with \code{length.out} rows for each bID.
@@ -30,7 +30,7 @@ wells <- define_wells(x=c(50,5),y=c(25,2.5),Q=c(0.5,-0.2),diam=c(0.05,0.08),R=10
 bounds_df <- tibble(bound_type=c("CH","NF","NF","NF"),
                  m=c(0.8,-1.25,0.8,-1.25),b=c(3,100,-25,1),
                  bID=as.numeric(1:4))
-aquifer <- define_aquifer("unconfined",1e-4,bounds=bounds_df)
+aquifer <- define_aquifer("unconfined",1e-4,h0=100,bounds=bounds_df)
 well_images <- generate_image_wells(wells,aquifer)
 ggplot() +
   geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
@@ -48,12 +48,11 @@ aquifer_unconfined <- define_aquifer("unconfined",1e-3,bounds=bounds_df,h0=100)
 set.seed(30)
 wells_df <- data.frame(x=runif(8,0,1000),y=runif(8,0,1000),diam=1) \%>\%
   mutate(R=1000,  #
-         country=factor(y>500,levels=c(F,T),labels=c("A","B"))) \%>\%
+         country=factor(y>500,levels=c(FALSE,TRUE),labels=c("A","B"))) \%>\%
   group_by(country) \%>\%
   mutate(weights=1,Q=-1/n()) \%>\% group_by()
 wells_actual <- define_wells(wells_df)
 wells <- wells_actual \%>\% generate_image_wells(aquifer_unconfined)
-print(wells)
 bound_behavior_no_im <- get_bounds_behavior(wells_actual,aquifer_unconfined) \%>\%
   dplyr::mutate(im="unbounded")
 bound_behavior_im <- get_bounds_behavior(wells,aquifer_unconfined) \%>\%
@@ -62,8 +61,4 @@ bounds_behavior_summary <- bound_behavior_no_im \%>\% bind_rows(bound_behavior_i
   group_by(bID,bound_type,im) \%>\%
   summarize(`Head`=mean(head),
             `Flow`=mean(abs(flow_normal)))
-bounds_behavior_summary \%>\% select(-ends_with("_sd")) \%>\%
-  gather(var,val,Head,Flow) \%>\%
-  unite(bound,bID,bound_type,sep=" ") \%>\% unite(var,var,im,sep=", ") \%>\%
-  spread(var,val)
 }

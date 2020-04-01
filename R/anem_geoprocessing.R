@@ -284,8 +284,8 @@ get_point_on_quandrangle <- function(x,y,axis) {
 #' Get intersection of two lines
 #'
 #' Get intersection of two lines specified by slope m and intercept, b
-#' @examples
 #' @keywords internal
+#' @examples
 #' \dontrun{
 #' get_intersection(1,0,-1,2)
 #' get_intersection(Inf,1,0,2)

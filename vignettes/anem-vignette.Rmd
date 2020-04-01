@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 )
 library(ggplot2)
 library(magrittr)
+library(dplyr)
 # library(tidyr)
 # library(sf)
 # devtools::install_github("https://github.com/gopalpenny/anem")
@@ -34,7 +35,41 @@ As you will see in this vignette, the package has a number of functions that are
 
 ### Understanding the method of images
 
-The package relies on the method of images, where wells are mirrored across aquifer boundaries to reproduce characterics of the boundary, such as no flow or constant head. The following examples demonstrate (a) how a no-flow boundary is created by mirroring a well across the boundary, and (b) how a constant head boundary is recreated by mirroring the well and inverting the pumping.
+The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see `?` and `?`, respectively, which give examples for generating similar plots). The principle of super position states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.
+
+```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
+# define the aquifer
+aquifer_super <- aquifer_confined_example
+aquifer_super$Ksat <- 5e-4
+
+# define wells and images
+wells_super_actual <- define_wells(data.frame(x=c(400,500,900),y=500,R=1500,Q=-0.1,diam=1))
+wells_super <- generate_image_wells(wells_super_actual,aquifer_super)
+
+# set the segment
+seg <- c(0,500,1000,500)
+
+# get segment for each well and all wells
+seg_w1 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==1,],aquifer_super,1000)
+seg_w1 <- data.frame(seg_w1[,c("x","y","head")],Wells="W1")
+seg_w2 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==2,],aquifer_super,1000)
+seg_w2 <- data.frame(seg_w2[,c("x","y","head")],Wells="W2")
+seg_w3 <- get_segments_behavior(seg,wells_super[wells_super$orig_wID==3,],aquifer_super,1000)
+seg_w3 <- data.frame(seg_w3[,c("x","y","head")],Wells="W3")
+seg_all <- get_segments_behavior(seg,wells_super,aquifer_super,1000)
+seg_all <- data.frame(seg_all[,c("x","y","head")],Wells="All")
+
+# plot results
+seg_behavior <- rbind(seg_all,seg_w1,seg_w2,seg_w3)
+ggplot() +
+  geom_line(data=seg_behavior,aes(x,head,linetype=Wells)) +
+  geom_vline(data=data.frame(x=c(0,1000)),aes(xintercept=x),color="gray") +
+  annotate(geom="text",x=40,y=86,label="Constant head boundary",angle=-90) +
+  annotate(geom="text",x=1040,y=86,label="No flow boundary",angle=-90)
+```
+
+
+In the method of images, wells are mirrored across aquifer boundaries to reproduce characterics of the boundary, such as no flow or constant head. The following examples demonstrate (a) how a no-flow boundary is created by mirroring a well across the boundary, and (b) how a constant head boundary is recreated by mirroring the well and inverting the pumping.
 
 ```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
 # Create a grid of locations

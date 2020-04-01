@@ -10,7 +10,10 @@ get_intersection(m1, b1, m2, b2)
 Get intersection of two lines specified by slope m and intercept, b
 }
 \examples{
+\dontrun{
 get_intersection(1,0,-1,2)
 get_intersection(Inf,1,0,2)
 get_intersection(Inf,1,Inf,2)
 }
+}
+\keyword{internal}
