@@ -25,7 +25,8 @@ Get the cumulative effect of all wells on flow at a single location, output as d
 }
 \examples{
 \dontrun{
-wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),diam=c(0.75,0.8),R=c(300,300))
+wells <- define_wells(x=c(0,0.5),y=c(0,0.25),Q=c(1e-3,-2e-3),
+  diam=c(0.75,0.8),R=c(300,300))
 aquifer <- define_aquifer(h0=0,Ksat=0.00001,z0=30,aquifer_type="confined")
 get_flow_direction(loc=c(5,5),wells,aquifer)
 get_flowdir_raw(loc=c(5,5),wells,aquifer)
@@ -36,15 +37,18 @@ get_flow_direction(loc=grid_pts,wells,aquifer)
 get_flowdir_raw(loc=grid_pts,wells,aquifer)
 get_flowdir_raw(loc=grid_pts,NULL,aquifer)
 
-recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),flow=1e-3,x0=0,y0=0)
+recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,-1,-1),
+  flow=1e-3,x0=0,y0=0)
 aquifer_norecharge <- define_aquifer("confined",1e-3,h0=0,z0=1)
-aquifer_recharge <- define_aquifer("confined",1e-3,h0=0,z0=1,recharge=recharge_params)
+aquifer_recharge <- define_aquifer("confined",1e-3,h0=0,z0=1,
+  recharge=recharge_params)
 (a <- get_flow_direction(c(-1,-1),wells,aquifer_recharge))
 (b <- get_flow_direction(c(-1,-1),wells,aquifer_norecharge))
 (d <- get_flow_direction(c(-1,-1),NULL,aquifer_recharge))
 b + d
 
-recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),
+  flow_main=1,flow_opp=1,x0=0,y0=0)
 aquifer_norecharge <- define_aquifer("confined",1,h0=0,z0=1)
 aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 loc <- expand.grid(x=-1:1,y=-1:1)
@@ -53,7 +57,8 @@ loc <- expand.grid(x=-1:1,y=-1:1)
 (d <- get_flow_direction(loc,NULL,aquifer_recharge))
 b + d - a
 
-recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,10),flow_main=1,flow_opp=1,x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,10),
+  flow_main=1,flow_opp=1,x0=0,y0=0)
 aquifer_norecharge <- define_aquifer("confined",1,h0=0,z0=1)
 aquifer_recharge <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 loc <- expand.grid(x=9:11,y=9:11)

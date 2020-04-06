@@ -60,31 +60,44 @@ prep_bounds_sf <- function(bounds_sf) {
 #' @examples
 #' \dontrun{
 #' # Example 1
-#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),
+#'   x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' rect_boundaries <- get_rectangle(bounds)
 #'
 #' library(ggplot2)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_segment(data=rect_boundaries,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'   geom_segment(data=rect_boundaries,
+#'     aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) +
+#'   coord_equal()
 #'
 #' # Example 2
 #' bounds2 <- data.frame(m=c(2,4,-1,-1),b=c(0,4,3,20))
 #' rect_boundaries2 <- get_rectangle(bounds2)
 #' ggplot() + geom_abline(data=bounds2,aes(slope=m,intercept=b)) +
-#'   geom_segment(data=rect_boundaries2,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'   geom_segment(data=rect_boundaries2,
+#'     aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) +
+#'   coord_equal()
 #'
 #' # Example 3
 #' bounds3 <- data.frame(m=c(Inf,0,Inf,0),b=c(0,4,4,0))
 #' rect_boundaries3 <- get_rectangle(bounds3)
-#' ggplot() + geom_abline(data=bounds3[bounds3$m!=Inf,],aes(slope=m,intercept=b),linetype="dashed") +
-#'   geom_vline(data=bounds3[bounds3$m==Inf,],aes(xintercept=b),linetype="dashed") +
-#'   geom_segment(data=rect_boundaries3,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#' ggplot() +
+#'   geom_abline(data=bounds3[bounds3$m!=Inf,],
+#'     aes(slope=m,intercept=b),linetype="dashed") +
+#'   geom_vline(data=bounds3[bounds3$m==Inf,],
+#'     aes(xintercept=b),linetype="dashed") +
+#'   geom_segment(data=rect_boundaries3,
+#'     aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) +
+#'   coord_equal()
 #'
 #' # Example 4
-#' bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),
+#'   x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' rect_boundaries4 <- get_rectangle(bounds4)
 #' ggplot() + geom_segment(data=bounds4,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_segment(data=rect_boundaries4,aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) + coord_equal()
+#'   geom_segment(data=rect_boundaries4,
+#'     aes(x1,y1,xend=x2,yend=y2,color=as.factor(bID))) +
+#'   coord_equal()
 #' }
 get_rectangle <- function(bounds) {
   is_sf <- max(grepl("sf",class(bounds)))
@@ -193,23 +206,30 @@ bounds_to_sf <- function(bounds,crs) {
 #' library(magrittr)
 #' library(ggplot2)
 #' library(dplyr)
-#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
+#' bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),
+#'   x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% mutate(bID=row_number())
 #' quad_vertices <- get_quad_vertices(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
-#'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+#'   geom_point(data=quad_vertices,
+#'     aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
 #'   scale_shape_manual(values=1:4)
 #'
-#' bounds <- data.frame(x1=c(0,1,2,1),y1=c(1,2,1,0),x2=c(1,2,1,0),y2=c(2,1,0,1)) %>% mutate(bID=row_number())
+#' bounds <- data.frame(x1=c(0,1,2,1),y1=c(1,2,1,0),x2=c(1,2,1,0),
+#'   y2=c(2,1,0,1)) %>% mutate(bID=row_number())
 #' quad_vertices <- get_quad_vertices(bounds)
 #' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal()
-#'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+#'   geom_point(data=quad_vertices,
+#'     aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
 #'   scale_shape_manual(values=1:4)
 #'
-#' bounds <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' bounds <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),
+#'   x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' quad_vertices <- get_quad_vertices(bounds)
-#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) + coord_equal() +
-#'   geom_point(data=quad_vertices,aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
-#'   scale_shape_manual(values=1:4)
+#' ggplot() + geom_segment(data=bounds,aes(x1,y1,xend=x2,yend=y2)) +
+#'   geom_point(data=quad_vertices,
+#'     aes(x,y,shape=as.factor(bID),color=as.factor(bID)),size=4) +
+#'   scale_shape_manual(values=1:4) +
+#'   coord_equal()
 #'
 #' bounds <-data.frame(bID=c(5, 6, 7, 8),
 #'                     x1=c(468888, 572670, 483978, 468888),
@@ -320,12 +340,13 @@ get_intersection <- function(m1,b1,m2,b2) {
 #' @examples
 #'
 #' \dontrun{
-#' get_nearest_point_on_boundary(c(1,1),)
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),
+#'   m=c(Inf,0,Inf,0),b=c(0,0,100,100)) %>% define_bounds()
 #' loc <- c(150,150)
 #' get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
 #'
-#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
+#' bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),
+#'   m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) %>% define_bounds()
 #' loc <- data.frame(x=c(-100,0,100),y=c(-150,0,150))
 #' nearest <- get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
 #' ggplot() +
@@ -594,11 +615,12 @@ get_edges_from_vertices <- function(vertices) {
 #' the rectangle is specified as segment 1: p1 --> p2, segment 2: p2 --> p3, etc.
 #' @examples
 #' \dontrun{
-#' edges_user <- data.frame(x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749846,-87.1823783130922),
-#'                  y1=c(41.4427263776721,41.8327350621526,41.1455697310095,40.8512155742825),
-#'                  bID=c(5,6,7,8),
-#'                  x2=c(-86.2150051217412,-85.8522401749846,-87.1823783130922,-87.3802501022322),
-#'                  y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
+#' edges_user <- data.frame(
+#'   x1=c(-87.3802501022322,-86.2150051217412,-85.8522401749846,-87.1823783130922),
+#'   y1=c(41.4427263776721,41.8327350621526,41.1455697310095,40.8512155742825),
+#'   bID=c(5,6,7,8),
+#'   x2=c(-86.2150051217412,-85.8522401749846,-87.1823783130922,-87.3802501022322),
+#'   y2=c(41.8327350621526,41.1455697310095,40.8512155742825,41.4427263776721))
 #' edges_rect <- get_utm_rectangle(edges_user)
 #' }
 get_utm_rectangle <- function(edges_user) {

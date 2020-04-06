@@ -277,18 +277,22 @@ define_bounds <- function(bounds_df,get_rectangular=TRUE) {
 #' }
 #' @examples
 #' aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
-#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+#' recharge_params <- list(recharge_type="F",
+#'   recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
 #' define_recharge(recharge_params,aquifer=aquifer)
 #'
-#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),aquifer=aquifer,flow=1,x0=3,y0=3)
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),
+#'   aquifer=aquifer,flow=1,x0=3,y0=3)
 #' define_recharge(recharge_params)
 #'
 #' aquifer <- define_aquifer("unconfined",Ksat=0.001,h0=100)
-#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+#' recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),
+#'   flow=1,x0=3,y0=3)
 #' define_recharge(recharge_params, aquifer=aquifer)
 #'
 #' aquifer <- define_aquifer("confined",Ksat=1,z0=10,h0=0)
-#' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),aquifer=aquifer,flow_main=1,flow_opp=1,x0=1,y0=1)
+#' recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),
+#'   aquifer=aquifer,flow_main=1,flow_opp=1,x0=1,y0=1)
 #' define_recharge(recharge_params)
 define_recharge <- function(recharge_params, recharge_type, recharge_vector, aquifer, ...) {
   # If any inputs are missing, replace values with those from recharge_params
@@ -423,11 +427,13 @@ define_recharge <- function(recharge_params, recharge_type, recharge_vector, aqu
 #' (aquifer <- define_aquifer("confined",1e-4))
 #' (aquifer <- define_aquifer("confined",1e-4,h0=100,z0=10))
 #'
-#' bounds_df1 <- data.frame(bound_type=c("CH","NF","NF","NF"),x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
+#' bounds_df1 <- data.frame(bound_type=c("CH","NF","NF","NF"),
+#'   x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0))
 #' aquifer_confined <- define_aquifer("confined",1e-3,bounds=bounds_df1,h0=100,z0=10)
 #' print(aquifer_confined)
 #'
-#' bounds_df2 <- data.frame(bound_type=c("CH","CH","NF","NF"),x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
+#' bounds_df2 <- data.frame(bound_type=c("CH","CH","NF","NF"),
+#'   x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
 #' aquifer_confined <- define_aquifer("unconfined",1e-3,bounds=bounds_df2,h0=100)
 #' aquifer_confined
 #'

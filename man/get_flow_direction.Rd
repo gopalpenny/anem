@@ -70,7 +70,9 @@ mutate(angle=atan(dy/dx),mag=sqrt(dx^2+dy^2),mag_norm=mag^(1/2)*5,
        x2=x+dx_norm,y2=y+dy_norm)
 
 ggplot(fd3_grid,aes(x,y)) + geom_point(size=2,shape=1) +
-  geom_segment(aes(xend=x2,yend=y2),arrow=arrow(type="closed",length=unit(2,"mm"))) + coord_equal()
+  geom_segment(aes(xend=x2,yend=y2),
+    arrow=arrow(type="closed",length=unit(2,"mm"))) +
+  coord_equal()
 
 
 wells <- define_wells(Q=0.1,x=-2,y=-2,R=100,diam=0.5)
@@ -79,13 +81,15 @@ aquifer <- define_aquifer("confined",1e-3,h0=0,z0=1,recharge=recharge_params)
 get_flow_direction(c(-1,-1),wells,aquifer)
 get_flow_direction(c(-1,-1),NULL,aquifer)
 
-recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),flow_main=1,flow_opp=1,x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,-1,-1),
+  flow_main=1,flow_opp=1,x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 loc <- expand.grid(x=-1:1,y=-1:1)
 loc \%>\% bind_cols(get_flow_direction(loc,wells,aquifer))
 loc \%>\% bind_cols(get_flow_direction(loc,NULL,aquifer))
 
-recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),flow_main=sqrt(2),flow_opp=sqrt(2),x0=0,y0=0)
+recharge_params <- list(recharge_type="D",recharge_vector=c(10,10,11,11),
+  flow_main=sqrt(2),flow_opp=sqrt(2),x0=0,y0=0)
 aquifer <- define_aquifer("confined",1,h0=0,z0=1,recharge=recharge_params)
 loc <- expand.grid(x=9:11,y=9:11)
 get_flow_direction(loc,wells,aquifer)

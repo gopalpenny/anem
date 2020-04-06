@@ -112,17 +112,21 @@ If this is specified, there will be a watershed divide
 
 \examples{
 aquifer <- define_aquifer("confined",Ksat=0.001,z0=10,h0=100)
-recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+recharge_params <- list(recharge_type="F",
+  recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
 define_recharge(recharge_params,aquifer=aquifer)
 
-recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),aquifer=aquifer,flow=1,x0=3,y0=3)
+recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),
+  aquifer=aquifer,flow=1,x0=3,y0=3)
 define_recharge(recharge_params)
 
 aquifer <- define_aquifer("unconfined",Ksat=0.001,h0=100)
-recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),flow=1,x0=3,y0=3)
+recharge_params <- list(recharge_type="F",recharge_vector=c(0,0,3,3),
+  flow=1,x0=3,y0=3)
 define_recharge(recharge_params, aquifer=aquifer)
 
 aquifer <- define_aquifer("confined",Ksat=1,z0=10,h0=0)
-recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),aquifer=aquifer,flow_main=1,flow_opp=1,x0=1,y0=1)
+recharge_params <- list(recharge_type="D",recharge_vector=c(0,0,1,1),
+  aquifer=aquifer,flow_main=1,flow_opp=1,x0=1,y0=1)
 define_recharge(recharge_params)
 }

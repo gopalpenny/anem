@@ -38,9 +38,12 @@ provided that:
 \dontrun{
 library(dplyr)
 library(ggplot2)
-bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
-aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,n=0.4,h0=0,z0=20,bounds=bounds_df)
-wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),diam=c(1,1,1),R=c(500,100,600)) \%>\%
+bounds_df <- data.frame(bound_type=c("NF","NF","CH","NF"),
+  m=c(Inf,0,Inf,0),b=c(0,1000,1000,0))
+aquifer <- define_aquifer(aquifer_type="confined",Ksat=0.001,
+  n=0.4,h0=0,z0=20,bounds=bounds_df)
+wells <- data.frame(x=c(400,100,650),y=c(300,600,800),Q=c(-1e-1,-1e-1,1e-1),
+  diam=c(1,1,1),R=c(500,100,600)) \%>\%
   define_wells() \%>\% generate_image_wells(aquifer)
 gridded <- get_gridded_hydrodynamics(wells,aquifer,c(100,100),c(10,10))
 

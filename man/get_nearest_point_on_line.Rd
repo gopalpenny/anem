@@ -19,12 +19,13 @@ Get nearest point on
 \examples{
 
 \dontrun{
-get_nearest_point_on_boundary(c(1,1),)
-bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),
+  m=c(Inf,0,Inf,0),b=c(0,0,100,100)) \%>\% define_bounds()
 loc <- c(150,150)
 get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
 
-bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) \%>\% define_bounds()
+bounds <- data.frame(bound_type=c("CH","NF","NF","NF"),
+  m=c(-2,0.5,-2,0.5),b=c(0,0,100,20)) \%>\% define_bounds()
 loc <- data.frame(x=c(-100,0,100),y=c(-150,0,150))
 nearest <- get_nearest_point_on_line(loc,bounds[1,]$m,bounds[1,]$b)
 ggplot() +

@@ -137,7 +137,8 @@ get_segments_behavior <- function(segments,wells,aquifer,length.out=100) {
 #' ggplot() +
 #'   geom_point(data=well_images,aes(x,y,fill=Q),color="black",size=2,shape=21) +
 #'   scale_fill_gradient2(low="blue",high="red",mid="gray")+
-#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type,color=as.factor(bID))) + coord_equal()
+#'   geom_segment(data=aquifer$bounds,aes(x1,y1,xend=x2,yend=y2,
+#'     linetype=bound_type,color=as.factor(bID))) + coord_equal()
 #' bound_behavior_im <- get_bounds_behavior(well_images,aquifer)
 #' bound_behavior_im$im <- "images"
 #' bound_behavior_no_im <- get_bounds_behavior(wells,aquifer)
