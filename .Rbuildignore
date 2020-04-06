@@ -8,3 +8,4 @@
 ^\.travis\.yml$
 ^example_scenarios/*$
 ^docs$
+^LICENSE\.md$

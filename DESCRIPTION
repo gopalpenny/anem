@@ -7,7 +7,7 @@ Author: person("Gopal", "Penny", email = "gopalpenny@gmail.com",
 Maintainer: Gopal Penny <gopalpenny@gmail.com>
 Description: This package is used for 2D steady state groundwater flow, applying the 
     analytical element method in aquifers with rectangular boundaries.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests:
