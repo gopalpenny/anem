@@ -9,3 +9,5 @@
 ^example_scenarios/*$
 ^docs$
 ^LICENSE\.md$
+^_pkgdown\.yml$
+^pkgdown$
