@@ -17,11 +17,7 @@ knitr::opts_chunk$set(
   fig.height=2.5
 )
 library(ggplot2)
-library(magrittr)
 library(dplyr)
-# library(tidyr)
-# library(sf)
-# devtools::install_github("https://github.com/gopalpenny/anem")
 library(anem)
 ```
 
@@ -35,7 +31,7 @@ As you will see in this vignette, the package has a number of functions that are
 
 ### Understanding the method of images
 
-The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see `?` and `?`, respectively, which give examples for generating similar plots). The principle of super position states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.
+The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see `?get_segments_behavior` and `?get_stream_function`, respectively, which give examples for generating similar plots). The principle of super position states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.
 
 ```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
 # define the aquifer
@@ -73,20 +69,20 @@ In the method of images, wells are mirrored across aquifer boundaries to reprodu
 
 ```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
 # Create a grid of locations
-loc <- tidyr::crossing(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
+loc <- expand.grid(x=seq(-200,200,length.out=201),y=seq(-200,200,length.out=201))
 
 # Constant head boundary
 wells_constant_head <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
 aquifer <- define_aquifer("confined",1e-4,z0=20,h0=0,n=0.35)
 constant_head_boundary <- loc %>%
-  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
-  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_constant_head,aquifer))
+  bind_cols(streamfunction=get_stream_function(loc,wells_constant_head,aquifer)) %>%
+  bind_cols(head=get_hydraulic_head(loc,wells_constant_head,aquifer))
 
 # No flow boundary
 wells_no_flow <- define_wells(x=c(-100,100),y=c(-0,0),Q=c(-1e-2,-1e-2),diam=c(0.1,0.1),R=c(500,500))
 no_flow_boundary <- loc %>%
-  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells_no_flow,aquifer)) %>%
-  dplyr::bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
+  bind_cols(streamfunction=get_stream_function(loc,wells_no_flow,aquifer)) %>%
+  bind_cols(head=get_hydraulic_head(loc,wells_no_flow,aquifer))
 
 thm <- theme(axis.text=element_blank(),axis.title=element_blank(),axis.ticks=element_blank(),
              panel.background = element_rect(fill=NA,color="black"),
@@ -115,8 +111,7 @@ Load packages for the vignette
 
 ```{r setup, message=FALSE,warning=FALSE,eval=FALSE}
 library(ggplot2)
-library(sf)
-# devtools::install_github("https://github.com/gopalpenny/anem")
+library(dplyr)
 library(anem)
 ```
 
@@ -205,7 +200,7 @@ ggplot() +
   geom_segment(data=gridded_1$flow,aes(x,y,xend=x2,yend=y2),
                arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
-  geom_point(data=wells %>% dplyr::filter(wID==orig_wID),aes(x,y),shape=21) +
+  geom_point(data=wells %>% filter(wID==orig_wID),aes(x,y),shape=21) +
   coord_equal()
 ```
 
@@ -279,8 +274,6 @@ gridded_3 <- get_gridded_hydrodynamics(wells,aquifer_unconfined)
 ggplot() +
   geom_raster(data=gridded_1$head,aes(x,y,fill=head_m)) +
   geom_contour(data=gridded_1$head,aes(x,y,z=head_m),color="white",alpha=0.3) +
-  # geom_segment(data=gridded_1$flow,aes(x,y,xend=x2,yend=y2),
-  #              arrow = arrow(ends="last",type="closed",length=unit(1,"mm")),color="black") +
   geom_segment(data=aquifer_unconfined$bounds,aes(x1,y1,xend=x2,yend=y2,linetype=bound_type)) +
   geom_path(data=well_particles,aes(x,y,group=i,color=as.factor(wID)),show.legend = FALSE) +
   geom_point(data=wells_actual,aes(x,y,color=as.factor(wID)),shape=21,show.legend = FALSE) +
