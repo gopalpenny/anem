@@ -8,3 +8,5 @@ addons:
       - libudunits2-dev
       - libgdal-dev
       - libproj-dev
+after_success:
+  - Rscript -e 'covr::codecov()'
