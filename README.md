@@ -1,5 +1,6 @@
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.org/gopalpenny/anem.svg?branch=master)](https://travis-ci.org/gopalpenny/anem)
+[![Codecov test coverage](https://codecov.io/gh/gopalpenny/anem/branch/master/graph/badge.svg)](https://codecov.io/gh/gopalpenny/anem?branch=master)
 <!-- badges: end -->
 
 # anem

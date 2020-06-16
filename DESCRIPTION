@@ -22,7 +22,8 @@ Suggests:
     shiny,
     stringr,
     tidyselect,
-    gridExtra
+    gridExtra,
+    covr
 Depends:
     R (>= 3.1.0)
 VignetteBuilder: knitr
