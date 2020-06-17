@@ -226,6 +226,8 @@ get_unit_norm <- function(m,axis) {
 #' gg_list$table
 #' gg_list$bounds_behavior
 plot_bounds_behavior <- function(wells,aquifer,length.out=100) {
+  dist_rel <- head <- flow_normal <- NULL
+
   cAquifer <- check_aquifer(aquifer)
 
   if (max(grepl("sf",class(aquifer$bounds)))) {
@@ -234,14 +236,18 @@ plot_bounds_behavior <- function(wells,aquifer,length.out=100) {
 
   wells_noimages <- wells %>% dplyr::filter(wID==orig_wID)
 
-  bounds_behavior_noim <- get_bounds_behavior(wells_noimages,aquifer,length.out=length.out) %>%
-    dplyr::mutate(im="no images")
-  bounds_behavior_wim <- get_bounds_behavior(wells,aquifer,length.out=length.out) %>%
-    dplyr::mutate(im="images")
+  bounds_behavior_noim <- get_bounds_behavior(wells_noimages,aquifer,length.out=length.out)
+  bounds_behavior_noim$im <- "no images"
+
+  bounds_behavior_wim <- get_bounds_behavior(wells,aquifer,length.out=length.out)
+  bounds_behavior_wim$im="images"
+
+  bounds_BT <- aquifer$bounds
+  bounds_BT$BT <- paste(bounds_BT$bID,bounds_BT$bound_type)
   bounds_behavior <- dplyr::bind_rows(bounds_behavior_noim,bounds_behavior_wim) %>%
-    dplyr::left_join(aquifer$bounds %>% dplyr::mutate(BT=paste(bID,bound_type)) %>%
-                       dplyr::select(bID,BT),by="bID") %>%
-    dplyr::mutate(im=factor(im,levels=c("no images","images")))
+    dplyr::left_join(bounds_BT[,c("bID","BT")],by="bID")
+  bounds_behavior$im=factor(bounds_behavior$im,levels=c("no images","images"))
+
   p_h <- ggplot2::ggplot(bounds_behavior) + ggplot2::geom_line(ggplot2::aes(dist_rel,head)) +
     ggplot2::facet_grid(BT~im,scales="free_x") + ggplot2::theme(axis.text.x=ggplot2::element_blank()) + ggplot2::ggtitle("Head along boundary")
   p_f <- ggplot2::ggplot(bounds_behavior) + ggplot2::geom_line(ggplot2::aes(dist_rel,flow_normal)) +
