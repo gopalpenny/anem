@@ -743,7 +743,7 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' df <- expand.grid(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20))
 #' df$z <- sqrt(df$x^2+df$y^2)
 #'
-#' cl <- get_contourlines(df,levels=seq(1,10,by=1.5), type="sf") %>% dplyr::group_by()
+#' cl <- get_contourlines(df,levels=seq(1,10,by=1.5), type="sf")
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_sf(data=cl,aes())
