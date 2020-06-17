@@ -161,6 +161,7 @@ get_rectangle <- function(bounds) {
       sf::st_set_crs(sf::st_crs(bounds))
     quad_vertices_final_linestring <- quad_vertices_final_sf %>% dplyr::group_by(bID) %>%
       dplyr::summarize(geometry=sf::st_union(geometry)) %>%
+      sf::st_as_sf(crs=sf::st_crs(bounds)) %>%
       sf::st_cast("LINESTRING",union=TRUE) %>%
       sf::st_set_crs(sf::st_crs(bounds))
     bounds_rectangular <- quad_vertices_final_linestring %>%
@@ -742,7 +743,7 @@ bounds_to_sf2 <- function(bounds, crs) {
 #' df <- expand.grid(x=seq(-5,5,length.out=20),y=seq(-5,5,length.out=20))
 #' df$z <- sqrt(df$x^2+df$y^2)
 #'
-#' cl <- get_contourlines(df,levels=seq(1,120,by=10), type="sf")
+#' cl <- get_contourlines(df,levels=seq(1,10,by=1.5), type="sf") %>% dplyr::group_by()
 #' ggplot() +
 #'   geom_raster(data=df,aes(x,y,fill=z)) +
 #'   geom_sf(data=cl,aes())
@@ -802,8 +803,8 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
       cl <- cl %>% sf::st_as_sf(coords=c("x","y"),crs=crs) %>%
         dplyr::arrange(i) %>%
         dplyr::group_by(level,line) %>%
-        dplyr::summarize(do_union=FALSE) %>%
-        sf::st_cast("LINESTRING")
+        dplyr::summarize(do_union=FALSE) %>% dplyr::ungroup() %>%
+        sf::st_cast("MULTILINESTRING")
     }
   } else {
     warning(paste0("No contours found. Level range: (",min(level),",",max(level),"). ",
