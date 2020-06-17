@@ -45,9 +45,13 @@ df <- tibble::tibble(time_days=c(168.228233320727, 184.090583379394, 365, 183.73
                  status=c("Reached well", "Reached boundary", "Zero velocity", "Reached well", "Zero velocity", "Reached well"),
                  endpoint=TRUE,
                  i=c(1:6),
-                 p=c("a", "b", "c", "d", "e", "f")) %>% dplyr::mutate_if(is.numeric,round)
+                 p=c("a", "b", "c", "d", "e", "f"))
+df[,c("time_days","x","y","i")] <- round(df[,c("time_days","x","y","i")])
+tracking_results <- particle_paths %>% dplyr::filter(status!="On path")
+tracking_results[,c("time_days","x","y","i")] <- round(tracking_results[,c("time_days","x","y","i")])
 test_that("track_particle works for data.frame loc input",{
-  expect_equal(particle_paths %>% dplyr::filter(status!="On path") %>% dplyr::mutate_if(is.numeric,round),df)
+  expect_equal(TRUE,
+               all.equal(tracking_results,df))
 })
 
 

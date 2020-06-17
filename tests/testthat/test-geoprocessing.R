@@ -1,5 +1,5 @@
 # context("anema_geoprocessing")
-
+# library(dplyr)
 
 test_that("get_utm_zone returns correct zones for three examples", {
   expect_equal(longitude_to_utm_zone(-87), 16)
@@ -14,7 +14,8 @@ test_that("utm_zone_to_proj4 returns correct proj4string for zone 32", {
 })
 
 
-boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% dplyr::mutate(bID=row_number())
+boundaries <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>%
+  dplyr::mutate(bID=dplyr::row_number())
 test_that("get_rectangle returns data.frame from simple quadrangle",{
   expect_equal(round(dplyr::select(get_rectangle(boundaries),-x1,-x2,-y1,-y2),4),
                tibble::tibble(m=c(0.9091,-1.1,0.9091,-1.1),
@@ -29,21 +30,20 @@ df1 <- round(tibble::tibble(m=c(0.909090909090909, -1.1, 0.909090909090909, -1.1
                   b=c(0.454545454545455, 22.15, -2.36363636363636, 0.05),
                   bID=1:4,
                   x1=c(10.7986425339, 10.7986425339, 12.2013574661, -0.2013574661),
-                  x2=c(-0.2013574661, 12.2013574661, 1.2013574661, 1.2013574661),
                   y1=c(10.2714932127, 10.2714932127, 8.7285067873, 0.2714932127),
+                  x2=c(-0.2013574661, 12.2013574661, 1.2013574661, 1.2013574661),
                   y2=c(0.2714932127, 8.7285067873, -1.2714932127, -1.2714932127)),5)
 test_that("get_rectangle returns correct bounds for quadrangle",{
   expect_equal(round(get_rectangle(bounds1),5),df1)
 })
-
 
 bounds4 <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
 df4 <- tibble::tibble(m=c(Inf, 0, Inf, 0),
                      b=c(0, 10, 10, 0),
                      bID=1:4,
                      x1=c(0, 0, 10, 0),
-                     x2=c(0, 10, 10, 10),
                      y1=c(10, 10, 10, 0),
+                     x2=c(0, 10, 10, 10),
                      y2=c(0, 10, 0, 0))
 
 # get_rectangle(bounds4) %>% ggp::print_data_frame_for_entry()
@@ -62,7 +62,7 @@ test_that("get_intersection returns NaN for vertical lines",{
   expect_equal(get_intersection(Inf,1,Inf,2),data.frame(x=NaN,y=NaN))
 })
 
-bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% dplyr::mutate(bID=row_number())
+bounds <- data.frame(x1=c(0,10,13,1),y1=c(0,10,9,-1),x2=c(10,13,1,0),y2=c(10,9,-1,0)) %>% dplyr::mutate(bID=dplyr::row_number())
 df <- tibble::tibble(bID=as.integer(c(1, 1, 2, 2, 3, 3, 4, 4)),
                      intersection_bID=as.integer(c(2, 4, 1, 3, 2, 4, 1, 3)),
                      x=c(10, 0, 10, 13, 13, 1, 0, 1),
@@ -73,7 +73,7 @@ test_that("get_quad_vertices returns data.frame with proper lines",{
 
 
 bounds <- data.frame(bID=1:4,x1=c(0,0,10,10),y1=c(0,10,10,0),x2=c(0,10,10,0),y2=c(10,10,0,0))
-df <- data.frame(bID=as.integer(c(1, 1, 2, 2, 3, 3, 4, 4)),
+df <- tibble::tibble(bID=as.integer(c(1, 1, 2, 2, 3, 3, 4, 4)),
                  intersection_bID=as.integer(c(2, 4, 1, 3, 2, 4, 1, 3)),
                  x=c(0, 0, 0, 10, 10, 10, 0, 10),
                  y=c(10, 0, 10, 10, 10, 0, 0, 0))
@@ -133,7 +133,7 @@ edges_user <- data.frame(x1=c(-87.38,-86.22,-85.85,-87.18),
                          bID=c(5,6,7,8),
                          x2=c(-86.22,-85.85,-87.18,-87.38),
                          y2=c(41.83,41.15,40.85,41.44))
-edges_rect <- df <- data.frame(bID=c(5, 6, 7, 8),
+edges_rect <- tibble::tibble(bID=c(5, 6, 7, 8),
                                x1=c(-87.44, -86.19, -85.88, -87.12),
                                y1=c(41.46, 41.81, 41.17, 40.83),
                                x2=c(-86.19, -85.88, -87.12, -87.44),
@@ -162,3 +162,4 @@ test_that("get_perpendicular_line works for slope = 0, Inf, or real number",{
   expect_equal(get_perpendicular_line(1/2,2,2),list(m=-2,b=6))
   expect_equal(get_perpendicular_line(-2,2,2),list(m=1/2,b=1))
 })
+

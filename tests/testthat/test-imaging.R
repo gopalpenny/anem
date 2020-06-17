@@ -15,9 +15,10 @@ well3 <- define_wells(wID=1,x=2,y=2,Q=0.5,diam=0.75,path=1,orig_wID=1,well_group
 boundary3 <- data.frame(bID=1,m=0,b=1,bound_type="NF")
 
 test_that("get_mirror_point accurately mirrors the point", {
-  expect_equal(get_mirror_point(point, boundary, new_wID=2) %>% dplyr::select(-max_mirror_dist,-well_type),
+  expect_equal(TRUE,
+               dplyr::all_equal(get_mirror_point(point, boundary, new_wID=2) %>% dplyr::select(-max_mirror_dist,-well_type),
                tibble::tibble(wID=2,Q=0.5,diam=0.75,x=1,y=1,orig_wID=1,transform="NF",R=5,
-                              source_bound=1,path="1 : 1 (1-NF)",w_group="a",well_image="Image (+Q)"))
+                              source_bound=1,path="1 : 1 (1-NF)",w_group="a",well_image="Image (+Q)")))
   expect_equal(get_mirror_point(well2, boundary2, new_wID=2) %>% dplyr::select(x,y),
                tibble::tibble(x=0,y=2))
   expect_equal(get_mirror_point(well3, boundary3, new_wID=2) %>% dplyr::select(x,y),
