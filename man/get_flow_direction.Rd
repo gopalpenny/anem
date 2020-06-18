@@ -5,7 +5,7 @@
 \title{Calculate the flow direction}
 \usage{
 get_flow_direction(loc, wells, aquifer, show_progress = FALSE,
-  eps = 1e-06, numderiv = FALSE)
+  eps = 1e-06)
 }
 \arguments{
 \item{loc}{coordinates vector as c(x,y), with units of [m] or as data.frame with columns $x and $y}
@@ -19,8 +19,6 @@ radius of influence R [m], & coordinates x [m], y [m]}
 wells and locations, then a progress bar will be printed.}
 
 \item{eps}{Threshold satisfying numeric derivative}
-
-\item{numderiv}{Boolean that determines whether unconfined aquifers are calculated analytically or numerically}
 }
 \value{
 Outputs the flow direction in the x and y directions. If the input \code{loc} is
@@ -47,9 +45,7 @@ get_flow_direction(loc=grid_pts,wells,aquifer)
 wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
 aquifer_unconfined <- define_aquifer(aquifer_type="unconfined",Ksat=0.00001,h0=20)
-fd2_a <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined)
-fd2_b <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined,numderiv=TRUE)
-fd2_a - fd2_b
+fd2 <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined)
 
 # Two pumping wells along diagonal line
 wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))

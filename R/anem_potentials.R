@@ -157,8 +157,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' wells2 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
 #' grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
 #' aquifer_unconfined <- define_aquifer(aquifer_type="unconfined",Ksat=0.00001,h0=20)
-#' fd2_a <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined)
-#' fd2_a - fd2_b
+#' fd2 <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined)
 #'
 #' # Two pumping wells along diagonal line
 #' wells3 <- data.frame(x=c(-10,10),y=c(-10,10),Q=c(-1e-3,-1e-3),diam=c(0.1,0.1),R=c(300,300))
