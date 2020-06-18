@@ -139,7 +139,6 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' @param show_progress Boolean input parameter. If true and there are >20 combinations of
 #' wells and locations, then a progress bar will be printed.
 #' @param eps Threshold satisfying numeric derivative
-#' @param numderiv Boolean that determines whether unconfined aquifers are calculated analytically or numerically
 #' @return Outputs the flow direction in the x and y directions. If the input \code{loc} is
 #'   a numeric \code{c(x,y)}, then the output is in the same format. If the input is a data.frame,
 #'   then the output is also a data.frame with columns \code{dx} and \code{dy}. The two values
@@ -159,7 +158,6 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' grid_pts2 <- data.frame(x=c(-11,0,11),y=c(-11,0,11))
 #' aquifer_unconfined <- define_aquifer(aquifer_type="unconfined",Ksat=0.00001,h0=20)
 #' fd2_a <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined)
-#' fd2_b <- get_flow_direction(loc=grid_pts2,wells2,aquifer_unconfined,numderiv=TRUE)
 #' fd2_a - fd2_b
 #'
 #' # Two pumping wells along diagonal line
@@ -205,7 +203,7 @@ get_hydraulic_head <- function(loc,wells,aquifer) { #h0,Ksat,z0=NA,aquifer_type)
 #' loc <- expand.grid(x=9:11,y=9:11)
 #' get_flow_direction(loc,wells,aquifer)
 #' get_flow_direction(loc,wells,aquifer)
-get_flow_direction <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6,numderiv=FALSE) {
+get_flow_direction <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6) {
   cAquifer <- check_aquifer(aquifer)
 
   loc_class <- class(loc)
@@ -213,7 +211,7 @@ get_flow_direction <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6,nu
   if (aquifer$aquifer_type == "confined") {
     fd <- get_flowdir_raw(loc,wells,aquifer) / (2 * aquifer$z0)
 
-  } else if (aquifer$aquifer_type == "unconfined" & !numderiv) {
+  } else if (aquifer$aquifer_type == "unconfined") {
     h <- get_hydraulic_head(loc,wells,aquifer)
     if (any(h==0)) {
       warning("In some locations head is equal to 0. Aquifer fully depleted and results unreliable.")
@@ -227,39 +225,6 @@ get_flow_direction <- function(loc,wells,aquifer,show_progress=FALSE,eps=1e-6,nu
       fd$dx <- fd$dx / (2 * h)
       fd$dy <- fd$dy / (2 * h)
     }
-  } else if (aquifer$aquifer_type == "unconfined" & numderiv) {
-    if (identical(loc_class,"numeric") | identical(loc_class,"integer")) { # loc is a vector as c(x, y)
-      fd <- -numDeriv::grad(get_hydraulic_head,loc,wells=wells,aquifer=aquifer)
-    } else if (max(grepl("data.frame",class(loc)))) { # loc is a data.frame with $x and $y columns
-      fd <- data.frame(dx=NULL,dy=NULL)
-      loc_list <- lapply(split(loc %>% dplyr::select(x,y),1:dim(loc)[1]),get_row_as_vector)
-      n <- length(loc_list)
-
-      if (!null_or_missing(wells)) {
-        n_wells <- dim(wells)[1]
-      } else {
-        n_wells <- 1
-      }
-      if (n * n_wells < 20 | !show_progress) { # no progress bar
-        for (i in 1:n) {
-          fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],method="simple",method.args=list(eps=eps),wells=wells,aquifer=aquifer)
-          fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
-          fd <- rbind(fd,fd_i_df)
-        }
-      } else { # with progress bar
-        start_time <- Sys.time()
-        cat(paste0("\nGetting flow direction at each point (",dim(loc)[1]," points, ",dim(wells)[1]," wells):\n"))
-        pb <- txtProgressBar(min = 1, max = n, initial = 1, char = "=",width = NA, style = 3)
-        for (i in 1:n) {
-          fd_i <- -numDeriv::grad(get_hydraulic_head,loc_list[[i]],wells=wells,aquifer=aquifer)
-          fd_i_df <- data.frame(dx=fd_i[1],dy=fd_i[2])
-          fd <- rbind(fd,fd_i_df)
-          setTxtProgressBar(pb, i)
-        }
-        cat("\n")
-      }
-    }
-    # end "unconfined" flow
   } else {
     stop("aquifer_type not specified as confined or unconfined")
   }
