@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 library(ggplot2)
 library(dplyr)
 library(anem)
+library(dplyr)
 ```
 
 This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.
@@ -27,11 +28,154 @@ This package models *simple* aquifer and well configurations. The boundaries of 
 
 Units are designed for length dimensions given in meters (or m^2^), and time in seconds.
 
-As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. 
+As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. The basic functionality of the package, described in more detail in sections below, can be seen in the following figure.
+
+
+
+```{r f1_prep, fig.width=6,fig.height=1.5,include=FALSE}
+bounds_df <- define_bounds(tibble(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,5000,5000,0)))
+recharge_params <- list(recharge_type="F", recharge_vector=c(0,0,1,0),
+                        flow=5e-6, x0=5000, y0=5000)
+aquifer <- define_aquifer("confined", 1e-3, h0=0, z0=10,
+                          bounds=bounds_df,recharge=recharge_params)
+wells_orig <- define_wells(x=c(1000,1700,3500,4000),y=c(4000,1700,3500,1000),
+                      R=rep(4000,4),diam=rep(1,4),Q=c(-0.02,-0.02,0.02,-0.02))
+wells <- wells_orig %>%
+  anem::generate_image_wells(aquifer)
+# wells <-  define_wells(x=2500,y=2500,
+#                       R=6000,diam=1,Q=-0.01) %>%
+#     anem::generate_image_wells(aquifer)
+
+# anem::get_gridded_hydrodynamics()
+loc <- expand.grid(x=seq(0,10000,length.out=201),y=seq(-5000,5000,length.out=201))
+
+thm <- theme(panel.background = element_rect(fill=NA,color=NA),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        legend.position="none",axis.text=element_blank(),
+        axis.ticks=element_blank(),axis.title=element_blank(),
+        legend.title=element_text(size=9),
+        legend.text=element_text(size=8),
+        legend.spacing = unit(1,"mm"),
+        legend.margin = margin(0.25,0,0,0.25,unit = "mm"),
+        legend.box.margin = margin(0,0,0,0,unit="mm"))
+
+p_base <- ggplot() +
+  geom_segment(data=aquifer$bounds %>%
+                 mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),
+                                  labels=c("River","No flow","Open"))) %>%
+                 filter(bt !="Open"),
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=1) +
+  scale_shape_manual("Well type",values = c(16,1,4,3)) +
+  scale_color_manual("Boundary",values = c("blue","#555555","#CCCCCC"))
+```
+
+```{r f1a, fig.width=3,fig.height=1.7,include=FALSE}
+well_color <- "#AA3333"
+constant_flow <- tibble(y=seq(500,5000-500,length.out = 6),x=0)
+f1_a <- p_base +
+  geom_segment(data=constant_flow,aes(x,y,xend=x+500,yend=y),arrow = arrow(length=unit(1,"mm"),type = "closed")) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),
+             aes(x,y,shape=well_type),size=3,stroke=1) +
+  # geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),
+  #            aes(x,y,shape=well_type),size=3,stroke=1,color=well_color,show.legend = FALSE) +
+  coord_equal() +
+  labs(subtitle = "(a)") +
+  thm %+replace% theme(legend.position = "left")
+```
+
+```{r f1b, fig.width=6,fig.height=1.5,include=FALSE}
+
+wells_roi <- wells %>% filter(orig_wID==4) %>% anem::gen_circles()
+f1_b <- p_base +
+  geom_polygon(data=wells_roi,aes(x,y,group=id),fill=well_color,alpha=0.2,color=NA,size=0.25) +
+  geom_point(data=wells %>% filter(well_image=="Actual",orig_wID!=4),
+             aes(x,y,shape=well_type),size=3,stroke=1,alpha=0.5) +
+  # geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),
+  #            aes(x,y,shape=well_type),size=3,stroke=1,color=well_color) +
+  geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),aes(x,y),
+             size=3,stroke=1,color=well_color,shape=16) +
+  geom_point(data=wells %>% filter(grepl("\\+Q",well_image),orig_wID==4),aes(x,y),
+             size=2.5,stroke=1,color=well_color,shape=15) +
+  geom_point(data=wells %>% filter(grepl("\\-Q",well_image),orig_wID==4),aes(x,y),
+             size=2,stroke=1,color=well_color,shape=0) +
+  annotate("rect",xmin=3500,xmax=6500,ymin=-1500,ymax=1500,color="#992222",linetype="dashed",fill=NA,size=1) +
+  annotate("point",500,-4500,shape=0,size=2,color=well_color,stroke=1) +
+  annotate("text",1000,-4500,shape=0,size=4.5,label="Image wells",
+           color="black",hjust=0,vjust=0.45) +
+  coord_equal() +
+  labs(subtitle = "(b)") +
+  thm #%+replace% theme(legend.position="right")
+```
+
+```{r f1c, fig.width=6,fig.height=1.5,include=FALSE}
+streamfunction <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells %>% filter(orig_wID==4),aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells,aquifer))
+
+flowlines <- anem::get_contourlines(streamfunction %>% rename(z=streamfunction),nlevels=40)
+f1_c <- p_base +
+  geom_path(data=flowlines,aes(x,y,group=line),color="#66CCEE",alpha=1) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),aes(x,y,shape=well_image),
+             size=2,stroke=1,color="#AA3333") +
+  geom_point(data=wells %>% filter(well_image!="Actual"),aes(x,y,shape=well_image),
+             size=2,stroke=1,color="#AA3333") +
+  annotate("rect",xmin=3500,xmax=6500,ymin=-1500,ymax=1500,color="#AA3333",linetype="dashed",fill=NA,size=1) +
+  coord_equal(xlim=c(3500,6500),ylim=c(-1500,1500)) +
+  scale_shape_manual(values=c(16,0,15))+
+  labs(subtitle = "(c)") +
+  thm #%+replace% theme(legend.position = "right")
+```
+
+```{r f1d, fig.width=6,fig.height=1.5,include=FALSE}
+wells_actual <- wells %>% filter(well_image=="Actual")
+gridded <- get_gridded_hydrodynamics(wells,aquifer,head_dim=c(200,200),flow_dim=c(10,10))
+missing_points <- 
+  do.call(rbind,lapply(split(wells_actual,seq(nrow(wells_actual))),
+                       function(loc,df) df[which.min(sqrt((df$x - loc$x)^2 + 
+                                                            (df$y - loc$y)^2))[1],c("x","y")], df=gridded$flow))
+x_multiplier <- 2e6
+gridded$flow <- gridded$flow %>% 
+  mutate(mag=sqrt(dx^2 + dy^2),
+         multiplier = (mag)^(1/4)*x_multiplier,
+         x2 = x + dx * multiplier,
+         y2 = y + dy * multiplier) %>%
+  anti_join(missing_points,by=c("x","y"))
+# contours <- get_contourlines(gridded$head %>% rename(z=head_m),nlevels=20)
+
+with(gridded$flow, max(abs(x2-x)))
+  
+f1_d <- ggplot() +
+  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+  # geom_path(data=contours,aes(x,y,group=line)) +
+  geom_segment(data=aquifer$bounds %>%
+                 mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),
+                                  labels=c("River","No flow","Open (no boundary)"))) %>%
+                 filter(bound_type!="PB"),
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=2,show.legend = FALSE) +
+  geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
+               arrow = arrow(ends="last",type="closed",length=unit(0.75,"mm")),color="black") +
+  geom_point(data=wells %>% filter(well_image=="Actual"),
+             aes(x,y,shape=well_type),size=3,stroke=1,show.legend = FALSE) +
+  scale_shape_manual("Well type",values = c(16,1,4,3)) +
+  scale_color_manual("Boundary",values = c("blue","#555555","#CCCCCC")) +
+  scale_fill_viridis_c("Hydraulic\nhead, m",breaks=-1:2,labels=c("-1","0 (river)","1","2")) +
+  labs(subtitle = "(d)") +
+  coord_equal() + thm %+replace% theme(legend.position = "right",legend.key.height=unit(0.55,"cm"))
+```
+
+
+```{r f1_plot, echo=FALSE, fig.width=7, fig.height=1.7, fig.cap=cap}
+cap <- "(a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Note that the stream, flowing from top to bottom, goes from gaining to losing."
+# ggpubr::ggarrange(f1_a,f1_b,f1_c,f1_d,nrow=1,labels=c("(a)","(b)","(c)","(d)"),widths=c(0.32,0.2,0.2,0.32)) %>% 
+# ggpubr::annotate_figure(bottom = "This is the caption.")
+# f1_a | f1_b | f1_c | f1_d
+gridExtra::grid.arrange(f1_a , f1_b , f1_c , f1_d,nrow=1,widths=c(0.33,0.2,0.2,0.35))
+```
 
 ### Understanding the method of images
 
-The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see `?get_segments_behavior` and `?get_stream_function`, respectively, which give examples for generating similar plots). The principle of super position states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.
+The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see `?get_segments_behavior` and `?get_stream_function`, respectively, which give examples for generating similar plots). The principle of superposition states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.
 
 ```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
 # define the aquifer
@@ -66,6 +210,7 @@ ggplot() +
 
 
 In the method of images, wells are mirrored across aquifer boundaries to reproduce characterics of the boundary, such as no flow or constant head. The following examples demonstrate (a) how a no-flow boundary is created by mirroring a well across the boundary, and (b) how a constant head boundary is recreated by mirroring the well and inverting the pumping.
+
 
 ```{r echo=FALSE, message=FALSE,warning=FALSE,fig.width=5.5,fig.height=3}
 # Create a grid of locations
@@ -283,4 +428,4 @@ ggplot() +
 
 ### Integrating with anem-app
 
-The basic functionality of this package is implemented online in a Shiny application, [anem-app](https://gopalpenny.shinyapps.io/anem-app/). The Shiny application provides an GUI for setting aquifer properties, drawing boundaries, defining recharge, adding wells, and tracking particles. It also displays results directly in the app. You can also download scenarios created on anem-app and import them into R. To do so, check out `?import_app_rds` from this package to learn more.
+The basic functionality of this package is implemented in a Shiny application, which can be run by calling `anem_app()` or accessed online at [shinyapps.io](https://gopalpenny.shinyapps.io/anem-app/). The Shiny application provides an GUI for setting aquifer properties, drawing boundaries, defining recharge, adding wells, and tracking particles. It also displays results directly in the app. You can also download scenarios created on anem-app and import them into R. To do so, check out `?import_app_rds` from this package to learn more.
