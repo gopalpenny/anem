@@ -1,3 +1,6 @@
 *.html
 *.R
 *_cache/
+anem-publication.pdf
+anem-publication.tex
+anem-publication.log
