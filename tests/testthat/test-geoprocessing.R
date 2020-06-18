@@ -163,3 +163,22 @@ test_that("get_perpendicular_line works for slope = 0, Inf, or real number",{
   expect_equal(get_perpendicular_line(-2,2,2),list(m=1/2,b=1))
 })
 
+df_circle_path <- data.frame(x=c(3, 2.29813332935693, 0.520944533000791, -1.5, -2.81907786235772, -2.81907786235773, -1.5, 0.52094453300079, 2.29813332935693, 3), y=c(0, 1.92836282905962, 2.95442325903662, 2.59807621135332, 1.02606042997701, -1.02606042997701, -2.59807621135332, -2.95442325903662, -1.92836282905962, -7.34788079488412e-16))
+test_that("gen_circleFun works for 1 circle",{
+  expect_equal(TRUE,
+               all.equal(gen_circleFun(list(x=0,y=0,r=3),npoints = 10),df_circle_path,tolerance=1e-5))
+})
+
+circles <- gen_circles(data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5)))
+test_that("gen_circles works for 3 circles",{
+  expect_equal(c(300,3),
+               dim(circles))
+})
+
+bounds_a <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))
+test_that("bounds_to_sf creates an sf object",{
+  expect_equal(any(grepl("sf",class(use_anem_function("bounds_to_sf",bounds=bounds_a,crs=4326)))),
+               TRUE)
+  expect_equal(any(grepl("sf",class(bounds_to_sf(bounds_a, crs=4326)))),
+               TRUE)
+})
