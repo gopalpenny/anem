@@ -791,7 +791,7 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
 #'   form a polygon
 #' @keywords internal
 bounds_sf_to_polygon <- function(bounds_sf) {
-  bounds_sf %>% dplyr::mutate(L1=row_number())
+  bounds_sf %>% dplyr::mutate(L1=dplyr::row_number())
 
   bounds_crs <- bounds_sf %>% sf::st_crs()
 
