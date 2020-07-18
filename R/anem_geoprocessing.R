@@ -790,8 +790,12 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
 #' @param bounds_sf An sf object containing 4 line segments that meet at the ends to
 #'   form a polygon
 #' @keywords internal
+#' @examples
+#' gw_district <- import_app_rds(params=anem::groundwater_district)
+#' bounds_sf <- gw_district$aquifer$bounds
+#' bounds_sf_to_polygon(bounds_sf)
 bounds_sf_to_polygon <- function(bounds_sf) {
-  bounds_sf %>% dplyr::mutate(L1=dplyr::row_number())
+  bounds_sf <- bounds_sf %>% dplyr::mutate(L1=dplyr::row_number())
 
   bounds_crs <- bounds_sf %>% sf::st_crs()
 
