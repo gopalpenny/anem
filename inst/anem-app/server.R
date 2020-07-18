@@ -456,12 +456,12 @@ server <- function(input, output, session) {
       setView(lng = -86.252, lat = 41.676, zoom=10)
   })
 
-  observeEvent(input$porosity,{
-    updateNumericInput(session,"porosity_roi",value=input$porosity)
-  })
-  observeEvent(input$porosity_roi,{
-    updateNumericInput(session,"porosity",value=input$porosity_roi)
-  })
+  # observeEvent(input$porosity,{
+  #   updateNumericInput(session,"porosity_roi",value=input$porosity)
+  # })
+  # observeEvent(input$porosity_roi,{
+  #   updateNumericInput(session,"porosity",value=input$porosity_roi)
+  # })
 
   # Map click (new well or aquifer vertex)
   observeEvent(input$prepmap_click,{
