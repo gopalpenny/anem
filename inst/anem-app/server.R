@@ -1171,7 +1171,7 @@ server <- function(input, output, session) {
           particles$capture_paths_wgs <- capture_paths_df %>% sf::st_as_sf(coords=c("x","y"),crs=proj4string_scenario()) %>%
             dplyr::group_by(wID,pID) %>% dplyr::summarize(do_union=FALSE) %>%
             sf::st_cast("MULTILINESTRING") %>%
-            sf::st_transform(crs=4326)
+            sf::st_transform(crs=4326) %>% sf::st_as_sf()
 
           particles$capture_endpoints <- capture_paths_df %>% dplyr::filter(endpoint)
 
