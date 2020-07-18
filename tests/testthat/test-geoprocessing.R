@@ -182,3 +182,11 @@ test_that("bounds_to_sf creates an sf object",{
   expect_equal(any(grepl("sf",class(bounds_to_sf(bounds_a, crs=4326)))),
                TRUE)
 })
+
+gw_district <- import_app_rds(params=anem::groundwater_district)
+bounds_sf <- gw_district$aquifer$bounds
+bounds_polygon <- bounds_sf_to_polygon(bounds_sf)
+test_that("bounds_sf_to_polygon works for groundwater_district",{
+  expect_equal(nrow(bounds_polygon),1)
+  expect_equal(any(grepl("sf",class(bounds_polygon))),TRUE)
+})
