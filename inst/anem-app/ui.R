@@ -26,7 +26,7 @@ ui <- fluidPage(
   tabsetPanel(id="maintabs",
               type="tabs",
               tabPanel(
-                "Instructions",value="instructions",fluid=TRUE,
+                "Overview",value="overview",fluid=TRUE,
                 includeMarkdown("app-instructions/app-instructions.Rmd")
               ),
               tabPanel(
@@ -95,7 +95,8 @@ ui <- fluidPage(
                                                    c("Confined" = "confined","Unconfined" = "unconfined"))),
                               column(6,numericInput("porosity","Aquifer porosity, n",0.35,0,1,0.01))
                             ),
-                            numericInput("Ksat", "Ksat, m/s^2",value = 0.001),
+                            HTML("<label class='control-label'>Hydraulic conductivity, m/s<sup>2</sup></label>"),
+                            numericInput("Ksat", NULL,value = 0.001),
                             numericInput("h0", "Undisturbed head, m",value = 50),
                             conditionalPanel(
                               condition = "input.aquifer_type == 'confined'",
@@ -157,6 +158,9 @@ ui <- fluidPage(
                               uiOutput("roi_confined"),
                               HTML(paste0("<p><font face='consolas'>", # courier
                                           "t: Elapsed time of pumping<br>",
+                                          "K<sub>sat</sub>: Hydraulic conductivity<br>",
+                                          "h<sub>0</sub>: Aquifer thickness<br>",
+                                          "t: Elapsed time of pumping<br>",
                                           "S: Aquifer storativity</font></p>"))
                             ),
                             conditionalPanel(
@@ -165,6 +169,8 @@ ui <- fluidPage(
                               uiOutput("roi_unconfined"),
                               HTML(paste0("<p><font face='consolas'>", # courier
                                           "t: Elapsed time of pumping<br>",
+                                          "K<sub>sat</sub>: Hydraulic conductivity<br>",
+                                          "h<sub>0</sub>: Initial water table thickness<br>",
                                           "n: Aquifer porosity</font></p>"))
                             ),
                             fluidRow(
@@ -172,11 +178,11 @@ ui <- fluidPage(
                               conditionalPanel(
                                 condition="input.aquifer_type == 'confined'",
                                 column(6,numericInput("storativity","S, unitless",0.35,0,1,0.01))
-                              ),
-                              conditionalPanel(
-                                condition="input.aquifer_type == 'unconfined'",
-                                column(6,numericInput("porosity_roi","Aquifer porosity, n",0.35,0,1,0.01))
-                              )
+                              )#,
+                              # conditionalPanel(
+                              #   condition="input.aquifer_type == 'unconfined'",
+                              #   column(6,numericInput("porosity_roi","Aquifer porosity, n",0.35,0,1,0.01))
+                              # )
                             )
                           )
                         )
@@ -267,11 +273,11 @@ ui <- fluidPage(
                                           sliderInput("headNlevels","# Contours",min=5,max=25,value = 10)
                                    ),
                                    column(6,
-                                          sliderInput("headNgrid","Grid dimension, N",min=100, max=200, value = 100,step=25)
+                                          sliderInput("headNgrid","Grid dimension, N",min=100, max=150, value = 100,step=10)
                                    )
                                  ),
                                  conditionalPanel(
-                                   condition = "input.headNlevels == 17 & input.headNgrid == 125",
+                                   condition = "input.headNlevels == 17 & input.headNgrid == 120",
                                    h4("Secret panel"),
                                    shiny::numericInput("headNupgrade","Increase max grid N to",value=200,min=0,max=1000),
                                    p("Warning: increasing grid N will increase memory usage. App timeouts can occur.")
