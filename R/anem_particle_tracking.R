@@ -285,11 +285,19 @@ get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_partic
   if (any(aquifer$recharge$recharge_type == "D")) {
     stop("get_capture_zone does not function with \"D\" type recharge")
   }
+
+  # remove "sf" class from wells for tidyr::crossing to function
+  if(any(grepl("sf",class(wells)))) {
+    wells <- sf::st_set_geometry(NULL)
+  }
+
   theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
   if (identical(wIDs,"all")) {
     wIDs <- wells %>% dplyr::filter(well_image=="Actual") %>% dplyr::pull(wID) %>% unique()
   }
   pts <- data.frame(dx = cos(theta), dy = sin(theta)) %>% dplyr::mutate(pID = dplyr::row_number())
+
+
   wells_capture <- wells %>%
     dplyr::filter(wID %in% wIDs)
   particles_matrix <- wells_capture %>%
