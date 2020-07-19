@@ -229,7 +229,7 @@ ui <- fluidPage(
                          ),
                          leaflet::leafletOutput("prepmap",height=450),
                          fluidRow(
-                           column(3,checkboxInput("update_images","Well images",FALSE)),
+                           column(3,checkboxInput("update_images","Update wells / boundaries",FALSE)),
                            column(3,checkboxInput("update_head","Hydraulic head",FALSE)),
                            column(3,checkboxInput("update_particles","Particle tracking",FALSE)),
                            column(3,checkboxInput("linkmaps","Link maps",TRUE))
