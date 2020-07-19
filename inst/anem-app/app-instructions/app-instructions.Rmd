@@ -9,11 +9,15 @@ output: html_document
 
 ### What anem-app does
 
-This shiny application is currently in development. It functions when used according to the instructions provided below.
+This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer), "constant head" (e.g., a river), or "open" (i.e., there is no boundary at the edge of the simulation). 
 
-This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform, isotropic saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer), "constant head" (e.g., a river), or "open" (i.e., there is no boundary at the edge of the simulation).
+The app is best used to develop an intuition for groundwater behavior in a wide variety of situations. However, given the idealized features of the app and simplified representation of boundaries, it is unable to reproduce peculiarities of any given groundwater system such as 3-dimensional flow, transient flow, irregular aquifer geometries, or non-uniform hydraulic conductivity. For these reasons, this app is ideal as a starting point for groundwater modeling but unlikely to be as accurate as models that allow for more complex processes and parameterization.
 
-The tool is based on the [analytical element method](https://en.wikipedia.org/wiki/Analytic_element_method) for groundwater models. More specifically, it utilizes the method of images, in which boundary behavior reproduced by mirroring wells across the boundaries. This approach is documented in a number of sources (e.g., Strack, 2017). The code underlying the model is contained within the `anem` R package, currently in development and accessible via [github](https://github.com/gopalpenny/anem). Please submit feedback or feature requests to the [github issues](https://github.com/gopalpenny/anem/issues) tab.
+The tool is based on the [analytical element method](https://en.wikipedia.org/wiki/Analytic_element_method) for groundwater models. More specifically, it utilizes the method of images, in which boundary behavior reproduced by mirroring wells across the boundaries. This approach is documented in a number of sources (e.g., Strack, 2017). The code underlying the model is contained within the `anem` R package, currently in development and accessible via [github](https://github.com/gopalpenny/anem).
+
+Please note that this app, as hosted by [shinyapps.io](https://www.shinyapps.io/), may timeout due to inactivity, excessive memory usage, or other unforseen issues. For this reason it is recommended that you backup your work regularly using the "File" -> "Download scenario" button.
+
+Please submit feedback (bugs, etc.) or feature requests on [github](https://github.com/gopalpenny/anem/issues).
 
 Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press, 2017.
 
@@ -49,7 +53,7 @@ Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press,
         1. defining individual particles to track (deselect "Well capture zones")
     + *Max time.* Set the maximum time for determining particle trajectories.
     + *Add particles* (Individual particle tracking only). Click the map to set initial locations for individual particle tracking.
-    + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particle would arrive in less or more time. Furthermore, this analysis would underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
+    + **NOTE:** Flow is non-reactive and non-dispersive. This means that travel times represent the "average" particle, but due to "dispersive" behavior of groundwater, some particles would arrive in less or more time. Furthermore, this analysis would underestimate the effect of macropores on travel times -- meaning transit times could be considerably lower!
 1. Save or upload a scenario
     + The "File" panel allows you to save a scenario as an RDS file or upload a scenario that has been downloaded. The RDS file contains an R `list` object that contains the parameters and map clicks needed for the app. 
     + The R package `anem` (on [github](https://github.com/gopalpenny/anem)) has a helper function, `import_app_rds`, that imports the file and prepares it for simulation using the `anem` package.
