@@ -288,7 +288,7 @@ get_capture_zone <- function(wells, aquifer, t_max = 365, wIDs = "all", n_partic
 
   # remove "sf" class from wells for tidyr::crossing to function
   if(any(grepl("sf",class(wells)))) {
-    wells <- sf::st_set_geometry(NULL)
+    wells <- wells %>% sf::st_set_geometry(NULL)
   }
 
   theta <- seq(0,2*pi*(1 - 1/n_particles),2*pi/n_particles)
