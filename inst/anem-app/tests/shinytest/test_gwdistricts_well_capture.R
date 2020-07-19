@@ -1,0 +1,12 @@
+app <- ShinyDriver$new("../../")
+app$snapshotInit("test_gwdistricts_well_capture")
+
+app$setInputs(maintabs = "prepare")
+app$setInputs(usermode = "files")
+app$setInputs(exampleUpload = "Groundwater district")
+app$setInputs(usermode = "particles")
+app$setInputs(wellCapture = TRUE)
+app$setInputs(captureParticles = 4)
+app$setInputs(max_tracking_time_years = 2)
+app$setInputs(maintabs = "results")
+app$snapshot()
