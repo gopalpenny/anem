@@ -302,7 +302,7 @@ ui <- fluidPage(
                              ),
                              leaflet::leafletOutput("resultsmap",height=450) %>% withSpinner(),
                              fluidRow(
-                               column(3,checkboxInput("update_images_results","Well images",FALSE)),
+                               column(3,checkboxInput("update_images_results","Update wells / boundaries",FALSE)),
                                column(3,checkboxInput("update_head_results","Hydraulic head",FALSE)),
                                column(3,checkboxInput("update_particles_results","Particle tracking",FALSE)),
                                column(3,checkboxInput("linkmaps_results","Link maps",TRUE))
