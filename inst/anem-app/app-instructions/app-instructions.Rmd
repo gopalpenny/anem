@@ -21,7 +21,16 @@ Please submit feedback (bugs, etc.) or feature requests on [github](https://gith
 
 Strack, Otto DL. *Analytical groundwater mechanics.* Cambridge University Press, 2017.
 
-### Instructions
+### Groundwater concepts
+
+If you are unfamiliar with groundwater or groundwater flow, the following resources may be a good starting point to learn the basics concepts behind the application:
+
+* [Aquifers and groundwater](https://www.usgs.gov/special-topic/water-science-school/science/aquifers-and-groundwater?qt-science_center_objects=0#qt-science_center_objects) - Introductory information from USGS 
+* [Groundwater flow](https://opentextbc.ca/physicalgeology2ed/chapter/14-2-groundwater-flow/) - Section 14.2, Physical Geography Ed. 2, from B.C. Campus
+
+The groundwater model behind the application has been described in [Penny *et al.* (2018)](https://ngwa.onlinelibrary.wiley.com/journal/17456584) in *Groundwater*.
+
+### Use notes for anem-app
 
 #### Prepare scenario
 
