@@ -149,18 +149,20 @@ y_transects <- data.frame(x = c(400, 600), id = c("d","e"), transect="y transect
 
 p_head <- ggplot(model) +
   geom_raster(aes(x,y,fill=anem)) +
-  scale_fill_viridis_c("Head, m") +
+  scale_fill_viridis_c("Head, m", breaks=c(44,46,48,50)) +
   geom_path(data=contours_MODFLOW,aes(x, y, group=line, linetype= "MODFLOW"),color="black") +
   geom_path(data=contours_anem,aes(x, y, group=line, linetype = "anem"),color="black") +
   geom_point(data=wells_new %>% filter(well_image=="Actual"),aes(x,y)) +
-  geom_segment(data=x_transects,aes(0, y, xend=800, yend = y, color = as.factor(id)))+
-  geom_segment(data=y_transects,aes(x, 0, xend=x, yend = 1000, color = as.factor(id)))+
+  geom_point(data=wells_new %>% filter(well_image=="Actual"),aes(x,y, shape="Wells"), size = 3) +
+  geom_segment(data=x_transects,aes(0, y, xend=800, yend = y, color = as.factor(id)), alpha = 0.7)+
+  geom_segment(data=y_transects,aes(x, 0, xend=x, yend = 1000, color = as.factor(id)), alpha = 0.7)+
   geom_text(data=x_transects,aes(750, y+20, label=id), color="white", vjust=0)+
   geom_text(data=y_transects,aes(x+20, 950, label=id), color="white", hjust=0)+
   scale_color_manual(values=rep("white",5),guide=FALSE) +
   scale_linetype_discrete("Model\ncontours") +
-  guides(fill=guide_colorbar(barheight = unit(1,"in"))) +
-  coord_equal() + ggp::t_manu()
+  scale_shape_discrete(NULL) +
+  guides(fill=guide_colorbar(barheight = unit(0.8,"in"), order = 1), shape=guide_legend(order = 2)) +
+  coord_equal() + ggp::t_manu() %+replace% theme(legend.spacing = unit(1, "mm"))
 # p_head
 
 # p_error <- ggplot(model) +
@@ -205,6 +207,7 @@ MODFLOW validation of anem with drawdown, constant head, and no-flow boundaries.
 p_validation <- p_head + p_transects + patchwork::plot_annotation(tag_levels = "a")
 
 ggsave("modflow_validation.pdf",p_validation,path=mod_path,width=8,height=3.5)
-p_validation
+ggsave("modflow_validation.png",p_validation,path=mod_path,width=8,height=3.5,dpi = 300)
+ p_validation
 ```
 
