@@ -31,7 +31,7 @@ server <- function(input, output, session) {
 
   output$fileDownload <- downloadHandler(
     filename = function() {
-      "anem_scenario.rds"
+      paste0(gsub("\\.rds$","",input$fileDownloadName),".rds")
     },
     content = function(file) {
       saveRDS(list(b1_type=input$b1_type,b2_type=input$b2_type,b3_type=input$b3_type,b4_type=input$b4_type,

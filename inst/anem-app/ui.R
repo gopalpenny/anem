@@ -206,7 +206,8 @@ ui <- fluidPage(
                       tabPanel(
                         "File",value="files",
                         hr(),
-                        p("Download the current scenario. The file should be saved with a .rds extension."),
+                        p("Download the current scenario. The file should be saved under the following name with a .rds extension."),
+                        shiny::textInput("fileDownloadName",NULL,value = "anem_scenario",width = "210px"),
                         shiny::downloadButton("fileDownload","Download current scenario"),
                         hr(),
                         p("Load an example scenario or upload a scenario."),
