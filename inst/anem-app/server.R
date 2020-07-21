@@ -566,6 +566,7 @@ server <- function(input, output, session) {
       clearControls()
     if (nrow(mapclicks$well_locations) > 0) {
       leafletProxy("prepmap") %>%
+        addPolygons(data=wells_roi() %>% sf::st_transform(4326),fillColor="black",fillOpacity = 0.07,opacity=0.4,stroke=TRUE,color="#888888", weight=1, group = "Wells") %>%
         addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 1, radius = 5,
                          data=mapclicks$well_locations) %>%
         addCircleMarkers(~x, ~y, color = ~wellPal2(Group), group = "Wells", opacity = 0.5, radius = 10,
