@@ -159,7 +159,7 @@ p_head <- ggplot(model) +
   geom_text(data=x_transects,aes(750, y+20, label=id), color="white", vjust=0)+
   geom_text(data=y_transects,aes(x+20, 950, label=id), color="white", hjust=0)+
   scale_color_manual(values=rep("white",5),guide=FALSE) +
-  scale_linetype_discrete("Model\ncontours") +
+  scale_linetype_discrete("Head\ncontours") +
   scale_shape_discrete(NULL) +
   guides(fill=guide_colorbar(barheight = unit(0.8,"in"), order = 1), shape=guide_legend(order = 2)) +
   coord_equal() + ggp::t_manu() %+replace% theme(legend.spacing = unit(1, "mm"))
