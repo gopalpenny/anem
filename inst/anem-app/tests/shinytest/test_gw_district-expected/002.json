@@ -13,6 +13,7 @@
     "diam": 1,
     "enableRecharge": false,
     "exampleUpload": "Groundwater district",
+    "fileDownloadName": "anem_scenario",
     "fileUpload": null,
     "h0": 50,
     "headNgrid": 150,

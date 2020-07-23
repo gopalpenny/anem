@@ -13,6 +13,7 @@
     "diam": 1,
     "enableRecharge": true,
     "exampleUpload": "None",
+    "fileDownloadName": "anem_scenario",
     "fileUpload": null,
     "h0": 50,
     "headNgrid": 100,
@@ -59,6 +60,7 @@
       "lng": -86.252,
       "lat": 41.676
     },
+    "resultsmap_groups": "Map",
     "resultsmap_zoom": 10,
     "resultsmode": "resultshead",
     "storativity": 0.35,

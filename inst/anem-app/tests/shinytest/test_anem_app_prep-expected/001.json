@@ -13,6 +13,7 @@
     "diam": 0.5,
     "enableRecharge": true,
     "exampleUpload": "None",
+    "fileDownloadName": "anem_scenario",
     "fileUpload": null,
     "h0": 60,
     "headNgrid": 100,
