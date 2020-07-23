@@ -791,9 +791,11 @@ get_contourlines <- function(df = NULL, nlevels = 10, drop_outer = TRUE, levels 
 #'   form a polygon
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' gw_district <- import_app_rds(params=anem::groundwater_district)
 #' bounds_sf <- gw_district$aquifer$bounds
 #' bounds_sf_to_polygon(bounds_sf)
+#' }
 bounds_sf_to_polygon <- function(bounds_sf) {
   bounds_sf <- bounds_sf %>% dplyr::mutate(L1=dplyr::row_number())
 
