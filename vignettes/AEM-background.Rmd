@@ -1,0 +1,233 @@
+---
+title: "AEM-background"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{AEM-background}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## The Analytical Element Method
+
+The analytical element method (AEM) represents the aquifer domain as the sum of analytical solutions of individual elements in the aquifer (Strack, 2017; Haitjema, 1995). The anem package focuses on 2-dimensional aquifers that reasonably adhere to the Depuit-Forschammer assumption, such that all flow lines are horizontal and parallel to the bottom of the aquifer (Strack *et al.*, 2006). Generally, this requires that the lateral extent of the domain is much greater than the vertical thickness and elements within the aquifer span the entire depth of the water table. In other words, streams are fully penetrating and wells are screened from the bottom to the top of the saturated portion of the aquifer (Ferris *et al.*, 1962). In practice, the assumption of 2D flow is typically adequate adequate when lateral distances are $L>5\sqrt{k_v/k_h}b$, where $b$ is the average saturated thickness of the aquifer, $k_v$ is the vertical hydraulic conductivity, and $k_h$ is the horizontal hydraulic conductivity (Haitjema, 2006). Vertical conductivity is often an order of magnitude smaller than the horizontal conductivity (Haitjema, 2006), in which case $5\sqrt{k_v/k_h}\approx 1.6$.
+
+### Principle of superposition
+
+Confined and unconfined aquifers can be treated as mathematically similar by strategically defining a state variable for hydraulic potential, $\phi$. We set hydraulic potential proportional to $\phi_c = z_0 h$ for confined aquifers, where $z_0$ is the thickness of a confined aquifer and $h$ is hydraulic head. In unconfined aquifers, we set hydraulic potential to $\phi_u=h^2/2$, where the term $h^2$ is discharge potential which is the square of the the saturated thickness of the water table, $h$ (Strack, 2017). This allows us to write Darcy's law as $\mathbf{q} = -k \nabla \phi$ for both types of aquifers, where we now use $k_h=k$ for the horizontal conductivity. In both cases, the groundwater continuity equation can be written as
+$$
+\nabla^2 \phi = 0.
+$$
+Because this equation is linear in $\phi$ it obeys the principle of superposition in which $f(c_1 \phi_1 + c_2 \phi_2) = c_1 f(\phi_1) + c_2 f(\phi_2)$. This means that the cumulative effect of any number of groundwater components can be calculated as the sum of the effects from individual components, which can be calculated independently. In practice, it allows non-trivial groundwater dynamics to be represented by the sum of simple analytical equations.
+
+Just as hydraulic potential obeys the principle of superposition, so do its derivatives such that the hydraulic gradient can be calculated as the sum of individual aquifer elements. Flow is then calculated from the gradient of hydraulic potential using Darcy's law and keeping track of the definitions of $\phi_c$ and $\phi_u$. The average linear velocity is equal to $v = q / n$, where $q$ is the Darcy velocity, which is the volumetric flow per unit area (e.g., units of m/s), and $n$ is porosity of the aquifer.
+
+The primary task is then to set up the aquifer with individual elements representing important dynamics including pumping wells, boundaries, and recharge. The following sections describe how well pumping, aquifer boundaries, and recharge are represented in anem.
+
+### Pumping and injection wells
+
+Wells are represented using a form of the Thiem solution describing steady-state hydraulic head in the vicinity ($r \le R$) of a pumping well (Thiem, 1906):
+$$
+\phi - \phi_0 = -\frac{Q}{2 \pi k} \log \left( \frac{r}{R} \right)\,,
+$$
+where $\phi$ is hydraulic potential at a distance $r$ from a fully penetrating well that pumps at rate $Q$ (positive for injection, negative for abstraction), $R$ is the radius of influence of the pumping well, and $\phi_0$ is the reference hydraulic potential when $Q=0$. At distances $r>R$, the hydraulic potential is undisturbed by pumping ($\phi=\phi_0$).
+
+The radius of influence determines how far the cone of depression spreads from the well. The anem package implements multiple approaches to calculating the radius of influence, as described in Fileccia (2015). This includes the Cooper and Jacob (1946) approximation for confined aquifers, where the radius of influence is estimated as $R=\sqrt{2.25 k z_0 t/S}$, where $t$ is the elapsed time of pumping and $S$ is the aquifer storativity. The package also includes the Aaravin and Numerov (1953) approximation for unconfined aquifers, where $R=\sqrt{1.9 k b t/n}$. Although these approaches were defined for time-varying solutions, they can serve as an approximation for steady-state solutions by setting time to some long-term value.
+
+### Boundary conditions
+
+The effects of boundaries are realized through the method of images by strategic placement of virtual wells, or ``image'' wells, that emulate the combined effect of actual wells and aquifer boundaries on the hydraulic potential surface (Freeze and Cherry, 1979). To demonstrate how this works, we use an example containing wells adjacent to a no-flow boundary, constant-head boundary, and in the presence of constant lateral flow towards the stream (Figure 1a). The image wells of the bottom right well (Figure 1a) are shown in Figure 1b, along with the radius of influence for each well. These wells mimic the behavior of the no-flow boundary, because two wells with equivalent pumping on opposite sides of the boundary create parallel flow lines along the boundary (Figure 1c, horizontal boundary). Two wells pumping at an equivalent rate but opposite sign mimic the effect of a constant head boundary (e.g., a river). In this case, the flow lines are perpendicular to the equal distance line meaning that no flow occurs along the boundary and it is of a constant head (Figure 1c, vertical boundary). This approach can be used to exactly reproduce no-flow and constant head boundaries for any number of wells.
+
+Rectangular boundaries allow a straightforward implementation of the method of images, such that either side of a boundary can be a mirror image of the other side. For any two boundaries that are parallel, wells must be successively imaged across the opposite boundary until the distance of the next well image to the boundary is greater than the radius of influence. Irregular boundaries can be achieved using well images, but doing so requires solving systems of equations (Kuo *et al.*, 1994) and is not implemented in the anem package.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(anem)
+library(dplyr)
+```
+
+```{r f1_prep, fig.width=6,fig.height=1.5,include=FALSE}
+bounds_df <- define_bounds(tibble(bound_type=c("PB","PB","CH","NF"),m=c(Inf,0,Inf,0),b=c(0,5000,5000,0)))
+recharge_params <- list(recharge_type="F", recharge_vector=c(0,0,1,0),
+                        flow=5e-6, x0=5000, y0=5000)
+aquifer <- define_aquifer("confined", 1e-3, h0=0, z0=10,
+                          bounds=bounds_df,recharge=recharge_params)
+wells_orig <- define_wells(x=c(1000,1700,3500,4000),y=c(4000,1700,3500,1000),
+                      R=rep(4000,4),diam=rep(1,4),Q=c(-0.02,-0.02,0.02,-0.02))
+wells <- wells_orig %>%
+  anem::generate_image_wells(aquifer)
+# wells <-  define_wells(x=2500,y=2500,
+#                       R=6000,diam=1,Q=-0.01) %>%
+#     anem::generate_image_wells(aquifer)
+
+# anem::get_gridded_hydrodynamics()
+loc <- expand.grid(x=seq(0,10000,length.out=201),y=seq(-5000,5000,length.out=201))
+
+thm <- theme(panel.background = element_rect(fill=NA,color=NA),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        legend.position="none",axis.text=element_blank(),
+        axis.ticks=element_blank(),axis.title=element_blank(),
+        legend.title=element_text(size=9),
+        legend.text=element_text(size=8),
+        legend.spacing = unit(1,"mm"),
+        legend.margin = margin(0.25,0,0,0.25,unit = "mm"),
+        legend.box.margin = margin(0,0,0,0,unit="mm"))
+
+p_base <- ggplot() +
+  geom_segment(data=aquifer$bounds %>%
+                 mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),
+                                  labels=c("River","No flow","Open"))) %>%
+                 filter(bt !="Open"),
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=1) +
+  scale_shape_manual("Well type",values = c(16,1,4,3)) +
+  scale_color_manual("Boundary",values = c("blue","#555555","#CCCCCC"))
+```
+
+```{r f1a, fig.width=3,fig.height=1.7,include=FALSE}
+well_color <- "#AA3333"
+constant_flow <- tibble(y=seq(500,5000-500,length.out = 6),x=0)
+f1_a <- p_base +
+  geom_segment(data=constant_flow,aes(x,y,xend=x+500,yend=y),arrow = arrow(length=unit(1,"mm"),type = "closed")) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),
+             aes(x,y,shape=well_type),size=3,stroke=1) +
+  # geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),
+  #            aes(x,y,shape=well_type),size=3,stroke=1,color=well_color,show.legend = FALSE) +
+  coord_equal() +
+  labs(subtitle = "(a)") +
+  thm %+replace% theme(legend.position = "left")
+```
+
+```{r f1b, fig.width=6,fig.height=1.5,include=FALSE}
+
+wells_roi <- wells %>% filter(orig_wID==4) %>% anem::gen_circles()
+f1_b <- p_base +
+  geom_polygon(data=wells_roi,aes(x,y,group=id),fill=well_color,alpha=0.2,color=NA,size=0.25) +
+  geom_point(data=wells %>% filter(well_image=="Actual",orig_wID!=4),
+             aes(x,y,shape=well_type),size=3,stroke=1,alpha=0.5) +
+  # geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),
+  #            aes(x,y,shape=well_type),size=3,stroke=1,color=well_color) +
+  geom_point(data=wells %>% filter(well_image=="Actual",orig_wID==4),aes(x,y),
+             size=3,stroke=1,color=well_color,shape=16) +
+  geom_point(data=wells %>% filter(grepl("\\+Q",well_image),orig_wID==4),aes(x,y),
+             size=2.5,stroke=1,color=well_color,shape=15) +
+  geom_point(data=wells %>% filter(grepl("\\-Q",well_image),orig_wID==4),aes(x,y),
+             size=2,stroke=1,color=well_color,shape=0) +
+  annotate("rect",xmin=3500,xmax=6500,ymin=-1500,ymax=1500,color="#992222",linetype="dashed",fill=NA,size=1) +
+  annotate("point",500,-4500,shape=0,size=2,color=well_color,stroke=1) +
+  annotate("text",1000,-4500,shape=0,size=4.5,label="Image wells",
+           color="black",hjust=0,vjust=0.45) +
+  coord_equal() +
+  labs(subtitle = "(b)") +
+  thm #%+replace% theme(legend.position="right")
+```
+
+```{r f1c, fig.width=6,fig.height=1.5,include=FALSE}
+streamfunction <- loc %>%
+  dplyr::bind_cols(streamfunction=get_stream_function(loc,wells %>% filter(orig_wID==4),aquifer)) %>%
+  dplyr::bind_cols(head=get_hydraulic_head(loc,wells,aquifer))
+
+flowlines <- anem::get_contourlines(streamfunction %>% rename(z=streamfunction),nlevels=40)
+f1_c <- p_base +
+  geom_path(data=flowlines,aes(x,y,group=line),color="#66CCEE",alpha=1) +
+  geom_point(data=wells %>% filter(well_image=="Actual"),aes(x,y,shape=well_image),
+             size=2,stroke=1,color="#AA3333") +
+  geom_point(data=wells %>% filter(well_image!="Actual"),aes(x,y,shape=well_image),
+             size=2,stroke=1,color="#AA3333") +
+  annotate("rect",xmin=3500,xmax=6500,ymin=-1500,ymax=1500,color="#AA3333",linetype="dashed",fill=NA,size=1) +
+  coord_equal(xlim=c(3500,6500),ylim=c(-1500,1500)) +
+  scale_shape_manual(values=c(16,0,15))+
+  labs(subtitle = "(c)") +
+  thm #%+replace% theme(legend.position = "right")
+```
+
+```{r f1d, fig.width=6,fig.height=1.5,include=FALSE}
+wells_actual <- wells %>% filter(well_image=="Actual")
+gridded <- get_gridded_hydrodynamics(wells,aquifer,head_dim=c(200,200),flow_dim=c(10,10))
+missing_points <- 
+  do.call(rbind,lapply(split(wells_actual,seq(nrow(wells_actual))),
+                       function(loc,df) df[which.min(sqrt((df$x - loc$x)^2 + 
+                                                            (df$y - loc$y)^2))[1],c("x","y")], df=gridded$flow))
+x_multiplier <- 2e6
+gridded$flow <- gridded$flow %>% 
+  mutate(mag=sqrt(dx^2 + dy^2),
+         multiplier = (mag)^(1/4)*x_multiplier,
+         x2 = x + dx * multiplier,
+         y2 = y + dy * multiplier) %>%
+  anti_join(missing_points,by=c("x","y"))
+# contours <- get_contourlines(gridded$head %>% rename(z=head_m),nlevels=20)
+
+with(gridded$flow, max(abs(x2-x)))
+  
+f1_d <- ggplot() +
+  geom_raster(data=gridded$head,aes(x,y,fill=head_m)) +
+  # geom_path(data=contours,aes(x,y,group=line)) +
+  geom_segment(data=aquifer$bounds %>%
+                 mutate(bt=factor(bound_type,levels=c("CH","NF","PB"),
+                                  labels=c("River","No flow","Open (no boundary)"))) %>%
+                 filter(bound_type!="PB"),
+               aes(x1,y1,xend=x2,yend=y2,color=bt),size=2,show.legend = FALSE) +
+  geom_segment(data=gridded$flow,aes(x,y,xend=x2,yend=y2),
+               arrow = arrow(ends="last",type="closed",length=unit(0.75,"mm")),color="black") +
+  geom_point(data=wells %>% filter(well_image=="Actual"),
+             aes(x,y,shape=well_type),size=3,stroke=1,show.legend = FALSE) +
+  scale_shape_manual("Well type",values = c(16,1,4,3)) +
+  scale_color_manual("Boundary",values = c("blue","#555555","#CCCCCC")) +
+  scale_fill_viridis_c("Hydraulic\nhead, m",breaks=-1:2,labels=c("-1","0 (river)","1","2")) +
+  labs(subtitle = "(d)") +
+  coord_equal() + thm %+replace% theme(legend.position = "right",legend.key.height=unit(0.4,"cm"))
+```
+
+
+```{r f1_plot, echo=FALSE, fig.width=7.5, fig.height=1.7, fig.cap=cap}
+cap <- "Figure 1. (a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Note that the stream, flowing from top to bottom, switches from gaining to losing."
+gridExtra::grid.arrange(f1_a , f1_b , f1_c , f1_d,nrow=1,widths=c(0.33,0.2,0.2,0.35))
+```
+
+### Recharge and background flow
+
+Aquifer recharge can occur via a variety of mechanisms including those that directly result from wells (e.g., injection wells) and aquifer boundaries (e.g., recharge from streams to nearby abstraction wells). In the anem package, we also implement a type of recharge that creates a regional hydraulic head gradient, which in turn produces steady, uniform background flow. Such background flow can represent a variety of recharge scenarios. For instance, constant uniform flow could be generated from precipitation, after the aquifer reaches an equilibrium. As another example, flow could be driven by two parallel streams, with the higher-elevation stream recharging the aquifer which then discharges to the lower elevation stream. In some groundwater systems where the river is disconnected from the aquifer due to aquifer overdraft, the recharge from river could create a groundwater divide with flow in both directions away from the river.
+
+The effect of constant lateral flow on hydraulic potential is calculated by integrating Darcy's equation, which yields
+$$
+\phi - \phi_1 = \frac{\mathbf{q}}{k}\cdot(\mathbf{x_1} - \mathbf{x}),
+$$
+where $\mathbf{q}$ is the flow vector and $\phi_1$ is a reference hydraulic potential at some location $\mathbf{x_1}=\{x_1,y_1\}$. The flow vector $\mathbf{q}$ is the lateral flux in units of [m\textsuperscript{2}/s], representing a volumetric recharge flow per unit length.
+
+
+## References
+
+Aravin, V. and Numerov, S. 1953.  Theory of motion of liquids and gases in undeformable porous media. *Gostekhizdat, Moscow*.
+
+Cooper, H. and Jacob, C.E. 1946.  A generalized graphical method for evaluating formation constants  and  summarizing  well-field  history. *Eos,  Transactions  American  Geophysical Union* 27, no. 4:  526–534.
+
+
+Ferris, J., Knowles, D., Brown, R., and Stallman, R. 1962. Theory of aquifer tests.
+*Geological Survey Water-Supply Paper 1536-E*.
+
+Fileccia,  A. 2015.  Some simple procedures for the calculation of the influence radius and well head protection areas (theoretical approach and a field case for a water table aquifer in an alluvial plain). *Acque Sotterranee-Italian Journal of Groundwater* 4, no. 3.
+
+Freeze, R.A. and Cherry, J.A. 1979. *Groundwater.* Prentice-Hall, Inc.
+
+Haitjema, H. 2006. The role of hand calculations in ground water flow modeling. *Groundwater* 44, no. 6:  786–791.
+
+Haitjema, H.M. 1995. *Analytic element modeling of groundwater flow.* Elsevier.
+
+Kuo, M.C.T., Wang, W.L., Lin, D.S., and Lin, C.C., and Chiang, C.J. 1994. An image-well method for predicting drawdown distribution in aquifers with irregularly shaped boundaries. *Groundwater* 35, no. 5: 794-804.
+
+Strack, O., Barnes, R., and Verruijt, A. 2006. Vertically integrated flows, discharge potential, and the dupuit-forchheimer approximation. *Groundwater* 44, no. 1:  72–75.
+
+Strack, O.D. 2017. *Analytical groundwater mechanics.*  Cambridge University Press.
+
+Thiem,  G.  1906. Hydrologische  methoden  (hydrologic  methods). *Gebhardt,  JM Leipzig, Germany.*
+
