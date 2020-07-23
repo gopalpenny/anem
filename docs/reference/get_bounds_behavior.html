@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">anem</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -94,6 +94,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/AEM-background.html">AEM-background</a>
+    </li>
     <li>
       <a href="../articles/anem-vignette.html">anem-vignette</a>
     </li>
@@ -174,7 +177,7 @@ Each row represents a point along bID and contains the head and flow as:
 <span class='no'>bounds_df</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>bound_type</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"CH"</span>,<span class='st'>"NF"</span>,<span class='st'>"NF"</span>,<span class='st'>"NF"</span>),<span class='kw'>m</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>Inf</span>,<span class='fl'>0</span>,<span class='fl'>Inf</span>,<span class='fl'>0</span>),<span class='kw'>b</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>1000</span>,<span class='fl'>1000</span>,<span class='fl'>0</span>))
 <span class='no'>aquifer_unconfined</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='define_aquifer.html'>define_aquifer</a></span>(<span class='st'>"unconfined"</span>,<span class='fl'>1e-3</span>,<span class='kw'>bounds</span><span class='kw'>=</span><span class='no'>bounds_df</span>,<span class='kw'>h0</span><span class='kw'>=</span><span class='fl'>100</span>)
 
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>dplyr</span>)</div><div class='output co'>#&gt; <span class='message'></span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>dplyr</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: package ‘dplyr’ was built under R version 3.6.2</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘dplyr’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:stats’:</span>
 #&gt; <span class='message'></span>
 #&gt; <span class='message'>    filter, lag</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
@@ -183,7 +186,7 @@ Each row represents a point along bID and contains the head and flow as:
 <span class='no'>wells_df</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>8</span>,<span class='fl'>0</span>,<span class='fl'>1000</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>8</span>,<span class='fl'>0</span>,<span class='fl'>1000</span>),<span class='kw'>diam</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>R</span><span class='kw'>=</span><span class='fl'>1000</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>country</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span>(<span class='no'>y</span><span class='kw'>&gt;</span><span class='fl'>500</span>,<span class='kw'>levels</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>,<span class='fl'>TRUE</span>),<span class='kw'>labels</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"A"</span>,<span class='st'>"B"</span>))) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>(<span class='no'>country</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>weights</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>Q</span><span class='kw'>=</span>-<span class='fl'>1</span>/<span class='fu'><a href='https://dplyr.tidyverse.org/reference/n.html'>n</a></span>()) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>()
+  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>weights</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>Q</span><span class='kw'>=</span>-<span class='fl'>1</span>/<span class='fu'><a href='https://dplyr.tidyverse.org/reference/context.html'>n</a></span>()) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>()
 <span class='no'>wells_actual</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='define_wells.html'>define_wells</a></span>(<span class='no'>wells_df</span>)
 <span class='no'>wells</span> <span class='kw'>&lt;-</span> <span class='no'>wells_actual</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='generate_image_wells.html'>generate_image_wells</a></span>(<span class='no'>aquifer_unconfined</span>)
 <span class='no'>bound_behavior_no_im</span> <span class='kw'>&lt;-</span> <span class='fu'>get_bounds_behavior</span>(<span class='no'>wells_actual</span>,<span class='no'>aquifer_unconfined</span>) <span class='kw'>%&gt;%</span>
@@ -193,7 +196,7 @@ Each row represents a point along bID and contains the head and flow as:
 <span class='no'>bounds_behavior_summary</span> <span class='kw'>&lt;-</span> <span class='no'>bound_behavior_no_im</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/bind.html'>bind_rows</a></span>(<span class='no'>bound_behavior_im</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>(<span class='no'>bID</span>,<span class='no'>bound_type</span>,<span class='no'>im</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarize</a></span>(<span class='kw'>`Head`</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span>(<span class='no'>head</span>),
-            <span class='kw'>`Flow`</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span>(<span class='no'>flow_normal</span>)))</div></pre>
+            <span class='kw'>`Flow`</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span>(<span class='no'>flow_normal</span>)))</div><div class='output co'>#&gt; <span class='message'>`summarise()` regrouping output by 'bID', 'bound_type' (override with `.groups` argument)</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

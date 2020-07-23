@@ -1,11 +1,11 @@
 Package: anem
 Type: Package
-Title: Analytical Elements Models for Wells
-Version: 0.1.0.9000
+Title: Analytical element models for simple aquifers
+Version: 0.1.1
 Author: person("Gopal", "Penny", email = "gopalpenny@gmail.com",
                   role = c("aut", "cre"))
 Maintainer: Gopal Penny <gopalpenny@gmail.com>
-Description: This package is used for 2D steady state groundwater flow, applying the 
+Description: This package is used to model simple, 2-dimensional, steady-state groundwater flow, applying the 
     analytical element method in aquifers with rectangular boundaries.
 License: MIT + file LICENSE
 Encoding: UTF-8

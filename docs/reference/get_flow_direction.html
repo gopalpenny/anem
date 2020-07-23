@@ -75,7 +75,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">anem</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -97,6 +97,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/AEM-background.html">AEM-background</a>
+    </li>
     <li>
       <a href="../articles/anem-vignette.html">anem-vignette</a>
     </li>
@@ -131,7 +134,7 @@
     </div>
 
     <pre class="usage"><span class='fu'>get_flow_direction</span>(<span class='no'>loc</span>, <span class='no'>wells</span>, <span class='no'>aquifer</span>, <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>eps</span> <span class='kw'>=</span> <span class='fl'>1e-06</span>, <span class='kw'>numderiv</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+  <span class='kw'>eps</span> <span class='kw'>=</span> <span class='fl'>1e-06</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -157,10 +160,6 @@ wells and locations, then a progress bar will be printed.</p></td>
     <tr>
       <th>eps</th>
       <td><p>Threshold satisfying numeric derivative</p></td>
-    </tr>
-    <tr>
-      <th>numderiv</th>
-      <td><p>Boolean that determines whether unconfined aquifers are calculated analytically or numerically</p></td>
     </tr>
     </table>
 
@@ -191,12 +190,8 @@ wells and locations, then a progress bar will be printed.</p></td>
 <span class='no'>wells2</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>10</span>,<span class='fl'>10</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>10</span>,<span class='fl'>10</span>),<span class='kw'>Q</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1e-3</span>,-<span class='fl'>1e-3</span>),<span class='kw'>diam</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>,<span class='fl'>0.1</span>),<span class='kw'>R</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>300</span>,<span class='fl'>300</span>))
 <span class='no'>grid_pts2</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>11</span>,<span class='fl'>0</span>,<span class='fl'>11</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>11</span>,<span class='fl'>0</span>,<span class='fl'>11</span>))
 <span class='no'>aquifer_unconfined</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='define_aquifer.html'>define_aquifer</a></span>(<span class='kw'>aquifer_type</span><span class='kw'>=</span><span class='st'>"unconfined"</span>,<span class='kw'>Ksat</span><span class='kw'>=</span><span class='fl'>0.00001</span>,<span class='kw'>h0</span><span class='kw'>=</span><span class='fl'>20</span>)
-<span class='no'>fd2_a</span> <span class='kw'>&lt;-</span> <span class='fu'>get_flow_direction</span>(<span class='kw'>loc</span><span class='kw'>=</span><span class='no'>grid_pts2</span>,<span class='no'>wells2</span>,<span class='no'>aquifer_unconfined</span>)
-<span class='no'>fd2_b</span> <span class='kw'>&lt;-</span> <span class='fu'>get_flow_direction</span>(<span class='kw'>loc</span><span class='kw'>=</span><span class='no'>grid_pts2</span>,<span class='no'>wells2</span>,<span class='no'>aquifer_unconfined</span>,<span class='kw'>numderiv</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-<span class='no'>fd2_a</span> - <span class='no'>fd2_b</span></div><div class='output co'>#&gt;              dx            dy
-#&gt; 1 -3.736863e-09 -3.736863e-09
-#&gt; 2 -1.773212e-10 -1.773212e-10
-#&gt; 3 -4.489571e-09 -4.489571e-09</div><div class='input'>
+<span class='no'>fd2</span> <span class='kw'>&lt;-</span> <span class='fu'>get_flow_direction</span>(<span class='kw'>loc</span><span class='kw'>=</span><span class='no'>grid_pts2</span>,<span class='no'>wells2</span>,<span class='no'>aquifer_unconfined</span>)
+
 <span class='co'># Two pumping wells along diagonal line</span>
 <span class='no'>wells3</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>10</span>,<span class='fl'>10</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>10</span>,<span class='fl'>10</span>),<span class='kw'>Q</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>1e-3</span>,-<span class='fl'>1e-3</span>),<span class='kw'>diam</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>,<span class='fl'>0.1</span>),<span class='kw'>R</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>300</span>,<span class='fl'>300</span>))
 <span class='no'>grid_pts3</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>3</span>,-<span class='fl'>3</span>,<span class='fl'>0</span>,<span class='fl'>3</span>,<span class='fl'>3</span>,-<span class='fl'>2</span>,<span class='fl'>2</span>,-<span class='fl'>1</span>,<span class='fl'>1</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>3</span>,<span class='fl'>3</span>,<span class='fl'>0</span>,-<span class='fl'>3</span>,<span class='fl'>3</span>,-<span class='fl'>1</span>,<span class='fl'>1</span>,-<span class='fl'>2</span>,<span class='fl'>2</span>))

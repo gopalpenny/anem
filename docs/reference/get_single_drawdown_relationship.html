@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">anem</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -94,6 +94,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/AEM-background.html">AEM-background</a>
+    </li>
     <li>
       <a href="../articles/anem-vignette.html">anem-vignette</a>
     </li>
@@ -178,7 +181,7 @@ The average drawdown is also weighted by values in weights_column, for the loc_g
 <span class='no'>wells_df</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>8</span>,<span class='fl'>0</span>,<span class='fl'>1000</span>),<span class='kw'>y</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span>(<span class='fl'>8</span>,<span class='fl'>0</span>,<span class='fl'>1000</span>),<span class='kw'>diam</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>R</span><span class='kw'>=</span><span class='fl'>1000</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>country</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span>(<span class='no'>y</span><span class='kw'>&gt;</span><span class='fl'>500</span>,<span class='kw'>levels</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>,<span class='fl'>TRUE</span>),<span class='kw'>labels</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"A"</span>,<span class='st'>"B"</span>))) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>(<span class='no'>country</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>weights</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>Q</span><span class='kw'>=</span><span class='fl'>1</span>/<span class='fu'><a href='https://dplyr.tidyverse.org/reference/n.html'>n</a></span>()) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>()
+  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>weights</span><span class='kw'>=</span><span class='fl'>1</span>,<span class='kw'>Q</span><span class='kw'>=</span><span class='fl'>1</span>/<span class='fu'><a href='https://dplyr.tidyverse.org/reference/context.html'>n</a></span>()) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span>()
 <span class='no'>wells</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='define_wells.html'>define_wells</a></span>(<span class='no'>wells_df</span>) <span class='kw'>%&gt;%</span> <span class='fu'><a href='generate_image_wells.html'>generate_image_wells</a></span>(<span class='no'>aquifer_unconfined</span>)
 
 <span class='fu'>get_single_drawdown_relationship</span>(<span class='no'>wells</span>, <span class='no'>aquifer_unconfined</span>,

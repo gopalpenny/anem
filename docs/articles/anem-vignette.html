@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">anem</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -54,6 +54,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/AEM-background.html">AEM-background</a>
+    </li>
+    <li>
       <a href="../articles/anem-vignette.html">anem-vignette</a>
     </li>
   </ul>
@@ -75,7 +78,7 @@
       <h1 data-toc-skip>anem-vignette</h1>
                         <h4 class="author">Gopal Penny</h4>
             
-            <h4 class="date">2020-04-17</h4>
+            <h4 class="date">2020-07-23</h4>
       
       
       <div class="hidden name"><code>anem-vignette.Rmd</code></div>
@@ -87,11 +90,19 @@
 <p>This package was created to evaluate the hydraulic relationships among wells, in order to estimate the effect of a group of wells on drawdown at these wells or other wells. It it based on method of images from the analytical element modeling approach, in which the 2-dimensional characteristics of aquifers are reproduced by strategically placing wells within the domain.</p>
 <p>This package models <em>simple</em> aquifer and well configurations. The boundaries of the aquifer can be specified as <em>no flow</em> or <em>constant head</em> boundaries, and the corners of the aquifer must be right angles. For fully bounded aquifers, this means that the aquifer must be a rectangle. The constant head boundaries take the head of the undisturbed aquifer, h0.</p>
 <p>Units are designed for length dimensions given in meters (or m<sup>2</sup>), and time in seconds.</p>
-<p>As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared.</p>
+<p>As you will see in this vignette, the package has a number of functions that are used to set up the aquifer boundaries and wells. For practical purposes, the package was designed for simple but real aquifers, and wells and boundaries of the aquifers can be imported as shapefiles and then prepared. The basic functionality of the package, described in more detail in sections below, can be seen in the following figure.</p>
+<div class="figure">
+<img src="anem-vignette_files/figure-html/f1_plot-1.png" alt="(a) Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Note that the stream, flowing from top to bottom, goes from gaining to losing." width="672"><p class="caption">
+</p>
+<ol style="list-style-type: lower-alpha"><li>Aquifer scenario with four wells and arrows indicating constant background flow towards the river. (b) Well images and radii of influence for bottom-right well (red). (c) Reproduction of the no-flow and constant-head boundaries for single well using well images. (d) Hydraulic head and flow field for scenario. Note that the stream, flowing from top to bottom, goes from gaining to losing.
+
+</li></ol>
+</div>
+
 <div id="understanding-the-method-of-images" class="section level3">
 <h3 class="hasAnchor">
 <a href="#understanding-the-method-of-images" class="anchor"></a>Understanding the method of images</h3>
-<p>The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see <code><a href="../reference/get_segments_behavior.html">?get_segments_behavior</a></code> and <code><a href="../reference/get_stream_function.html">?get_stream_function</a></code>, respectively, which give examples for generating similar plots). The principle of super position states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.</p>
+<p>The package relies on the principle of superposition and the method of images to generate groundwater hydrodynamics, illustrated by the two figures below (see <code><a href="../reference/get_segments_behavior.html">?get_segments_behavior</a></code> and <code><a href="../reference/get_stream_function.html">?get_stream_function</a></code>, respectively, which give examples for generating similar plots). The principle of superposition states that, because the groundwater equations are linear, the solution to the equations can be calculated as the sum of solutions. In the example below, the drawdown of the water table is calculated as the sum of drawdown due to three individual wells.</p>
 <p><img src="anem-vignette_files/figure-html/unnamed-chunk-2-1.png" width="528"></p>
 <p>In the method of images, wells are mirrored across aquifer boundaries to reproduce characterics of the boundary, such as no flow or constant head. The following examples demonstrate (a) how a no-flow boundary is created by mirroring a well across the boundary, and (b) how a constant head boundary is recreated by mirroring the well and inverting the pumping.</p>
 <p><img src="anem-vignette_files/figure-html/unnamed-chunk-3-1.png" width="528"></p>
@@ -420,7 +431,7 @@ Mean head, no images
 <div id="integrating-with-anem-app" class="section level3">
 <h3 class="hasAnchor">
 <a href="#integrating-with-anem-app" class="anchor"></a>Integrating with anem-app</h3>
-<p>The basic functionality of this package is implemented online in a Shiny application, <a href="https://gopalpenny.shinyapps.io/anem-app/">anem-app</a>. The Shiny application provides an GUI for setting aquifer properties, drawing boundaries, defining recharge, adding wells, and tracking particles. It also displays results directly in the app. You can also download scenarios created on anem-app and import them into R. To do so, check out <code><a href="../reference/import_app_rds.html">?import_app_rds</a></code> from this package to learn more.</p>
+<p>The basic functionality of this package is implemented in a Shiny application, which can be run by calling <code><a href="../reference/anem_app.html">anem_app()</a></code> or accessed online at <a href="https://gopalpenny.shinyapps.io/anem-app/">shinyapps.io</a>. The Shiny application provides an GUI for setting aquifer properties, drawing boundaries, defining recharge, adding wells, and tracking particles. It also displays results directly in the app. You can also download scenarios created on anem-app and import them into R. To do so, check out <code><a href="../reference/import_app_rds.html">?import_app_rds</a></code> from this package to learn more.</p>
 </div>
 </div>
   </div>

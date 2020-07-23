@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">anem</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -94,6 +94,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/AEM-background.html">AEM-background</a>
+    </li>
     <li>
       <a href="../articles/anem-vignette.html">anem-vignette</a>
     </li>
@@ -137,6 +140,12 @@ form a polygon</p></td>
     </table>
 
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='no'>gw_district</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='import_app_rds.html'>import_app_rds</a></span>(<span class='kw'>params</span><span class='kw'>=</span><span class='kw pkg'>anem</span><span class='kw ns'>::</span><span class='no'><a href='groundwater_district.html'>groundwater_district</a></span>)
+<span class='no'>bounds_sf</span> <span class='kw'>&lt;-</span> <span class='no'>gw_district</span>$<span class='no'>aquifer</span>$<span class='no'>bounds</span>
+<span class='fu'>bounds_sf_to_polygon</span>(<span class='no'>bounds_sf</span>)
+}</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

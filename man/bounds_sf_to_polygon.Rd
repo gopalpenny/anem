@@ -13,4 +13,11 @@ form a polygon}
 \description{
 Convert bounds as sf object to polygon
 }
+\examples{
+\dontrun{
+gw_district <- import_app_rds(params=anem::groundwater_district)
+bounds_sf <- gw_district$aquifer$bounds
+bounds_sf_to_polygon(bounds_sf)
+}
+}
 \keyword{internal}
