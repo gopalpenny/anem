@@ -7,6 +7,8 @@ output: html_document
 
 ## A simple model for groundwater behavior
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/XnmbmAbx3HM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ### What anem-app does
 
 This web application models 2D, steady-state groundwater behavior in *simple* aquifers purturbed by pumping wells -- note the emphasis on simple. The model requires aquifer boundaries to be rectangular and have uniform saturated hydraulic conductivity. It works for confined and unconfined aquifers, any number of pumping wells, and can track any number of particles in the aquifer. Boundaries can be "no flow" (e.g., due to an impervious layer), "constant head" (e.g., a river), or "open" (i.e., there is no boundary at the edge of the simulation). 
