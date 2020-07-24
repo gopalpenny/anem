@@ -30,7 +30,8 @@ If you are unfamiliar with groundwater or groundwater flow, the following resour
 * [Aquifers and groundwater](https://www.usgs.gov/special-topic/water-science-school/science/aquifers-and-groundwater?qt-science_center_objects=0#qt-science_center_objects) - Introductory information from USGS 
 * [Groundwater flow](https://opentextbc.ca/physicalgeology2ed/chapter/14-2-groundwater-flow/) - Section 14.2, Physical Geography Ed. 2, from B.C. Campus
 
-The groundwater model behind the application has been described in [Penny *et al.* (2018)](https://ngwa.onlinelibrary.wiley.com/journal/17456584) in *Groundwater*.
+The groundwater model behind the application (i.e., coded into the R package `anem`) is described [here](https://gopalpenny.github.io/anem/articles/AEM-background.html).
+<!-- and has been published in in *Groundwater* ([Penny *et al.*, 2020](https://ngwa.onlinelibrary.wiley.com/journal/17456584)). -->
 
 ### Use notes for anem-app
 
