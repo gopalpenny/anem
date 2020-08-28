@@ -169,10 +169,27 @@ test_that("gen_circleFun works for 1 circle",{
                all.equal(gen_circleFun(list(x=0,y=0,r=3),npoints = 10),df_circle_path,tolerance=1e-5))
 })
 
-circles <- gen_circles(data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5)))
-test_that("gen_circles works for 3 circles",{
-  expect_equal(c(300,3),
-               dim(circles))
+circle_obj <- data.frame(x=0,y=0,r=1, id = 2, foo="hello", bar = "bye")
+circle_out1 <- gen_circleFun(circle_obj, npoints = 4)
+circle_check1 <- data.frame(x=c(1, -0.5, -0.5, 1), y=c(0, 0.866025403784439, -0.866025403784438, -2.44929359829471e-16), id=c(2, 2, 2, 2))
+circle_out2 <- gen_circleFun(circle_obj, npoints = 4, include_data=TRUE)
+circle_check2 <- data.frame(x=c(1, -0.5, -0.5, 1), y=c(0, 0.866025403784439, -0.866025403784438, -2.44929359829471e-16), id=c(2, 2, 2, 2), r=c(1, 1, 1, 1), foo=c("hello", "hello", "hello", "hello"), bar=c("bye", "bye", "bye", "bye"))
+test_that("gen_circleFun works for additional columns",{
+  expect_equal(circle_out1, circle_check1)
+  expect_equal(circle_out2, circle_check2)
+})
+
+
+circle_df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5), foo="hello")
+circles_w_id <- circle_df
+circles_w_id$id <- 2
+circles_out <- gen_circles(circle_df, npoints = 100)
+circles_w_data_out <- gen_circles(circle_df, npoints = 2, include_data = TRUE)
+circles_w_data_check <- data.frame(x=c(1.5, 1.5, 3, 3, 4.5, 4.5), y=c(1, 1, 2, 2, 3, 3), id=c(1, 1, 2, 2, 3, 3), r=c(0.5, 0.5, 1, 1, 1.5, 1.5), foo=c("hello", "hello", "hello", "hello", "hello", "hello"))
+test_that("gen_circles works for 3 circles and warning for id column",{
+  expect_equal(c(300,3),dim(circles_out))
+  expect_equal(circles_w_data_out,circles_w_data_check)
+  expect_warning(gen_circles(circles_w_id),"df contains id as a column")
 })
 
 bounds_a <- define_bounds(data.frame(m=c(1,-1,1,-1),b=c(0,2,2,4),bound_type=c("CH","NF","NF","NF")))

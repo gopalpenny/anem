@@ -404,9 +404,17 @@ get_nearest_point_on_line <- function(loc,m,b) {
 #' Generate outline of circle
 #'
 #' @param circle A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional
+#' @param npoints Number of points for the circle
+#' @param include_data Include additional columns in the \code{circle} data.frame
 #' @keywords internal
 #' @importFrom magrittr %>%
-gen_circleFun <- function(circle, npoints = 100){
+#' @examples
+#' \dontrun{
+#' circle <- data.frame(x=0,y=0,r=1,foo="hello", bar = "bye")
+#' gen_circleFun(circle, npoints = 5)
+#' gen_circleFun(circle, npoints = 5, include_data=TRUE)
+#' }
+gen_circleFun <- function(circle, npoints = 100, include_data = FALSE){
   center <- c(circle$x,circle$y)
   if("r" %in% names(circle)) {
     r <- circle$r
@@ -422,6 +430,14 @@ gen_circleFun <- function(circle, npoints = 100){
   if (!is.null(circle$id)) {
     df <- df %>% dplyr::mutate(id=circle$id)
   }
+  if (include_data) {
+    additional_names <- names(circle)[!(names(circle) %in% c(names(df)))]
+    if (length(additional_names) > 0) {
+      df_orig_names <- names(df)
+      df <- cbind(df, circle[,additional_names], row.names= NULL)
+      names(df) <- c(df_orig_names,additional_names)
+    }
+  }
   return(df)
 }
 
@@ -434,15 +450,22 @@ gen_circ <- function(x,y,r) {
 #' Generate an object that acts like a circle
 #'
 #' @param df data.frame with columns x, y, r
+#' @param npoints number of points to use in each circle
+#' @param include_data boolean that determines whether additional columns are returned
 #' @export
 #' @examples
 #' library(ggplot2)
-#' df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5))
+#' df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5), foo = "hello")
 #' circles <- gen_circles(df)
+#' circles <- gen_circles(df, npoints = 5, include_data = TRUE)
 #' ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
-gen_circles <- function(df) {
+gen_circles <- function(df, npoints = 100, include_data = FALSE) {
+  if ("id" %in% names(df)) {
+    warning("df contains id as a column, which will be overwritten")
+  }
   df$id <- 1:dim(df)[1]
-  circles <- do.call(rbind,lapply(split(df,df$id),gen_circleFun))
+  circles <- do.call(rbind,lapply(split(df,df$id), gen_circleFun, npoints = npoints, include_data = include_data))
+  row.names(circles) <- NULL
   return(circles)
 }
 

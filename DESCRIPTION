@@ -1,7 +1,7 @@
 Package: anem
 Type: Package
 Title: Analytical element models for simple aquifers
-Version: 0.1.1
+Version: 0.1.1.9000
 Author: person("Gopal", "Penny", email = "gopalpenny@gmail.com",
                   role = c("aut", "cre"))
 Maintainer: Gopal Penny <gopalpenny@gmail.com>
