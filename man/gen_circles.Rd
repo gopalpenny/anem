@@ -4,17 +4,23 @@
 \alias{gen_circles}
 \title{Generate an object that acts like a circle}
 \usage{
-gen_circles(df)
+gen_circles(df, npoints = 100, include_data = FALSE)
 }
 \arguments{
 \item{df}{data.frame with columns x, y, r}
+
+\item{npoints}{number of points to use in each circle}
+
+\item{include_data}{boolean that determines whether additional columns are returned}
 }
 \description{
 Generate an object that acts like a circle
 }
 \examples{
 library(ggplot2)
-df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5))
+df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5), foo = "hello")
 circles <- gen_circles(df)
 ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
+
+circles_with_data <- gen_circles(df, npoints = 5, include_data = TRUE)
 }

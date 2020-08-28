@@ -4,12 +4,23 @@
 \alias{gen_circleFun}
 \title{Generate outline of circle}
 \usage{
-gen_circleFun(circle, npoints = 100)
+gen_circleFun(circle, npoints = 100, include_data = FALSE)
 }
 \arguments{
 \item{circle}{A \code{data.frame} with $x, $y, and $r (or $R) columns. $id optional}
+
+\item{npoints}{Number of points for the circle}
+
+\item{include_data}{Include additional columns in the \code{circle} data.frame}
 }
 \description{
 Generate outline of circle
+}
+\examples{
+\dontrun{
+circle <- data.frame(x=0,y=0,r=1,foo="hello", bar = "bye")
+gen_circleFun(circle, npoints = 5)
+gen_circleFun(circle, npoints = 5, include_data=TRUE)
+}
 }
 \keyword{internal}
