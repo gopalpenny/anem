@@ -457,8 +457,9 @@ gen_circ <- function(x,y,r) {
 #' library(ggplot2)
 #' df <- data.frame(x=1:3,y=1:3,r=c(0.5,1,1.5), foo = "hello")
 #' circles <- gen_circles(df)
-#' circles <- gen_circles(df, npoints = 5, include_data = TRUE)
 #' ggplot(circles) + geom_polygon(aes(x,y,group=id),color="black",alpha=0.5) + coord_equal()
+#'
+#' circles_with_data <- gen_circles(df, npoints = 5, include_data = TRUE)
 gen_circles <- function(df, npoints = 100, include_data = FALSE) {
   if ("id" %in% names(df)) {
     warning("df contains id as a column, which will be overwritten")
